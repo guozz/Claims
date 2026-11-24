@@ -720,15 +720,18 @@
     }
     .rc-photo-btn {
       display: inline-flex; align-items: center; justify-content: center; gap: 4px;
-      height: 30px; min-width: 34px; padding: 0 9px; border-radius: 999px;
+      height: 30px; min-width: 30px; padding: 0 7px; border-radius: 9px;
       border: 1px solid var(--border); background: var(--surface-3);
       color: var(--text-muted); font-size: 11.5px; font-weight: 700; cursor: pointer;
       transition: all 0.14s ease; flex-shrink: 0;
     }
     .rc-photo-btn svg { width: 14px; height: 14px; stroke-width: 2; flex-shrink: 0; }
     .rc-photo-btn:hover { border-color: var(--accent-border); background: var(--accent-soft); color: var(--accent); }
+    .rc-photo-btn.rc-cam-btn { background: var(--accent-soft); border-color: var(--accent-border); color: var(--accent); }
+    .rc-photo-btn.rc-lib-btn { background: var(--sky-soft); border-color: var(--sky-border); color: var(--sky-text); }
     .rc-photo-btn.has-photo {
       background: var(--green-soft); border-color: var(--green-border); color: var(--green-text);
+      padding: 0 8px; border-radius: 999px; font-family: var(--font-mono); font-size: 11px;
     }
     .inline-ico { display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; }
     .inline-ico svg { display: block; }
@@ -1809,9 +1812,10 @@
     }
     html[data-layout="mobile"] .curr-seg { flex: 0 0 auto; }
     html[data-layout="mobile"] .rc-label-wrap { flex: 1 1 115px; min-width: 0; }
-    html[data-layout="mobile"] .rc-amt-wrap { flex: 1 1 56%; min-width: 0; }
-    html[data-layout="mobile"] .rc-sgd-wrap { flex: 0 0 auto; margin-left: auto; min-width: 0; gap: 6px; }
-    html[data-layout="mobile"] .rc-photo-btn { height: 36px; padding: 0 11px; border-radius: 999px; }
+    html[data-layout="mobile"] .rc-amt-wrap { flex: 1 1 44%; min-width: 96px; }
+    html[data-layout="mobile"] .rc-sgd-wrap { flex: 0 0 auto; margin-left: auto; min-width: 0; gap: 5px; }
+    html[data-layout="mobile"] .rc-photo-btn { height: 36px; min-width: 34px; padding: 0 8px; border-radius: 10px; }
+    html[data-layout="mobile"] .rc-photo-btn.has-photo { min-width: 28px; padding: 0 8px; border-radius: 999px; }
     html[data-layout="mobile"] .console-sticky { position: static; }
     html[data-layout="mobile"] .console-card { max-height: none; }
     html[data-layout="mobile"] .mobile-bottom-nav {
@@ -3976,6 +3980,7 @@
       if (name === 'calendar') return '<svg ' + a + '><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>';
       if (name === 'share') return '<svg ' + a + '><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>';
       if (name === 'doc') return '<svg ' + a + '><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>';
+      if (name === 'eye') return '<svg ' + a + '><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';
       if (name === 'layers') return '<svg ' + a + '><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>';
       return '';
     }
@@ -4017,8 +4022,9 @@
         + '</div>'
       ) : '';
       const showSgdReadout = isFx || calc.grossParsed.isExpression || calc.deduction > 0;
+      const safeDayId = dayId ? esc(dayId) : '';
 
-      return '<div class="receipt-row">'
+      return '<div id="rc-row-' + esc(item.id) + '" class="receipt-row">'
         + '<div class="receipt-main">'
         + idxBadgeHtml
         + '<div class="curr-seg">'
@@ -4026,10 +4032,12 @@
         + '<button type="button" class="' + (isFx ? 'active-fx' : '') + '" onclick="setReceiptCurrency(\'' + scope + '\',\'' + esc(item.id) + '\',\'FX\',' + dayArg + ')">' + esc(fxCode) + '</button>'
         + '</div>'
         + '<div class="rc-label-wrap"><input class="input" type="text" placeholder="' + esc(placeholder) + '" value="' + esc(item.label) + '" oninput="updateReceiptField(\'' + scope + '\',\'' + esc(item.id) + '\',\'label\',this.value,' + dayArg + ',this)" /></div>'
-        + '<div class="rc-amt-wrap"><input class="input mono input-right' + (calc.grossParsed.valid ? '' : ' invalid') + '" type="text" inputmode="decimal" placeholder="' + (isFx ? ('0 ' + esc(fxCode)) : 'SGD 0.00') + '" value="' + esc(item.amountExpr) + '" oninput="updateReceiptField(\'' + scope + '\',\'' + esc(item.id) + '\',\'amountExpr\',this.value,' + dayArg + ',this)" /></div>'
+        + '<div class="rc-amt-wrap"><input id="rc-amt-input-' + esc(item.id) + '" class="input mono input-right' + (calc.grossParsed.valid ? '' : ' invalid') + '" type="text" inputmode="decimal" placeholder="' + (isFx ? ('0 ' + esc(fxCode)) : 'SGD 0.00') + '" value="' + esc(item.amountExpr) + '" oninput="updateReceiptField(\'' + scope + '\',\'' + esc(item.id) + '\',\'amountExpr\',this.value,' + dayArg + ',this)" /></div>'
         + '<div class="rc-sgd-wrap">'
         + '<span id="rc-sgd-' + esc(item.id) + '" class="rc-sgd-val" style="' + (showSgdReadout ? '' : 'display:none') + '">SGD ' + fmt2(calc.sgd) + '</span>'
-        + '<button type="button" class="rc-photo-btn' + (photoCount > 0 ? ' has-photo' : '') + '" title="' + (photoCount > 0 ? (photoCount + ' photo(s) attached — tap to view/manage') : 'Attach receipt photo') + '" onclick="handleItemPhotoClick(\'' + scope + '\',\'' + esc(item.id) + '\',' + dayArg + ')">' + slickSvg('camera', 14) + (photoCount > 0 ? ('<span>' + photoCount + '</span>') : '') + '</button>'
+        + '<button type="button" class="rc-photo-btn rc-cam-btn" title="Snap photo with camera for this line" aria-label="Snap photo with camera" onclick="triggerReceiptUpload({ scope:\'' + scope + '\', itemId:\'' + esc(item.id) + '\', dayId:\'' + safeDayId + '\', role:\'receipt\' }, true)">' + slickSvg('camera', 14) + '</button>'
+        + '<button type="button" class="rc-photo-btn rc-lib-btn" title="Attach from Photo Library or PDF Files" aria-label="Attach from Photo Library or Files" onclick="triggerReceiptUpload({ scope:\'' + scope + '\', itemId:\'' + esc(item.id) + '\', dayId:\'' + safeDayId + '\', role:\'receipt\' }, false)">' + slickSvg('image', 14) + '</button>'
+        + (photoCount > 0 ? ('<button type="button" class="rc-photo-btn has-photo" title="' + photoCount + ' photo(s) attached — tap to view/manage" onclick="handleItemPhotoClick(\'' + scope + '\',\'' + esc(item.id) + '\',' + dayArg + ')"><span>' + photoCount + '</span></button>') : '')
         + '<button type="button" class="btn btn-icon-sm btn-ghost btn-danger-ghost" title="Remove row" onclick="removeReceipt(\'' + scope + '\',\'' + esc(item.id) + '\',' + dayArg + ')">✕</button>'
         + '</div>'
         + '</div>'
@@ -4886,7 +4894,7 @@
         + '<input class="date-pill-native" type="date" value="' + esc(d.day.date) + '" onchange="updateMealDayDate(\'' + esc(d.day.id) + '\',this.value)" />'
         + '</div>'
         + '<div class="day-actions">'
-        + '<button type="button" class="btn btn-sm" onclick="printMealDayPDF(\'' + esc(d.day.id) + '\')">' + slickSvg('doc', 13) + '<span>PDF</span></button>'
+        + '<button type="button" class="btn btn-sm btn-soft" onclick="openSlidePreviewModal({ type: \'mealDay\', dayId: \'' + esc(d.day.id) + '\' })" title="Slide &amp; Print Preview for this day">' + slickSvg('eye', 13) + '<span>Preview</span></button>'
         + '<button type="button" class="btn btn-sm btn-green-soft" onclick="exportMealDaySheet(\'' + esc(d.day.id) + '\')">' + slickSvg('share', 13) + '<span>Share</span></button>'
         + '</div>'
         + '</div>'
@@ -4904,9 +4912,9 @@
         + '</form>'
         + '</div>'
         + '<div class="aware-attach-inline' + (dayPhotos.length > 0 ? ' has-photos' : '') + '">'
-        + '<span style="display:inline-flex;align-items:center;gap:6px;">' + slickSvg('camera', 14) + '<span>' + (dayPhotos.length > 0 ? (dayPhotos.length + ' receipt' + (dayPhotos.length === 1 ? '' : 's') + ' attached') : 'Add from Library / PDF') + '</span></span>'
+        + '<span style="display:inline-flex;align-items:center;gap:6px;">' + slickSvg('image', 14) + '<span>' + (dayPhotos.length > 0 ? (dayPhotos.length + ' receipt' + (dayPhotos.length === 1 ? '' : 's') + ' attached') : 'Add from Library / Files') + '</span></span>'
         + '<div style="display:flex;gap:6px;">'
-        + '<button type="button" class="btn btn-sm btn-soft" onclick="triggerReceiptUpload({ scope:\'mealDay\', dayId:\'' + esc(d.day.id) + '\', itemId:\'\', role:\'receipt\' }, false)">' + slickSvg('image', 13) + '<span>Library</span></button>'
+        + '<button type="button" class="btn btn-sm btn-soft" onclick="triggerReceiptUpload({ scope:\'mealDay\', dayId:\'' + esc(d.day.id) + '\', itemId:\'\', role:\'receipt\' }, false)">' + slickSvg('image', 13) + '<span>Library / PDF</span></button>'
         + '<button type="button" class="btn btn-sm btn-sky-soft" onclick="triggerReceiptUpload({ scope:\'mealDay\', dayId:\'' + esc(d.day.id) + '\', itemId:\'\', role:\'bank\' }, false)">' + slickSvg('card', 13) + '<span>Bank</span></button>'
         + '</div>'
         + '</div>'
@@ -4947,9 +4955,7 @@
             + '</button>')
           : '');
 
-      const snapMealAction = d
-        ? ('triggerReceiptUpload({ scope:\'mealDay\', dayId:\'' + esc(d.day.id) + '\', itemId:\'\', role:\'receipt\' }, true)')
-        : 'addTodayMealDayAndSelect()';
+      const snapMealAction = 'triggerSnapMealQuick(\'' + (d ? esc(d.day.id) : '') + '\')';
       const snapBankAction = d
         ? ('triggerReceiptUpload({ scope:\'mealDay\', dayId:\'' + esc(d.day.id) + '\', itemId:\'\', role:\'bank\' }, false)')
         : 'addTodayMealDayAndSelect()';
@@ -4971,9 +4977,9 @@
         + '</div>'
         + '<div class="aware-day-strip">' + dayChipsHtml + '</div>'
         + '<div class="aware-capture-grid">'
-        + '<button type="button" class="aware-capture-btn primary" onclick="' + snapMealAction + '">' + slickSvg('camera', 15) + '<span>Snap Meal</span></button>'
-        + '<button type="button" class="aware-capture-btn sky" onclick="triggerReceiptUpload({ scope:\'' + activeScope + '\', dayId:\'\', itemId:\'\', role:\'receipt\' }, true)">' + slickSvg('transit', 15) + '<span>Snap Trpt</span></button>'
-        + '<button type="button" class="aware-capture-btn green" onclick="' + snapBankAction + '">' + slickSvg('card', 15) + '<span>+Bank SGD</span></button>'
+        + '<button type="button" class="aware-capture-btn primary" onclick="' + snapMealAction + '" title="Snap photo &amp; create new meal line in Today\'s Meals">' + slickSvg('camera', 15) + '<span>Snap Meal</span></button>'
+        + '<button type="button" class="aware-capture-btn sky" onclick="triggerSnapTransportQuick()" title="Add new ' + (activeScope === 'sgTransport' ? 'SG Local' : 'Overseas') + ' transport line &amp; attach from Photo Library">' + slickSvg('transit', 15) + '<span>Snap Trpt</span></button>'
+        + '<button type="button" class="aware-capture-btn green" onclick="' + snapBankAction + '" title="Attach Bank SGD screenshot from Photo Library / Files">' + slickSvg('card', 15) + '<span>+Bank SGD</span></button>'
         + '</div>'
         + '</div>';
 
@@ -5001,7 +5007,10 @@
       }).join('');
 
       const transportSectionHtml = '<div class="aware-section-head"><span class="aware-section-title">Daily Transport</span>'
-        + '<span id="cat-total-' + activeScope + '" class="pill pill-accent mono">SGD ' + fmt2(activeTrptTotal) + '</span></div>'
+        + '<div style="display:flex;align-items:center;gap:6px;">'
+        + '<button type="button" class="btn btn-sm btn-soft" onclick="openSlidePreviewModal({ type: \'category\', scope: \'' + activeScope + '\' })" title="Slide &amp; Print Preview for ' + (activeScope === 'sgTransport' ? 'SG Local' : 'Overseas') + ' Transport">' + slickSvg('eye', 13) + '<span>Preview</span></button>'
+        + '<span id="cat-total-' + activeScope + '" class="pill pill-accent mono">SGD ' + fmt2(activeTrptTotal) + '</span>'
+        + '</div></div>'
         + '<div id="mobile-aware-transport-card" class="mobile-trpt-card">'
         + '<div class="mobile-trpt-tabs">'
         + '<button type="button" class="mobile-trpt-tab' + (activeScope === 'overseasTransport' ? ' active' : '') + '" onclick="setMobileTransportTab(\'overseas\')"><span>Overseas</span><span class="mono">$' + fmt2(summary.overseasTransport.total) + '</span></button>'
@@ -9210,10 +9219,33 @@
       triggerReceiptUpload(Object.assign({}, baseTarget, { role: role === 'bank' ? 'bank' : 'receipt' }), !!useCamera);
     }
 
+    function triggerSnapMealQuick(dayId) {
+      triggerReceiptUpload({
+        scope: 'meal',
+        dayId: dayId || '',
+        itemId: '',
+        role: 'receipt',
+        autoCreateLine: true
+      }, true);
+    }
+
+    function triggerSnapTransportQuick() {
+      const activeScope = mobileTransportTab === 'sg' ? 'sgTransport' : 'overseasTransport';
+      triggerReceiptUpload({
+        scope: activeScope,
+        dayId: '',
+        itemId: '',
+        role: 'receipt',
+        autoCreateLine: true
+      }, false);
+    }
+
     function triggerReceiptUpload(target, useCamera) {
-      receiptVault.pendingUploadTarget = Object.assign({ scope: 'unmatched', itemId: '', dayId: '', role: 'receipt' }, target || {});
+      receiptVault.pendingUploadTarget = Object.assign({ scope: 'unmatched', itemId: '', dayId: '', role: 'receipt', autoCreateLine: false }, target || {});
       const inp = document.getElementById(useCamera ? 'receipt-camera-input' : 'receipt-upload-input');
       if (inp) {
+        // Strictly ensure Library / PDF inputs never force the camera
+        if (!useCamera) inp.removeAttribute('capture');
         inp.value = '';
         inp.click();
       }
@@ -9453,12 +9485,12 @@
       if (evt.target) evt.target.value = '';
       if (files.length === 0) return;
 
-      const target = receiptVault.pendingUploadTarget || { scope: 'unmatched', itemId: '', dayId: '', role: 'receipt' };
+      const target = Object.assign({ scope: 'unmatched', itemId: '', dayId: '', role: 'receipt', autoCreateLine: false }, receiptVault.pendingUploadTarget || {});
       const useBW = !!receiptVault.bwMode;
       const hasPdf = files.some(function (f) { return f.type === 'application/pdf' || /\.pdf$/i.test(f.name || ''); });
       showToast('Compressing ' + files.length + (hasPdf ? ' file(s) (<300 KB/pg)…' : (' photo' + (files.length === 1 ? '' : 's') + ' (<300 KB)…')), 'indigo');
 
-      let added = 0;
+      const stagedRecs = [];
       let addedBytes = 0;
       let pdfPagesAdded = 0;
       let truncatedPdf = false;
@@ -9472,7 +9504,7 @@
               const pg = pages[p];
               if (pg.totalPages > pages.length) truncatedPdf = true;
               const pageSuffix = pg.totalPages > 1 ? (' (p' + pg.pageNum + '/' + pg.totalPages + ')') : '';
-              const rec = {
+              stagedRecs.push({
                 id: uid('ph'),
                 tripId: state.id,
                 scope: target.scope || 'unmatched',
@@ -9487,17 +9519,14 @@
                 height: pg.height,
                 bytes: pg.bytes,
                 isBW: pg.isBW,
-                createdAt: Date.now() + added
-              };
-              receiptVault.photos.push(rec);
-              await idbPutReceipt(rec);
-              added++;
+                createdAt: Date.now() + stagedRecs.length
+              });
               addedBytes += pg.bytes || 0;
               pdfPagesAdded++;
             }
           } else {
             const processed = await compressImageFile(f, useBW);
-            const rec = {
+            stagedRecs.push({
               id: uid('ph'),
               tripId: state.id,
               scope: target.scope || 'unmatched',
@@ -9512,11 +9541,8 @@
               height: processed.height,
               bytes: processed.bytes,
               isBW: processed.isBW,
-              createdAt: Date.now() + added
-            };
-            receiptVault.photos.push(rec);
-            await idbPutReceipt(rec);
-            added++;
+              createdAt: Date.now() + stagedRecs.length
+            });
             addedBytes += processed.bytes || 0;
           }
         } catch (err) {
@@ -9525,23 +9551,112 @@
         }
       }
 
+      if (stagedRecs.length === 0) {
+        if (!hasPdf) showToast('Could not process selected photo(s).', 'red');
+        return;
+      }
+
+      // Auto-create (or reuse untouched empty placeholder) line item for Snap Meal & Snap Transport
+      let createdItemId = '';
+      let createdContextLabel = '';
+      if (target.autoCreateLine) {
+        const defaultFxId = (state.fxAnchors[0] && state.fxAnchors[0].id) || '';
+        const makeBlankItem = function () {
+          return {
+            id: uid('rc'),
+            label: '',
+            currency: 'SGD',
+            amountExpr: '',
+            deductionExpr: '',
+            deductionReason: '',
+            fxAnchorId: defaultFxId,
+            customRate: ''
+          };
+        };
+
+        if (target.scope === 'meal' || target.scope === 'mealDay') {
+          let dayObj = target.dayId ? (state.meals || []).find(function (m) { return m.id === target.dayId; }) : null;
+          if (!dayObj) {
+            const todayIso = toISODate(new Date());
+            dayObj = (state.meals || []).find(function (m) { return m.date === todayIso; });
+            if (!dayObj) {
+              dayObj = { id: uid('day'), date: todayIso, items: [] };
+              state.meals.push(dayObj);
+              state.meals.sort(function (a, b) { return String(a.date || '').localeCompare(String(b.date || '')); });
+            }
+            mobileAwareDayId = dayObj.id;
+          }
+          const singleBlank = dayObj.items.length === 1
+            && !(dayObj.items[0].amountExpr || '').trim()
+            && !(dayObj.items[0].label || '').trim()
+            && getReceiptCountForItem(dayObj.items[0].id) === 0;
+          let lineItem = singleBlank ? dayObj.items[0] : makeBlankItem();
+          if (!singleBlank) dayObj.items.push(lineItem);
+          target.scope = 'meal';
+          target.dayId = dayObj.id;
+          target.itemId = lineItem.id;
+          createdItemId = lineItem.id;
+          createdContextLabel = 'Meal #' + dayObj.items.length + ' (' + fmtDateNoYear(dayObj.date, 'short') + ')';
+        } else if (target.scope === 'overseasTransport' || target.scope === 'sgTransport') {
+          const list = state[target.scope] && state[target.scope].items;
+          if (list) {
+            const singleBlank = list.length === 1
+              && !(list[0].amountExpr || '').trim()
+              && !(list[0].label || '').trim()
+              && getReceiptCountForItem(list[0].id) === 0;
+            let lineItem = singleBlank ? list[0] : makeBlankItem();
+            if (!singleBlank) list.push(lineItem);
+            target.dayId = '';
+            target.itemId = lineItem.id;
+            createdItemId = lineItem.id;
+            createdContextLabel = (target.scope === 'sgTransport' ? 'SG Transport' : 'Overseas Transport') + ' #' + list.length;
+          }
+        }
+      }
+
+      for (let rIdx = 0; rIdx < stagedRecs.length; rIdx++) {
+        const rec = stagedRecs[rIdx];
+        rec.scope = target.scope || rec.scope;
+        rec.dayId = target.dayId || '';
+        rec.itemId = target.itemId || '';
+        receiptVault.photos.push(rec);
+        await idbPutReceipt(rec);
+      }
+
+      const added = stagedRecs.length;
       updateVaultCountBadges();
-      renderWorkspace();
+      if (createdItemId) {
+        persistStore(true, false);
+        renderAll();
+      } else {
+        renderWorkspace();
+      }
       if (document.getElementById('receipt-modal-backdrop').classList.contains('open')) {
         renderReceiptModal();
       }
       if (document.getElementById('slide-preview-backdrop').classList.contains('open')) {
         renderSlidePreviewModal();
       }
-      if (added > 0) {
-        const sizeLabel = formatBytes(addedBytes);
-        const suffix = pdfPagesAdded > 0
-          ? (' (' + pdfPagesAdded + ' PDF pg · ' + sizeLabel + (truncatedPdf ? ', capped at 12' : '') + ')')
-          : (' (' + sizeLabel + ')');
+
+      const sizeLabel = formatBytes(addedBytes);
+      const suffix = pdfPagesAdded > 0
+        ? (' (' + pdfPagesAdded + ' PDF pg · ' + sizeLabel + (truncatedPdf ? ', capped at 12' : '') + ')')
+        : (' (' + sizeLabel + ')');
+      if (createdItemId) {
+        showToast('Created ' + createdContextLabel + ' + ' + added + ' file' + (added === 1 ? '' : 's') + suffix + ' ✓', 'green');
+        setTimeout(function () {
+          const rowEl = document.getElementById('rc-row-' + createdItemId);
+          if (rowEl) {
+            rowEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            rowEl.classList.add('radar-flash');
+            setTimeout(function () { rowEl.classList.remove('radar-flash'); }, 1200);
+          }
+          const amtInp = document.getElementById('rc-amt-input-' + createdItemId);
+          if (amtInp) amtInp.focus();
+        }, 80);
+      } else {
         showToast('Attached ' + added + ' item' + (added === 1 ? '' : 's') + suffix + ' ✓', 'green');
         scheduleCloudWrite(false);
-      } else if (!hasPdf) {
-        showToast('Could not process selected photo(s).', 'red');
       }
     }
 
