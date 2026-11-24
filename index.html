@@ -7149,6 +7149,13 @@
       return String(val || '').replace(/[\r\n\s]+/g, '');
     }
 
+    function sanitizeGistId(val) {
+      const cleaned = sanitizeGistCredential(val).replace(/\/+$/, '');
+      if (!cleaned) return '';
+      const parts = cleaned.split('/');
+      return parts[parts.length - 1] || cleaned;
+    }
+
     function gistHeaders(token, includeContentType) {
       const h = {
         'Authorization': 'Bearer ' + sanitizeGistCredential(token),
@@ -7531,8 +7538,7 @@
     async function oneDriveReadJsonFile(fileName, token) {
       const url = buildOneDriveItemEndpoint(fileName) + ':/content';
       const res = await fetch(url, {
-        headers: { 'Authorization': 'Bearer ' + token },
-        cache: 'no-store'
+        headers: { 'Authorization': 'Bearer ' + token }
       });
       if (res.status === 404) return null;
       if (!res.ok) {
@@ -7826,7 +7832,7 @@
 
     async function syncGistTwoWay(silent, pushPreferred) {
       const token = sanitizeGistCredential(gistSync.cfg.token);
-      const gistId = sanitizeGistCredential(gistSync.cfg.gistId);
+      const gistId = sanitizeGistId(gistSync.cfg.gistId);
       if (!gistSync.cfg.enabled || !token || !gistId) return;
       if (gistSync.busy) {
         if (pushPreferred) gistSync.pendingPush = true;
@@ -7845,11 +7851,12 @@
       renderCloudStatusUI();
 
       try {
-        const res = await gistFetch(GIST_API_BASE + '/' + encodeURIComponent(gistId), {
+        // Note: Do NOT pass cache: 'no-store' to api.github.com — browsers add a Cache-Control header
+        // which GitHub's CORS preflight rejects with TypeError: Failed to fetch. Use ?_cb= instead.
+        const res = await gistFetch(GIST_API_BASE + '/' + encodeURIComponent(gistId) + '?_cb=' + Date.now(), {
           method: 'GET',
           mode: 'cors',
-          headers: gistHeaders(token, false),
-          cache: 'no-store'
+          headers: gistHeaders(token, false)
         }, 'Fetch Private Gist');
         if (!res.ok) throw new Error(formatGistHttpError(res, 'Gist fetch'));
         const gist = await res.json();
@@ -8065,7 +8072,7 @@
       const tokInp = document.getElementById('gist-token-input');
       const idInp = document.getElementById('gist-id-input');
       const token = sanitizeGistCredential(tokInp ? tokInp.value : gistSync.cfg.token);
-      let gistId = sanitizeGistCredential(idInp ? idInp.value : gistSync.cfg.gistId);
+      let gistId = sanitizeGistId(idInp ? idInp.value : gistSync.cfg.gistId);
       if (!token) {
         showToast('Paste a GitHub Personal Access Token (gist scope) first.', 'amber');
         return;
@@ -8104,20 +8111,20 @@
           gistSync.cfg.enabled = true;
           gistSync.cfg.token = token;
           gistSync.cfg.gistId = gistId;
-          gistSync.cfg.lastReceiptsHash = '';
           gistSync.cfg.lastSyncedAt = Date.now();
           gistSync.lastPullCheckAt = Date.now();
+          gistSync.cfg.lastReceiptsHash = '';
           gistSync.pendingPush = false;
           saveGistConfig();
           if (tokInp) tokInp.value = '';
           if (idInp) idInp.value = '';
           gistSync.busy = false;
-          // Push any existing receipt photos in safe <=850 KB shards immediately
+          renderCloudStatusUI();
+          if (document.documentElement.getAttribute('data-layout') === 'mobile') renderWorkspace();
           if (gistSync.cfg.syncReceipts !== false) {
+            showToast('Created private Gist — syncing receipts…', 'green');
             await syncGistTwoWay(false, true);
           } else {
-            renderCloudStatusUI();
-            if (document.documentElement.getAttribute('data-layout') === 'mobile') renderWorkspace();
             showToast('Created private Gist & enabled Auto-Sync ✓', 'green');
           }
           return;
@@ -8137,6 +8144,43 @@
         gistSync.lastError = err.message || 'Gist connection failed';
         renderCloudStatusUI();
         showToast('Gist connect failed: ' + gistSync.lastError, 'red');
+      }
+    }
+
+    async function testGitHubGistConnection() {
+      const token = sanitizeGistCredential(gistSync.cfg.token);
+      const gistId = sanitizeGistId(gistSync.cfg.gistId);
+      if (!token || !gistId) {
+        showToast('Connect Private GitHub Gist first.', 'amber');
+        return;
+      }
+      showToast('Testing GitHub Gist connection…', 'indigo');
+      try {
+        const uRes = await gistFetch('https://api.github.com/user?_cb=' + Date.now(), {
+          method: 'GET',
+          mode: 'cors',
+          headers: gistHeaders(token, false)
+        }, 'Auth check');
+        if (!uRes.ok) throw new Error(formatGistHttpError(uRes, 'Token check'));
+        const scopes = uRes.headers.get('x-oauth-scopes');
+        if (scopes !== null && scopes.split(',').map(function (s) { return s.trim(); }).indexOf('gist') < 0) {
+          throw new Error('Token is missing the "gist" scope (found: ' + (scopes || 'none') + ')');
+        }
+        const gRes = await gistFetch(GIST_API_BASE + '/' + encodeURIComponent(gistId) + '?_cb=' + Date.now(), {
+          method: 'GET',
+          mode: 'cors',
+          headers: gistHeaders(token, false)
+        }, 'Gist read check');
+        if (!gRes.ok) throw new Error(formatGistHttpError(gRes, 'Gist check'));
+        const g = await gRes.json();
+        const fileCount = g && g.files ? Object.keys(g.files).length : 0;
+        gistSync.lastError = '';
+        renderCloudStatusUI();
+        showToast('Connection OK ✓ Gist reachable (' + fileCount + ' file' + (fileCount === 1 ? '' : 's') + ')', 'green');
+      } catch (err) {
+        gistSync.lastError = err.message || 'Connection test failed';
+        renderCloudStatusUI();
+        showToast('Test failed: ' + gistSync.lastError, 'red');
       }
     }
 
@@ -8455,6 +8499,7 @@
         if (gistConnected) {
           gistActs.innerHTML =
             '<button type="button" class="btn btn-sm btn-primary" onclick="syncGistTwoWay(false)"' + (gistSync.busy ? ' disabled' : '') + '>↻ Sync Now</button>'
+            + '<button type="button" class="btn btn-sm btn-soft" onclick="testGitHubGistConnection()"' + (gistSync.busy ? ' disabled' : '') + '>🩺 Test</button>'
             + '<button type="button" class="btn btn-sm btn-green-soft" onclick="copyGistPairingCode()">📲 Copy 1-Tap Device Pair Code</button>'
             + '<button type="button" class="btn btn-sm btn-red-soft" onclick="disconnectGitHubGist()">Disconnect</button>';
         }
