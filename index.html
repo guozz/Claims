@@ -7142,25 +7142,94 @@
         .join('|');
     }
 
-    function gistHeaders(token) {
-      return {
-        'Authorization': 'Bearer ' + String(token || '').trim(),
-        'Accept': 'application/vnd.github+json',
-        'Content-Type': 'application/json'
-      };
+    const GIST_SHARD_PREFIX = 'claimflow-receipts-';
+    const GIST_SHARD_MAX_CHARS = 850000; // Keep each Gist file under GitHub's 1 MB truncation threshold
+
+    function sanitizeGistCredential(val) {
+      return String(val || '').replace(/[\r\n\s]+/g, '');
     }
 
-    async function readGistFileContent(fileObj, token) {
+    function gistHeaders(token, includeContentType) {
+      const h = {
+        'Authorization': 'Bearer ' + sanitizeGistCredential(token),
+        'Accept': 'application/vnd.github+json'
+      };
+      if (includeContentType) h['Content-Type'] = 'application/json';
+      return h;
+    }
+
+    async function gistFetch(url, opts, phaseLabel) {
+      try {
+        return await fetch(url, opts);
+      } catch (err) {
+        if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+          throw new Error('Offline — changes queued');
+        }
+        throw new Error((phaseLabel || 'Gist request') + ' failed (network/CORS — check internet or ad-blocker)');
+      }
+    }
+
+    function formatGistHttpError(res, phaseLabel) {
+      if (res.status === 401) return 'Invalid or expired GitHub token (401)';
+      if (res.status === 403) return 'GitHub API access denied or rate-limited (403)';
+      if (res.status === 404) return 'Private Gist not found or token missing gist scope (404)';
+      if (res.status === 413 || res.status === 422) return phaseLabel + ' payload rejected (' + res.status + ') — tap Optimize (<300 KB) in Vault';
+      return phaseLabel + ' failed (HTTP ' + res.status + ')';
+    }
+
+    /**
+     * Reads a Gist file safely without triggering CORS preflight errors:
+     * gist.githubusercontent.com rejects custom Authorization headers on OPTIONS preflight,
+     * and secret Gist raw_urls are already capability URLs that work with a simple headerless GET.
+     */
+    async function readGistFileContent(fileObj) {
       if (!fileObj) return '';
       if (!fileObj.truncated && typeof fileObj.content === 'string') return fileObj.content;
       if (fileObj.raw_url) {
-        const res = await fetch(fileObj.raw_url, {
-          headers: token ? { 'Authorization': 'Bearer ' + token } : {}
-        });
-        if (!res.ok) throw new Error('Raw Gist fetch failed (' + res.status + ')');
+        const res = await gistFetch(fileObj.raw_url, { method: 'GET', mode: 'cors' }, 'Read receipt file');
+        if (!res.ok) throw new Error('Raw Gist fetch failed (HTTP ' + res.status + ')');
         return await res.text();
       }
       return fileObj.content || '';
+    }
+
+    /** Packs receipts into <= ~850 KB shards so GitHub never truncates or drops large PATCH requests */
+    function buildGistReceiptShards(receipts) {
+      const sorted = (receipts || []).slice().sort(function (a, b) {
+        const ca = Number(a.createdAt) || 0;
+        const cb = Number(b.createdAt) || 0;
+        if (ca !== cb) return ca - cb;
+        return String(a.id).localeCompare(String(b.id));
+      });
+      const shards = {};
+      let shardIdx = 0;
+      let bucket = [];
+      let bucketChars = 64;
+
+      const flushBucket = function () {
+        if (bucket.length === 0) return;
+        const fname = GIST_SHARD_PREFIX + shardIdx + '.json';
+        const hash = computeReceiptsHash(bucket);
+        shards[fname] = {
+          hash: hash,
+          content: JSON.stringify({ hash: hash, updatedAt: Date.now(), receipts: bucket })
+        };
+        shardIdx++;
+        bucket = [];
+        bucketChars = 64;
+      };
+
+      for (let i = 0; i < sorted.length; i++) {
+        const rec = sorted[i];
+        const recLen = JSON.stringify(rec).length + 2;
+        if (bucket.length > 0 && (bucketChars + recLen) > GIST_SHARD_MAX_CHARS) {
+          flushBucket();
+        }
+        bucket.push(rec);
+        bucketChars += recLen;
+      }
+      flushBucket();
+      return shards;
     }
 
     function renderMobileGistSyncChipHtml() {
@@ -7756,7 +7825,9 @@
     }
 
     async function syncGistTwoWay(silent, pushPreferred) {
-      if (!gistSync.cfg.enabled || !gistSync.cfg.token || !gistSync.cfg.gistId) return;
+      const token = sanitizeGistCredential(gistSync.cfg.token);
+      const gistId = sanitizeGistCredential(gistSync.cfg.gistId);
+      if (!gistSync.cfg.enabled || !token || !gistId) return;
       if (gistSync.busy) {
         if (pushPreferred) gistSync.pendingPush = true;
         return;
@@ -7774,12 +7845,13 @@
       renderCloudStatusUI();
 
       try {
-        const token = gistSync.cfg.token;
-        const res = await fetch(GIST_API_BASE + '/' + encodeURIComponent(gistSync.cfg.gistId), {
-          headers: gistHeaders(token),
+        const res = await gistFetch(GIST_API_BASE + '/' + encodeURIComponent(gistId), {
+          method: 'GET',
+          mode: 'cors',
+          headers: gistHeaders(token, false),
           cache: 'no-store'
-        });
-        if (!res.ok) throw new Error('Gist fetch failed (' + res.status + ')');
+        }, 'Fetch Private Gist');
+        if (!res.ok) throw new Error(formatGistHttpError(res, 'Gist fetch'));
         const gist = await res.json();
         const files = gist.files || {};
 
@@ -7788,7 +7860,7 @@
 
         let remoteDb = null;
         if (files[GIST_DATA_FILE]) {
-          const txt = await readGistFileContent(files[GIST_DATA_FILE], token);
+          const txt = await readGistFileContent(files[GIST_DATA_FILE]);
           if (txt && txt.trim()) remoteDb = JSON.parse(txt);
         }
 
@@ -7829,10 +7901,28 @@
           needPushDb = true;
         }
 
-        let needPushReceipts = false;
-        let mergedReceipts = [];
-        let pulledReceipts = 0;
+        // Phase 1: Always sync lightweight trips DB first so numbers/claims never get blocked by receipt sizes
+        if (needPushDb) {
+          const dbPatch = {};
+          dbPatch[GIST_DATA_FILE] = {
+            content: JSON.stringify({
+              activeTripId: store.activeTripId,
+              trips: store.trips,
+              deletedReceiptIds: mergedDeleted,
+              updatedAt: Date.now()
+            }, null, 2)
+          };
+          const dbRes = await gistFetch(GIST_API_BASE + '/' + encodeURIComponent(gistId), {
+            method: 'PATCH',
+            mode: 'cors',
+            headers: gistHeaders(token, true),
+            body: JSON.stringify({ files: dbPatch })
+          }, 'Save trips to Gist');
+          if (!dbRes.ok) throw new Error(formatGistHttpError(dbRes, 'Save trips'));
+        }
 
+        // Phase 2: Differential sharded receipt photo sync (backwards-compatible with legacy claimflow-receipts.json)
+        let pulledReceipts = 0;
         if (gistSync.cfg.syncReceipts !== false) {
           const deletedSet = {};
           mergedDeleted.forEach(function (id) { deletedSet[id] = true; });
@@ -7846,14 +7936,33 @@
           const localMap = {};
           localRecs.forEach(function (r) { localMap[r.id] = r; });
 
-          let parsedRec = null;
-          if (files[GIST_RECEIPTS_FILE]) {
-            const rTxt = await readGistFileContent(files[GIST_RECEIPTS_FILE], token);
-            if (rTxt && rTxt.trim()) parsedRec = JSON.parse(rTxt);
+          // Read all remote receipt files (both legacy single file and sharded files)
+          const remoteRecMap = {};
+          const remoteShardHashes = {};
+          const remoteShardNames = [];
+          const fileNames = Object.keys(files);
+          for (let fIdx = 0; fIdx < fileNames.length; fIdx++) {
+            const fname = fileNames[fIdx];
+            const isLegacy = fname === GIST_RECEIPTS_FILE;
+            const isShard = /^claimflow-receipts-\d+\.json$/.test(fname);
+            if (!isLegacy && !isShard) continue;
+            if (isShard) remoteShardNames.push(fname);
+            try {
+              const rTxt = await readGistFileContent(files[fname]);
+              if (rTxt && rTxt.trim()) {
+                const parsedRec = JSON.parse(rTxt);
+                if (isShard && parsedRec && parsedRec.hash) remoteShardHashes[fname] = parsedRec.hash;
+                const list = (parsedRec && Array.isArray(parsedRec.receipts)) ? parsedRec.receipts : [];
+                list.forEach(function (rr) {
+                  if (rr && rr.id) remoteRecMap[rr.id] = rr;
+                });
+              }
+            } catch (readErr) {
+              console.warn('Skipped unreadable receipt file ' + fname + ':', readErr);
+            }
           }
-          const remoteRecs = (parsedRec && Array.isArray(parsedRec.receipts)) ? parsedRec.receipts : [];
-          const remoteHash = (parsedRec && parsedRec.hash) ? parsedRec.hash : '';
 
+          const remoteRecs = Object.keys(remoteRecMap).map(function (k) { return remoteRecMap[k]; });
           const toRestore = [];
           remoteRecs.forEach(function (rr) {
             if (!rr || !rr.id || deletedSet[rr.id]) return;
@@ -7875,44 +7984,56 @@
             localRecs = localRecs.filter(function (r) { return !deletedSet[r.id]; });
           }
 
-          mergedReceipts = localRecs;
-          const finalHash = computeReceiptsHash(mergedReceipts);
-          if (finalHash !== remoteHash || mergedReceipts.length !== remoteRecs.length || localDeletedBefore.length !== mergedDeleted.length) {
-            needPushReceipts = (finalHash !== remoteHash);
-          }
-
           if (pulledReceipts > 0 || localRecs.length !== receiptVault.photos.length) {
             await loadTripReceipts();
           }
-        }
 
-        const patchFiles = {};
-        if (needPushDb) {
-          patchFiles[GIST_DATA_FILE] = {
-            content: JSON.stringify({
-              activeTripId: store.activeTripId,
-              trips: store.trips,
-              deletedReceiptIds: mergedDeleted,
-              updatedAt: Date.now()
-            }, null, 2)
-          };
-        }
-        if (needPushReceipts && gistSync.cfg.syncReceipts !== false) {
-          const rHash = computeReceiptsHash(mergedReceipts);
-          const recStr = JSON.stringify({ hash: rHash, updatedAt: Date.now(), receipts: mergedReceipts });
-          if (recStr.length <= 18 * 1024 * 1024) {
-            patchFiles[GIST_RECEIPTS_FILE] = { content: recStr };
-            gistSync.cfg.lastReceiptsHash = rHash;
-          }
-        }
-
-        if (Object.keys(patchFiles).length > 0) {
-          const pRes = await fetch(GIST_API_BASE + '/' + encodeURIComponent(gistSync.cfg.gistId), {
-            method: 'PATCH',
-            headers: gistHeaders(token),
-            body: JSON.stringify({ files: patchFiles })
+          // Build <= 850 KB shards and upload ONLY changed shards in small safe batches (max ~1.6 MB per PATCH)
+          const desiredShards = buildGistReceiptShards(localRecs);
+          const desiredNames = Object.keys(desiredShards);
+          const changedUploads = [];
+          desiredNames.forEach(function (fname) {
+            if (remoteShardHashes[fname] !== desiredShards[fname].hash) {
+              changedUploads.push({ name: fname, content: desiredShards[fname].content });
+            }
           });
-          if (!pRes.ok) throw new Error('Gist update failed (' + pRes.status + ')');
+
+          // Remove obsolete shards and migrate away from truncated legacy claimflow-receipts.json
+          const removals = [];
+          remoteShardNames.forEach(function (fname) {
+            if (!desiredShards[fname]) removals.push(fname);
+          });
+          if (files[GIST_RECEIPTS_FILE]) removals.push(GIST_RECEIPTS_FILE);
+
+          // Push changed shards in batches of <= 2 shards (stays safely below GitHub's request limits)
+          for (let b = 0; b < changedUploads.length; b += 2) {
+            const batchPatch = {};
+            const slice = changedUploads.slice(b, b + 2);
+            slice.forEach(function (item) {
+              batchPatch[item.name] = { content: item.content };
+            });
+            const sRes = await gistFetch(GIST_API_BASE + '/' + encodeURIComponent(gistId), {
+              method: 'PATCH',
+              mode: 'cors',
+              headers: gistHeaders(token, true),
+              body: JSON.stringify({ files: batchPatch })
+            }, 'Upload receipt photos');
+            if (!sRes.ok) throw new Error(formatGistHttpError(sRes, 'Upload receipts'));
+          }
+
+          if (removals.length > 0) {
+            const delPatch = {};
+            removals.forEach(function (fname) { delPatch[fname] = null; });
+            const dRes = await gistFetch(GIST_API_BASE + '/' + encodeURIComponent(gistId), {
+              method: 'PATCH',
+              mode: 'cors',
+              headers: gistHeaders(token, true),
+              body: JSON.stringify({ files: delPatch })
+            }, 'Clean up old receipt shards');
+            if (!dRes.ok) throw new Error(formatGistHttpError(dRes, 'Clean up receipt shards'));
+          }
+
+          gistSync.cfg.lastReceiptsHash = computeReceiptsHash(localRecs);
         }
 
         gistSync.cfg.lastSyncedAt = Date.now();
@@ -7943,8 +8064,8 @@
     async function connectGitHubGist() {
       const tokInp = document.getElementById('gist-token-input');
       const idInp = document.getElementById('gist-id-input');
-      const token = (tokInp ? tokInp.value : gistSync.cfg.token || '').trim();
-      let gistId = (idInp ? idInp.value : gistSync.cfg.gistId || '').trim();
+      const token = sanitizeGistCredential(tokInp ? tokInp.value : gistSync.cfg.token);
+      let gistId = sanitizeGistCredential(idInp ? idInp.value : gistSync.cfg.gistId);
       if (!token) {
         showToast('Paste a GitHub Personal Access Token (gist scope) first.', 'amber');
         return;
@@ -7965,32 +8086,25 @@
           };
           const createFiles = {};
           createFiles[GIST_DATA_FILE] = { content: JSON.stringify(dbPayload, null, 2) };
-          if (gistSync.cfg.syncReceipts !== false) {
-            const localRecs = await idbGetAllReceipts();
-            const rHash = computeReceiptsHash(localRecs);
-            const recStr = JSON.stringify({ hash: rHash, updatedAt: Date.now(), receipts: localRecs });
-            if (recStr.length <= 18 * 1024 * 1024) {
-              createFiles[GIST_RECEIPTS_FILE] = { content: recStr };
-              gistSync.cfg.lastReceiptsHash = rHash;
-            }
-          }
-          const res = await fetch(GIST_API_BASE, {
+          const res = await gistFetch(GIST_API_BASE, {
             method: 'POST',
-            headers: gistHeaders(token),
+            mode: 'cors',
+            headers: gistHeaders(token, true),
             body: JSON.stringify({
               description: 'ClaimFlow Private Travel Claims Backup',
               public: false,
               files: createFiles
             })
-          });
+          }, 'Create Private Gist');
           const created = await res.json().catch(function () { return {}; });
           if (!res.ok || !created.id) {
-            throw new Error(created.message || ('Could not create private Gist (' + res.status + ')'));
+            throw new Error(created.message || formatGistHttpError(res, 'Create private Gist'));
           }
           gistId = created.id;
           gistSync.cfg.enabled = true;
           gistSync.cfg.token = token;
           gistSync.cfg.gistId = gistId;
+          gistSync.cfg.lastReceiptsHash = '';
           gistSync.cfg.lastSyncedAt = Date.now();
           gistSync.lastPullCheckAt = Date.now();
           gistSync.pendingPush = false;
@@ -7998,9 +8112,14 @@
           if (tokInp) tokInp.value = '';
           if (idInp) idInp.value = '';
           gistSync.busy = false;
-          renderCloudStatusUI();
-          if (document.documentElement.getAttribute('data-layout') === 'mobile') renderWorkspace();
-          showToast('Created private Gist & enabled Auto-Sync ✓', 'green');
+          // Push any existing receipt photos in safe <=850 KB shards immediately
+          if (gistSync.cfg.syncReceipts !== false) {
+            await syncGistTwoWay(false, true);
+          } else {
+            renderCloudStatusUI();
+            if (document.documentElement.getAttribute('data-layout') === 'mobile') renderWorkspace();
+            showToast('Created private Gist & enabled Auto-Sync ✓', 'green');
+          }
           return;
         }
 
