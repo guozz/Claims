@@ -6,10 +6,9 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="ClaimFlow" />
-  <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
-  <meta name="theme-color" content="#111827" media="(prefers-color-scheme: dark)" />
+  <meta id="meta-theme-color" name="theme-color" content="#232830" />
   <title>ClaimFlow — Travel Claims, TOIL &amp; HRMS Console</title>
   <style>
     /* ==========================================================================
@@ -172,7 +171,9 @@
        2. BASE & RESET
        ========================================================================== */
     *, *::before, *::after { box-sizing: border-box; }
-    html, body { margin: 0; padding: 0; }
+    html { background: var(--bg); color-scheme: light; }
+    html.dark, html.grey { color-scheme: dark; }
+    html, body { margin: 0; padding: 0; background: var(--bg); }
     body {
       font-family: var(--font-sans);
       background: var(--bg);
@@ -718,18 +719,19 @@
       flex-shrink: 0;
     }
     .rc-photo-btn {
-      display: inline-flex; align-items: center; justify-content: center; gap: 3px;
-      height: 28px; min-width: 30px; padding: 0 7px; border-radius: 7px;
-      border: 1px solid var(--border-strong); background: var(--surface);
-      color: var(--text-muted); font-size: 12px; font-weight: 700; cursor: pointer;
-      transition: all 0.14s ease;
+      display: inline-flex; align-items: center; justify-content: center; gap: 4px;
+      height: 30px; min-width: 34px; padding: 0 9px; border-radius: 999px;
+      border: 1px solid var(--border); background: var(--surface-3);
+      color: var(--text-muted); font-size: 11.5px; font-weight: 700; cursor: pointer;
+      transition: all 0.14s ease; flex-shrink: 0;
     }
-    .rc-photo-btn:hover { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
+    .rc-photo-btn svg { width: 14px; height: 14px; stroke-width: 2; flex-shrink: 0; }
+    .rc-photo-btn:hover { border-color: var(--accent-border); background: var(--accent-soft); color: var(--accent); }
     .rc-photo-btn.has-photo {
       background: var(--green-soft); border-color: var(--green-border); color: var(--green-text);
     }
-
-    /* Inline Day Receipt Thumbnails & iPhone-First Meal Upload Strip */
+    .inline-ico { display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .inline-ico svg { display: block; }
     .meal-upload-strip {
       display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px;
       padding: 9px 10px; border-radius: 11px;
@@ -1606,12 +1608,12 @@
 
     /* Auto Desktop / Mobile Layout Mode */
     .mobile-aware-hero {
-      border-radius: 18px;
+      border-radius: 20px;
       padding: 14px;
-      background: linear-gradient(145deg, color-mix(in srgb, var(--accent) 16%, var(--surface)), var(--surface-2));
-      border: 1.5px solid var(--accent-border);
+      background: linear-gradient(160deg, color-mix(in srgb, var(--accent) 13%, var(--surface)), color-mix(in srgb, var(--surface-2) 92%, var(--surface)));
+      border: 1px solid color-mix(in srgb, var(--accent-border) 55%, var(--border));
       box-shadow: var(--shadow-sm);
-      display: flex; flex-direction: column; gap: 11px;
+      display: flex; flex-direction: column; gap: 12px;
     }
     .aware-top-row {
       display: flex; align-items: flex-start; justify-content: space-between; gap: 10px;
@@ -1620,44 +1622,49 @@
       display: inline-flex; align-items: center; gap: 6px;
       padding: 3px 9px; border-radius: 999px;
       background: var(--green-soft); border: 1px solid var(--green-border); color: var(--green-text);
-      font-size: 10.5px; font-weight: 800; letter-spacing: 0.02em; text-transform: uppercase;
+      font-size: 10px; font-weight: 800; letter-spacing: 0.03em; text-transform: uppercase;
     }
     .aware-live-pill.nearest {
-      background: var(--accent-soft); border-color: var(--accent-border); color: var(--accent);
+      background: color-mix(in srgb, var(--accent-soft) 85%, transparent);
+      border-color: color-mix(in srgb, var(--accent-border) 70%, transparent);
+      color: var(--accent);
     }
     .aware-live-dot {
-      width: 7px; height: 7px; border-radius: 50%; background: var(--green);
-      box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.28);
+      width: 6px; height: 6px; border-radius: 50%; background: var(--green);
+      box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.25);
     }
     .aware-live-pill.nearest .aware-live-dot {
-      background: var(--accent); box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.25);
+      background: var(--accent); box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.24);
     }
     .aware-hero-date {
-      font-size: 19px; font-weight: 800; letter-spacing: -0.02em; margin: 4px 0 0; line-height: 1.15;
+      font-size: 21px; font-weight: 800; letter-spacing: -0.025em; margin: 5px 0 0; line-height: 1.12;
     }
     .aware-hero-sub {
-      font-size: 11.5px; color: var(--text-subtle); margin-top: 2px;
+      font-size: 11.5px; color: var(--text-subtle); margin-top: 3px; font-weight: 500;
     }
     .aware-trip-stat {
       text-align: right; flex-shrink: 0;
-      padding: 6px 10px; border-radius: 11px;
-      background: var(--surface); border: 1px solid var(--border);
+      padding: 7px 11px; border-radius: 13px;
+      background: color-mix(in srgb, var(--surface) 82%, transparent);
+      border: 1px solid var(--border);
     }
     .aware-day-strip {
-      display: flex; gap: 6px; overflow-x: auto; padding: 2px 0 4px;
+      display: flex; gap: 7px; overflow-x: auto; padding: 2px 0;
       -webkit-overflow-scrolling: touch; scrollbar-width: none;
     }
     .aware-day-strip::-webkit-scrollbar { display: none; }
     .aware-day-chip {
-      flex: 0 0 auto; min-width: 74px;
+      flex: 0 0 auto; min-width: 78px;
       display: flex; flex-direction: column; align-items: center; gap: 2px;
-      padding: 7px 10px; border-radius: 12px;
-      border: 1px solid var(--border); background: var(--surface);
-      color: var(--text-muted); cursor: pointer; transition: all 0.14s ease;
+      padding: 8px 11px; border-radius: 13px;
+      border: 1px solid var(--border);
+      background: color-mix(in srgb, var(--surface) 78%, transparent);
+      color: var(--text-muted); cursor: pointer; transition: all 0.15s ease;
     }
     .aware-day-chip.active {
-      background: var(--accent); border-color: var(--accent); color: #ffffff;
-      box-shadow: 0 4px 12px rgba(79, 70, 229, 0.32);
+      background: linear-gradient(135deg, var(--accent), #6d28d9);
+      border-color: transparent; color: #ffffff;
+      box-shadow: 0 4px 14px rgba(79, 70, 229, 0.34);
     }
     .aware-day-chip.is-today:not(.active) {
       border-color: var(--green); background: var(--green-soft); color: var(--green-text);
@@ -1666,57 +1673,57 @@
       border-style: dashed; border-color: var(--green-border);
       background: var(--green-soft); color: var(--green-text);
     }
-    .aware-day-chip-top { font-size: 10.5px; font-weight: 800; opacity: 0.9; white-space: nowrap; }
-    .aware-day-chip-amt { font-family: var(--font-mono); font-size: 11.5px; font-weight: 800; }
-    .aware-metrics-row {
-      display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px;
-    }
-    .aware-metric-box {
-      padding: 9px 11px; border-radius: 12px;
-      background: var(--surface); border: 1px solid var(--border);
-      display: flex; flex-direction: column; gap: 4px;
-    }
-    .aware-metric-lbl {
-      font-size: 10px; font-weight: 800; text-transform: uppercase;
-      letter-spacing: 0.04em; color: var(--text-subtle);
-      display: flex; align-items: center; justify-content: space-between;
-    }
-    .aware-metric-val { font-family: var(--font-mono); font-size: 16px; font-weight: 800; line-height: 1.15; }
+    .aware-day-chip-top { font-size: 10.5px; font-weight: 700; opacity: 0.88; white-space: nowrap; }
+    .aware-day-chip-amt { font-family: var(--font-mono); font-size: 12px; font-weight: 800; }
     .aware-capture-grid {
-      display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 7px;
+      display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px;
     }
     .aware-capture-btn {
-      display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
-      padding: 9px 6px; border-radius: 12px; border: 1px solid var(--border-strong);
-      background: var(--surface); color: var(--text);
-      font-size: 11px; font-weight: 800; cursor: pointer; min-height: 54px;
-      transition: transform 0.12s ease, border-color 0.14s ease;
+      display: flex; align-items: center; justify-content: center; gap: 6px;
+      padding: 0 8px; border-radius: 12px; border: 1px solid var(--border);
+      background: color-mix(in srgb, var(--surface) 88%, transparent);
+      color: var(--text); font-size: 11.5px; font-weight: 700; cursor: pointer;
+      height: 40px; transition: transform 0.12s ease, border-color 0.14s ease, background 0.14s ease;
     }
     .aware-capture-btn:active { transform: scale(0.97); }
-    .aware-capture-btn .cap-ico { font-size: 17px; line-height: 1; }
+    .aware-capture-btn svg { width: 15px; height: 15px; flex-shrink: 0; }
     .aware-capture-btn.primary {
       background: linear-gradient(135deg, var(--accent), #6d28d9);
       border-color: transparent; color: #ffffff;
       box-shadow: 0 4px 12px rgba(79, 70, 229, 0.28);
     }
     .aware-capture-btn.sky {
-      background: var(--sky-soft); border-color: var(--sky-border); color: var(--sky-text);
+      background: color-mix(in srgb, var(--sky-soft) 80%, var(--surface));
+      border-color: color-mix(in srgb, var(--sky-border) 65%, var(--border));
+      color: var(--sky-text);
     }
     .aware-capture-btn.green {
-      background: var(--green-soft); border-color: var(--green-border); color: var(--green-text);
+      background: color-mix(in srgb, var(--green-soft) 80%, var(--surface));
+      border-color: color-mix(in srgb, var(--green-border) 65%, var(--border));
+      color: var(--green-text);
     }
     .aware-section-head {
       display: flex; align-items: center; justify-content: space-between; gap: 8px;
-      padding: 2px 2px 0;
+      padding: 4px 2px 0;
     }
     .aware-section-title {
-      font-size: 12px; font-weight: 800; text-transform: uppercase;
-      letter-spacing: 0.05em; color: var(--text-subtle);
+      font-size: 11px; font-weight: 800; text-transform: uppercase;
+      letter-spacing: 0.06em; color: var(--text-subtle);
       display: flex; align-items: center; gap: 6px;
     }
+    .aware-attach-inline {
+      display: flex; align-items: center; justify-content: space-between; gap: 8px;
+      padding: 7px 10px; border-radius: 11px;
+      background: var(--surface-2); border: 1px solid var(--border);
+      font-size: 11.5px; font-weight: 600; color: var(--text-subtle);
+    }
+    .aware-attach-inline.has-photos {
+      background: color-mix(in srgb, var(--green-soft) 55%, var(--surface-2));
+      border-color: var(--green-border); color: var(--green-text);
+    }
     .mobile-trpt-card {
-      background: var(--surface); border: 1.5px solid var(--border-strong);
-      border-radius: 16px; overflow: hidden; box-shadow: var(--shadow-xs);
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 18px; overflow: hidden; box-shadow: var(--shadow-xs);
     }
     .mobile-trpt-head {
       padding: 10px 12px; background: var(--surface-2); border-bottom: 1px solid var(--border);
@@ -1724,23 +1731,23 @@
     }
     .mobile-trpt-tabs {
       display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px;
-      padding: 9px 12px 0;
+      padding: 10px 12px 0;
     }
     .mobile-trpt-tab {
       display: flex; align-items: center; justify-content: space-between; gap: 6px;
-      padding: 8px 10px; border-radius: 10px; border: 1px solid var(--border);
+      padding: 9px 11px; border-radius: 11px; border: 1px solid var(--border);
       background: var(--surface-2); color: var(--text-muted);
-      font-size: 12px; font-weight: 700; cursor: pointer;
+      font-size: 12px; font-weight: 700; cursor: pointer; transition: all 0.14s ease;
     }
     .mobile-trpt-tab.active {
       background: var(--accent-soft); border-color: var(--accent); color: var(--accent);
     }
     .mobile-fixed-cta {
       display: flex; align-items: center; justify-content: space-between; gap: 10px;
-      padding: 11px 14px; border-radius: 14px;
-      background: var(--surface); border: 1px dashed var(--border-strong);
+      padding: 12px 14px; border-radius: 16px;
+      background: var(--surface); border: 1px solid var(--border);
       color: var(--text-muted); font-size: 12px; font-weight: 600; cursor: pointer;
-      width: 100%; text-align: left;
+      width: 100%; text-align: left; box-shadow: var(--shadow-xs);
     }
     .mobile-fixed-cta:active { background: var(--surface-2); }
     .mobile-view-banner {
@@ -1753,43 +1760,69 @@
     html[data-layout="mobile"] .desktop-only,
     html[data-layout="mobile"] .desktop-only-flex { display: none !important; }
     html[data-layout="mobile"] #receipt-vault-btn { display: none !important; }
+    html[data-layout="mobile"] .topbar {
+      background: color-mix(in srgb, var(--surface) 94%, transparent);
+      border-bottom-color: color-mix(in srgb, var(--border) 75%, transparent);
+    }
     html[data-layout="mobile"] .topbar-inner { padding: 7px 12px; gap: 8px; }
     html[data-layout="mobile"] .brand-title { display: none; }
     html[data-layout="mobile"] .lbl-txt { display: none; }
-    html[data-layout="mobile"] .trip-select { max-width: none; height: 34px; font-size: 13px; }
-    html[data-layout="mobile"] .save-badge { height: 28px; padding: 0 8px; font-size: 10.5px; }
+    html[data-layout="mobile"] .trip-select { max-width: none; height: 34px; font-size: 13px; border-radius: 10px; }
+    html[data-layout="mobile"] .save-badge { height: 28px; padding: 0 9px; font-size: 10.5px; }
     html[data-layout="mobile"] .main-grid {
-      grid-template-columns: 1fr; padding: 10px 11px calc(84px + env(safe-area-inset-bottom, 0px)); gap: 12px;
+      grid-template-columns: 1fr; padding: 10px 12px calc(86px + env(safe-area-inset-bottom, 0px)); gap: 12px;
     }
-    html[data-layout="mobile"] .workspace-col { gap: 11px; }
-    html[data-layout="mobile"] .card { border-radius: 15px; }
-    html[data-layout="mobile"] .card-head { padding: 11px 12px; gap: 8px; }
+    html[data-layout="mobile"] .workspace-col { gap: 12px; }
+    html[data-layout="mobile"] .card,
+    html[data-layout="mobile"] .day-card { border-radius: 18px; border-width: 1px; border-color: var(--border); }
+    html[data-layout="mobile"] .card-head { padding: 11px 13px; gap: 8px; }
     html[data-layout="mobile"] .card.collapsed .card-sub { display: none; }
     html[data-layout="mobile"] .card.collapsed .card-closed-pill { display: none; }
     html[data-layout="mobile"] .card-head-right { gap: 5px; }
     html[data-layout="mobile"] .card-head-right .pill { display: none; }
     html[data-layout="mobile"] .card-head-right .btn-preview-cat { padding: 0 7px; font-size: 11px; }
     html[data-layout="mobile"] .cat-total-pill { font-size: 12px; padding: 4px 8px; }
-    html[data-layout="mobile"] .card-body { padding: 11px 12px; }
+    html[data-layout="mobile"] .card-body,
+    html[data-layout="mobile"] .day-body { padding: 12px; }
+    html[data-layout="mobile"] .day-head { padding: 11px 12px; background: var(--surface-2); }
+    html[data-layout="mobile"] .day-badge-pill {
+      padding: 5px 11px; border-radius: 999px; font-size: 12.5px;
+      background: color-mix(in srgb, var(--accent-soft) 95%, transparent);
+      color: var(--accent); border: 1px solid var(--accent-border);
+      box-shadow: none;
+    }
+    html[data-layout="mobile"] .day-card.cap-hit .day-badge-pill {
+      background: var(--amber-soft); color: var(--amber-text); border-color: var(--amber-border); box-shadow: none;
+    }
     html[data-layout="mobile"] .input,
     html[data-layout="mobile"] .select,
-    html[data-layout="mobile"] .textarea { font-size: 15px; padding: 8px 10px; min-height: 38px; }
-    html[data-layout="mobile"] .receipt-row { padding: 9px 10px; border-radius: 12px; }
-    html[data-layout="mobile"] .receipt-main {
-      display: grid;
-      grid-template-columns: auto auto minmax(0, 1fr);
-      gap: 7px; align-items: center;
+    html[data-layout="mobile"] .textarea { font-size: 15px; padding: 8px 10px; min-height: 38px; border-radius: 10px; }
+    html[data-layout="mobile"] .receipt-row {
+      padding: 10px; border-radius: 14px;
+      background: color-mix(in srgb, var(--surface-2) 85%, var(--surface));
     }
-    html[data-layout="mobile"] .rc-label-wrap { grid-column: 3; min-width: 0; }
-    html[data-layout="mobile"] .rc-amt-wrap { grid-column: 1 / 3; min-width: 0; }
-    html[data-layout="mobile"] .rc-sgd-wrap { grid-column: 3; margin-left: 0; min-width: 0; justify-content: flex-end; }
+    html[data-layout="mobile"] .receipt-main {
+      display: flex; flex-wrap: wrap; align-items: center; gap: 7px;
+    }
+    html[data-layout="mobile"] .rc-idx-badge {
+      flex: 0 0 auto; min-width: 24px; height: 24px; padding: 0 6px; border-radius: 7px; font-size: 11px;
+    }
+    html[data-layout="mobile"] .curr-seg { flex: 0 0 auto; }
+    html[data-layout="mobile"] .rc-label-wrap { flex: 1 1 115px; min-width: 0; }
+    html[data-layout="mobile"] .rc-amt-wrap { flex: 1 1 56%; min-width: 0; }
+    html[data-layout="mobile"] .rc-sgd-wrap { flex: 0 0 auto; margin-left: auto; min-width: 0; gap: 6px; }
+    html[data-layout="mobile"] .rc-photo-btn { height: 36px; padding: 0 11px; border-radius: 999px; }
     html[data-layout="mobile"] .console-sticky { position: static; }
     html[data-layout="mobile"] .console-card { max-height: none; }
-    html[data-layout="mobile"] .mobile-bottom-nav { display: grid; }
-    html[data-layout="mobile"] .mnav-btn { position: relative; border-radius: 12px; transition: all 0.15s ease; }
+    html[data-layout="mobile"] .mobile-bottom-nav {
+      display: grid;
+      border-top-color: color-mix(in srgb, var(--border) 75%, transparent);
+    }
+    html[data-layout="mobile"] .mnav-btn { position: relative; border-radius: 12px; gap: 3px; transition: all 0.15s ease; }
+    html[data-layout="mobile"] .mnav-btn .mnav-ico { display: flex; align-items: center; justify-content: center; height: 19px; }
     html[data-layout="mobile"] .mnav-btn.active {
       background: var(--accent-soft); color: var(--accent); border-color: var(--accent-border);
-      box-shadow: 0 2px 10px rgba(79, 70, 229, 0.16);
+      box-shadow: 0 2px 10px rgba(79, 70, 229, 0.14);
     }
     html[data-layout="mobile"] body:not(.mobile-view-hrms) .console-sticky { display: none; }
     html[data-layout="mobile"] body.mobile-view-hrms #workspace-col { display: none; }
@@ -1877,19 +1910,19 @@
   <!-- IPHONE / MOBILE BOTTOM NAVIGATION BAR -->
   <nav class="mobile-bottom-nav no-print" aria-label="Mobile View Switcher">
     <button type="button" id="mnav-today" class="mnav-btn active" onclick="setMobileView('today')">
-      <span class="mnav-ico">⚡</span>
+      <span class="mnav-ico"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></span>
       <span>Today</span>
     </button>
     <button type="button" id="mnav-daily" class="mnav-btn" onclick="setMobileView('daily')">
-      <span class="mnav-ico">🍽️</span>
+      <span class="mnav-ico"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></span>
       <span>All Days</span>
     </button>
     <button type="button" id="mnav-fixed" class="mnav-btn" onclick="setMobileView('fixed')">
-      <span class="mnav-ico">🗂️</span>
+      <span class="mnav-ico"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg></span>
       <span>Fixed</span>
     </button>
     <button type="button" id="mnav-photos" class="mnav-btn" onclick="openReceiptModal()">
-      <span class="mnav-ico">📷</span>
+      <span class="mnav-ico"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg></span>
       <span>Photos (<span id="mnav-photo-count">0</span>)</span>
     </button>
   </nav>
@@ -1946,14 +1979,68 @@
       <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
         <div>
           <strong style="font-size:15px;">☁️ Automatic Cloud &amp; Multi-Device Sync</strong>
-          <div style="font-size:11.5px;color:var(--text-subtle);">Zero-file-picker auto-sync between iPhone &amp; Laptop via Private GitHub Gist, plus Drive backups</div>
+          <div style="font-size:11.5px;color:var(--text-subtle);">Direct OneDrive API auto-sync (iPhone &amp; Laptop), Private GitHub Gist, or local backups</div>
         </div>
         <button type="button" class="btn btn-icon-sm btn-ghost" onclick="closeCloudModal()">✕</button>
       </div>
 
-      <div class="cloud-section" style="border-color:var(--accent-border);background:color-mix(in srgb, var(--accent-soft) 35%, var(--surface-2));">
+      <div class="cloud-section" style="border-color:var(--sky-border);background:color-mix(in srgb, var(--sky-soft) 38%, var(--surface-2));">
         <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;">
-          <strong style="font-size:13px;">1. ⚡ Zero-File-Picker Auto-Sync (iPhone &amp; Laptop — Private GitHub Gist)</strong>
+          <strong style="font-size:13px;">1. ☁️ OneDrive Direct Auto-Sync (iPhone &amp; Laptop — Microsoft Graph API)</strong>
+          <span id="od-mode-pill" class="pill pill-neutral">Not Connected</span>
+        </div>
+        <div id="od-status-box" class="cloud-status-box"></div>
+        <div id="od-connected-actions" style="display:none;flex-wrap:wrap;gap:7px;"></div>
+        <div id="od-setup-panel" style="display:flex;flex-direction:column;gap:8px;">
+          <div class="gist-setup-steps">
+            <strong>One-time Microsoft App Registration (Free, Private, Zero Backend):</strong><br/>
+            1. Open <strong>portal.azure.com</strong> → <em>App registrations</em> → <strong>New registration</strong> (Name: <code>ClaimFlow</code>, Accounts: <em>Personal Microsoft accounts</em> or <em>Any + Personal</em>).<br/>
+            2. Under <strong>Redirect URI</strong>, choose <strong>Single-page application (SPA)</strong> and paste this exact URL:<br/>
+            <div style="display:flex;align-items:center;gap:6px;margin:4px 0;">
+              <input id="od-redirect-uri-display" class="input mono" type="text" readonly style="font-size:11px;padding:4px 7px;min-height:28px;" />
+              <button type="button" class="btn btn-sm btn-soft" onclick="copyOneDriveRedirectUri()">Copy URI</button>
+            </div>
+            <div id="od-https-warning" style="display:none;margin:4px 0;padding:6px 8px;border-radius:7px;background:var(--amber-soft);border:1px solid var(--amber-border);color:var(--amber-text);font-size:11px;"></div>
+            3. Copy the <strong>Application (client) ID</strong> below and tap <strong>Sign in with Microsoft</strong>. Files auto-save to <code>OneDrive / &lt;Folder&gt; / claimflow-db.json</code>.
+          </div>
+          <div class="grid-3">
+            <div style="grid-column:span 2;">
+              <label class="field-label">Azure Application (Client) ID</label>
+              <input id="od-client-id-input" class="input mono" type="text" autocomplete="off" placeholder="e.g. 12345678-abcd-4ef0-9123-456789abcdef" />
+            </div>
+            <div>
+              <label class="field-label">Account Type</label>
+              <select id="od-tenant-select" class="select">
+                <option value="consumers">Personal (Outlook/Hotmail)</option>
+                <option value="common">Personal + Work/School</option>
+                <option value="organizations">Work / School Only</option>
+              </select>
+            </div>
+          </div>
+          <div class="grid-2">
+            <div>
+              <label class="field-label">OneDrive Folder Path</label>
+              <input id="od-folder-input" class="input mono" type="text" value="ClaimFlow" placeholder="ClaimFlow (or approot)" />
+            </div>
+            <div style="display:flex;align-items:flex-end;">
+              <button type="button" class="btn btn-primary" style="width:100%;" onclick="startOneDriveLogin()">☁️ Sign in with Microsoft OneDrive</button>
+            </div>
+          </div>
+          <div style="display:flex;gap:7px;padding-top:6px;border-top:1px solid var(--border);">
+            <input id="od-pair-code-input" class="input mono" type="text" autocomplete="off" placeholder="Or paste CLAIMFLOW_OD1:... setup code from your other device" />
+            <button type="button" class="btn btn-sky-soft" onclick="applyOneDriveSetupCode()">📲 Apply Code</button>
+          </div>
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:12px;">
+          <label class="check-opt"><input id="chk-od-autopush" type="checkbox" checked onchange="setOneDrivePref('autoPush',this.checked)" /><span>Auto-push edits (2.5s debounce)</span></label>
+          <label class="check-opt"><input id="chk-od-autopull" type="checkbox" checked onchange="setOneDrivePref('autoPull',this.checked)" /><span>Auto-pull on open / return</span></label>
+          <label class="check-opt"><input id="chk-od-receipts" type="checkbox" checked onchange="setOneDrivePref('syncReceipts',this.checked)" /><span>Sync receipt photos (differential + chunked)</span></label>
+        </div>
+      </div>
+
+      <div class="cloud-section" style="border-color:var(--accent-border);background:color-mix(in srgb, var(--accent-soft) 28%, var(--surface-2));">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;">
+          <strong style="font-size:13px;">2. ⚡ Zero-File-Picker Auto-Sync (Alternative — Private GitHub Gist)</strong>
           <span id="gist-mode-pill" class="pill pill-neutral">Not Connected</span>
         </div>
         <div id="gist-status-box" class="cloud-status-box"></div>
@@ -1992,7 +2079,7 @@
 
       <div class="cloud-section">
         <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;">
-          <strong style="font-size:13px;">2. Direct Cloud Folder Auto-Sync (Desktop Chrome / Edge)</strong>
+          <strong style="font-size:13px;">3. Direct Local Cloud Folder Sync (Desktop Chrome / Edge)</strong>
           <span id="cloud-mode-pill" class="pill pill-neutral">Not Linked</span>
         </div>
         <div id="cloud-fs-status" class="cloud-status-box"></div>
@@ -2005,7 +2092,7 @@
       </div>
 
       <div class="cloud-section">
-        <strong style="font-size:13px;">3. Manual Backup File (iCloud / OneDrive / Google Drive)</strong>
+        <strong style="font-size:13px;">4. Manual Backup File (iCloud / OneDrive / Google Drive)</strong>
         <div style="font-size:11.5px;color:var(--text-subtle);">Save all trips (with embedded receipt photos when enabled) to a single <code>claimflow-db.json</code> via iOS Share Sheet or download, and Smart-Merge newer edits on any device.</div>
         <div style="display:flex;flex-wrap:wrap;gap:7px;">
           <button type="button" class="btn btn-soft" onclick="exportFullWorkspaceJSON()">📲 Save / Share All Trips (claimflow-db.json)</button>
@@ -2014,7 +2101,7 @@
       </div>
 
       <div class="cloud-section">
-        <strong style="font-size:13px;">4. One-Time Cross-Device Sync Code (No Account Needed)</strong>
+        <strong style="font-size:13px;">5. One-Time Cross-Device Sync Code (No Account Needed)</strong>
         <div style="display:flex;flex-wrap:wrap;gap:7px;">
           <button type="button" class="btn btn-sm btn-soft" onclick="copySyncCode(false)">Copy Current Trip Code</button>
           <button type="button" class="btn btn-sm" onclick="copySyncCode(true)">Copy All Trips Code</button>
@@ -3288,8 +3375,11 @@
 
     function manualSaveNow() {
       persistStore(true, true);
-      if (gistSync.cfg.enabled && gistSync.cfg.token && gistSync.cfg.gistId) {
-        syncGistTwoWay(false);
+      if (oneDriveSync.cfg.enabled && oneDriveSync.cfg.accessToken) {
+        syncOneDriveTwoWay(false, true);
+        showToast('Saved locally & auto-syncing to OneDrive…', 'green');
+      } else if (gistSync.cfg.enabled && gistSync.cfg.token && gistSync.cfg.gistId) {
+        syncGistTwoWay(false, true);
         showToast('Saved locally & auto-syncing to Private Gist…', 'green');
       } else if (cloudSync.handle && !cloudSync.needsReconnect) {
         showToast('Saved locally & syncing to ' + cloudSync.fileName + '…', 'green');
@@ -3875,6 +3965,20 @@
       return '<svg class="card-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>';
     }
 
+    function slickSvg(name, size) {
+      const s = size || 15;
+      const a = 'width="' + s + '" height="' + s + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"';
+      if (name === 'camera') return '<svg ' + a + '><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>';
+      if (name === 'image') return '<svg ' + a + '><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>';
+      if (name === 'card') return '<svg ' + a + '><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>';
+      if (name === 'transit') return '<svg ' + a + '><rect x="4" y="3" width="16" height="14" rx="3"/><line x1="4" y1="11" x2="20" y2="11"/><circle cx="8.5" cy="14.5" r="1"/><circle cx="15.5" cy="14.5" r="1"/><line x1="8" y1="17" x2="6" y2="21"/><line x1="16" y1="17" x2="18" y2="21"/></svg>';
+      if (name === 'calendar') return '<svg ' + a + '><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>';
+      if (name === 'share') return '<svg ' + a + '><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>';
+      if (name === 'doc') return '<svg ' + a + '><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>';
+      if (name === 'layers') return '<svg ' + a + '><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>';
+      return '';
+    }
+
     function closedBadgeHtml(collapsed) {
       return collapsed ? '<span class="pill pill-green card-closed-pill">✓ Closed</span>' : '';
     }
@@ -3924,7 +4028,7 @@
         + '<div class="rc-amt-wrap"><input class="input mono input-right' + (calc.grossParsed.valid ? '' : ' invalid') + '" type="text" inputmode="decimal" placeholder="' + (isFx ? ('0 ' + esc(fxCode)) : 'SGD 0.00') + '" value="' + esc(item.amountExpr) + '" oninput="updateReceiptField(\'' + scope + '\',\'' + esc(item.id) + '\',\'amountExpr\',this.value,' + dayArg + ',this)" /></div>'
         + '<div class="rc-sgd-wrap">'
         + '<span id="rc-sgd-' + esc(item.id) + '" class="rc-sgd-val" style="' + (showSgdReadout ? '' : 'display:none') + '">SGD ' + fmt2(calc.sgd) + '</span>'
-        + '<button type="button" class="rc-photo-btn' + (photoCount > 0 ? ' has-photo' : '') + '" title="' + (photoCount > 0 ? (photoCount + ' photo(s) attached — tap to view/manage') : 'Attach receipt photo') + '" onclick="handleItemPhotoClick(\'' + scope + '\',\'' + esc(item.id) + '\',' + dayArg + ')">📷' + (photoCount > 0 ? ('<span>' + photoCount + '</span>') : '') + '</button>'
+        + '<button type="button" class="rc-photo-btn' + (photoCount > 0 ? ' has-photo' : '') + '" title="' + (photoCount > 0 ? (photoCount + ' photo(s) attached — tap to view/manage') : 'Attach receipt photo') + '" onclick="handleItemPhotoClick(\'' + scope + '\',\'' + esc(item.id) + '\',' + dayArg + ')">' + slickSvg('camera', 14) + (photoCount > 0 ? ('<span>' + photoCount + '</span>') : '') + '</button>'
         + '<button type="button" class="btn btn-icon-sm btn-ghost btn-danger-ghost" title="Remove row" onclick="removeReceipt(\'' + scope + '\',\'' + esc(item.id) + '\',' + dayArg + ')">✕</button>'
         + '</div>'
         + '</div>'
@@ -4777,12 +4881,12 @@
       return '<div id="day-card-' + esc(d.day.id) + '" class="day-card' + (d.isCapped ? ' cap-hit' : '') + '">'
         + '<div class="day-head">'
         + '<div class="day-date-trigger">'
-        + '<span class="day-badge-pill"><span>🍽️ ' + esc(fmtDateNoYear(d.day.date, 'paren')) + '</span><span>📅</span></span>'
+        + '<span class="day-badge-pill">' + slickSvg('calendar', 14) + '<span>' + esc(fmtDateNoYear(d.day.date, 'paren')) + '</span></span>'
         + '<input class="date-pill-native" type="date" value="' + esc(d.day.date) + '" onchange="updateMealDayDate(\'' + esc(d.day.id) + '\',this.value)" />'
         + '</div>'
         + '<div class="day-actions">'
-        + '<button type="button" class="btn btn-sm btn-soft" onclick="printMealDayPDF(\'' + esc(d.day.id) + '\')">📄 PDF</button>'
-        + '<button type="button" class="btn btn-sm btn-green-soft" onclick="exportMealDaySheet(\'' + esc(d.day.id) + '\')">📲 Share</button>'
+        + '<button type="button" class="btn btn-sm" onclick="printMealDayPDF(\'' + esc(d.day.id) + '\')">' + slickSvg('doc', 13) + '<span>PDF</span></button>'
+        + '<button type="button" class="btn btn-sm btn-green-soft" onclick="exportMealDaySheet(\'' + esc(d.day.id) + '\')">' + slickSvg('share', 13) + '<span>Share</span></button>'
         + '</div>'
         + '</div>'
         + '<div class="day-cap-bar-wrap">'
@@ -4798,12 +4902,11 @@
         + '<button type="submit" class="btn btn-sm btn-primary">Add</button>'
         + '</form>'
         + '</div>'
-        + '<div class="meal-upload-strip' + (dayPhotos.length > 0 ? ' has-photos' : '') + '">'
-        + '<div style="font-size:11.5px;font-weight:700;">📷 ' + (dayPhotos.length > 0 ? (dayPhotos.length + ' Receipt' + (dayPhotos.length === 1 ? '' : 's') + ' Attached') : 'Capture Today\'s Meal Receipt') + '</div>'
-        + '<div class="meal-upload-btns">'
-        + '<button type="button" class="btn btn-sm btn-primary" onclick="triggerReceiptUpload({ scope:\'mealDay\', dayId:\'' + esc(d.day.id) + '\', itemId:\'\', role:\'receipt\' }, true)">📸 Snap</button>'
-        + '<button type="button" class="btn btn-sm btn-soft" onclick="triggerReceiptUpload({ scope:\'mealDay\', dayId:\'' + esc(d.day.id) + '\', itemId:\'\', role:\'receipt\' }, false)">🖼️ Library</button>'
-        + '<button type="button" class="btn btn-sm btn-sky-soft" onclick="triggerReceiptUpload({ scope:\'mealDay\', dayId:\'' + esc(d.day.id) + '\', itemId:\'\', role:\'bank\' }, false)">💳 Bank</button>'
+        + '<div class="aware-attach-inline' + (dayPhotos.length > 0 ? ' has-photos' : '') + '">'
+        + '<span style="display:inline-flex;align-items:center;gap:6px;">' + slickSvg('camera', 14) + '<span>' + (dayPhotos.length > 0 ? (dayPhotos.length + ' receipt' + (dayPhotos.length === 1 ? '' : 's') + ' attached') : 'Add from Library / PDF') + '</span></span>'
+        + '<div style="display:flex;gap:6px;">'
+        + '<button type="button" class="btn btn-sm btn-soft" onclick="triggerReceiptUpload({ scope:\'mealDay\', dayId:\'' + esc(d.day.id) + '\', itemId:\'\', role:\'receipt\' }, false)">' + slickSvg('image', 13) + '<span>Library</span></button>'
+        + '<button type="button" class="btn btn-sm btn-sky-soft" onclick="triggerReceiptUpload({ scope:\'mealDay\', dayId:\'' + esc(d.day.id) + '\', itemId:\'\', role:\'bank\' }, false)">' + slickSvg('card', 13) + '<span>Bank</span></button>'
         + '</div>'
         + '</div>'
         + photosHtml
@@ -4814,15 +4917,13 @@
     function renderMobileTodayView(summary) {
       const aware = detectAwareMealDay(summary);
       const d = aware.dayEntry;
-      const cap = summary.cap > 0 ? summary.cap : 0;
       const activeScope = mobileTransportTab === 'sg' ? 'sgTransport' : 'overseasTransport';
       const activeTrptItems = activeScope === 'sgTransport' ? state.sgTransport.items : state.overseasTransport.items;
       const activeTrptTotal = activeScope === 'sgTransport' ? summary.sgTransport.total : summary.overseasTransport.total;
-      const combinedTrptTotal = round2(summary.overseasTransport.total + summary.sgTransport.total);
 
       const livePillHtml = aware.isExactToday
-        ? '<span class="aware-live-pill"><span class="aware-live-dot"></span>Aware · Today Detected</span>'
-        : ('<span class="aware-live-pill nearest"><span class="aware-live-dot"></span>Aware · ' + (d ? ('Day ' + (aware.dayIndex + 1) + ' of ' + aware.totalDays) : 'Ready') + '</span>');
+        ? '<span class="aware-live-pill"><span class="aware-live-dot"></span>Today</span>'
+        : ('<span class="aware-live-pill nearest"><span class="aware-live-dot"></span>Day ' + (d ? (aware.dayIndex + 1) + ' of ' + aware.totalDays : 'Ready') + '</span>');
 
       const heroTitle = d ? fmtDateNoYear(d.day.date, 'paren') : fmtDateNoYear(aware.todayIso, 'paren');
       const range = fmtRangeNoYear(state.trip.startDate, state.trip.endDate);
@@ -4835,7 +4936,7 @@
         const pCount = getReceiptsForMealDay(dayObj.day).length;
         return '<button type="button" class="aware-day-chip' + (isSelected ? ' active' : '') + (isToday ? ' is-today' : '') + '" onclick="selectAwareMealDay(\'' + esc(dayObj.day.id) + '\')">'
           + '<span class="aware-day-chip-top">' + (isToday ? '● Today' : ('D' + (idx + 1) + ' · ' + esc(fmtDateNoYear(dayObj.day.date, 'short')))) + '</span>'
-          + '<span id="aware-pill-amt-' + esc(dayObj.day.id) + '" class="aware-day-chip-amt">$' + fmt2(dayObj.capped) + (pCount > 0 ? ' 📷' : '') + '</span>'
+          + '<span id="aware-pill-amt-' + esc(dayObj.day.id) + '" class="aware-day-chip-amt">$' + fmt2(dayObj.capped) + (pCount > 0 ? (' · ' + pCount) : '') + '</span>'
           + '</button>';
       }).join('')
         + (!aware.hasTodayInTrip
@@ -4844,12 +4945,6 @@
             + '<span class="aware-day-chip-amt">' + esc(fmtDateNoYear(aware.todayIso, 'short')) + '</span>'
             + '</button>')
           : '');
-
-      const dayMealVal = d ? d.capped : 0;
-      const dayMealRaw = d ? d.raw : 0;
-      const dayMealPct = cap > 0 ? Math.min(100, Math.round((dayMealRaw / cap) * 100)) : 0;
-      const dayMealLeft = cap > 0 ? Math.max(0, round2(cap - dayMealRaw)) : 0;
-      const dayBarColor = (d && d.isCapped) ? 'var(--amber)' : (dayMealPct >= 80 ? 'var(--sky)' : 'var(--green)');
 
       const snapMealAction = d
         ? ('triggerReceiptUpload({ scope:\'mealDay\', dayId:\'' + esc(d.day.id) + '\', itemId:\'\', role:\'receipt\' }, true)')
@@ -4869,33 +4964,21 @@
         + '<div class="aware-hero-sub">' + esc(heroSub) + '</div>'
         + '</div>'
         + '<div class="aware-trip-stat">'
-        + '<div style="font-size:9.5px;font-weight:800;text-transform:uppercase;color:var(--text-subtle);">Trip Total</div>'
-        + '<div id="aware-trip-total" class="mono" style="font-size:13.5px;font-weight:800;color:var(--accent);">SGD ' + fmt2(summary.grandClaimable) + '</div>'
+        + '<div style="font-size:9.5px;font-weight:800;text-transform:uppercase;letter-spacing:0.04em;color:var(--text-subtle);">Trip Total</div>'
+        + '<div id="aware-trip-total" class="mono" style="font-size:14px;font-weight:800;color:var(--accent);margin-top:1px;">SGD ' + fmt2(summary.grandClaimable) + '</div>'
         + '</div>'
         + '</div>'
         + '<div class="aware-day-strip">' + dayChipsHtml + '</div>'
-        + '<div class="aware-metrics-row">'
-        + '<div class="aware-metric-box">'
-        + '<div class="aware-metric-lbl"><span>🍽️ Day Meals</span><span id="aware-day-meal-left" class="mono">' + (d && d.isCapped ? 'Capped' : ('$' + fmt2(dayMealLeft) + ' left')) + '</span></div>'
-        + '<div id="aware-day-meal-val" class="aware-metric-val">SGD ' + fmt2(dayMealVal) + '</div>'
-        + (cap > 0 ? ('<div class="day-cap-track"><div id="aware-day-meal-bar" class="day-cap-fill" style="width:' + dayMealPct + '%;background:' + dayBarColor + ';"></div></div>') : '')
-        + '</div>'
-        + '<div class="aware-metric-box">'
-        + '<div class="aware-metric-lbl"><span>🚆 Transport</span><span class="mono">OS + SG</span></div>'
-        + '<div id="aware-trpt-total" class="aware-metric-val">SGD ' + fmt2(combinedTrptTotal) + '</div>'
-        + '<div style="font-size:10.5px;color:var(--text-subtle);" class="mono">OS $' + fmt2(summary.overseasTransport.total) + ' · SG $' + fmt2(summary.sgTransport.total) + '</div>'
-        + '</div>'
-        + '</div>'
         + '<div class="aware-capture-grid">'
-        + '<button type="button" class="aware-capture-btn primary" onclick="' + snapMealAction + '"><span class="cap-ico">📸</span><span>Snap Meal</span></button>'
-        + '<button type="button" class="aware-capture-btn sky" onclick="triggerReceiptUpload({ scope:\'' + activeScope + '\', dayId:\'\', itemId:\'\', role:\'receipt\' }, true)"><span class="cap-ico">🚕</span><span>Snap Trpt</span></button>'
-        + '<button type="button" class="aware-capture-btn green" onclick="' + snapBankAction + '"><span class="cap-ico">💳</span><span>+Bank SGD</span></button>'
+        + '<button type="button" class="aware-capture-btn primary" onclick="' + snapMealAction + '">' + slickSvg('camera', 15) + '<span>Snap Meal</span></button>'
+        + '<button type="button" class="aware-capture-btn sky" onclick="triggerReceiptUpload({ scope:\'' + activeScope + '\', dayId:\'\', itemId:\'\', role:\'receipt\' }, true)">' + slickSvg('transit', 15) + '<span>Snap Trpt</span></button>'
+        + '<button type="button" class="aware-capture-btn green" onclick="' + snapBankAction + '">' + slickSvg('card', 15) + '<span>+Bank SGD</span></button>'
         + '</div>'
         + '</div>';
 
       // Open Card 1: Today's Daily Meals
       const mealSectionHtml = d
-        ? ('<div class="aware-section-head"><span class="aware-section-title">🍽️ Today\'s Meals · Open for Entry</span>'
+        ? ('<div class="aware-section-head"><span class="aware-section-title">Today\'s Meals</span>'
           + '<button type="button" class="btn btn-sm btn-ghost" onclick="setMobileView(\'daily\')">All ' + summary.meals.days.length + ' Days →</button></div>'
           + renderSingleAwareMealDayCardHtml(d, summary))
         : ('<div class="card"><div class="card-body" style="text-align:center;padding:20px;">'
@@ -4916,12 +4999,12 @@
         return '<button type="button" class="chip-btn" onclick="addReceipt(\'' + activeScope + '\',null,\'' + esc(ch.label) + '\',\'' + ch.curr + '\')">+ ' + esc(ch.label) + '</button>';
       }).join('');
 
-      const transportSectionHtml = '<div class="aware-section-head"><span class="aware-section-title">🚆 Daily Transport · Open for Entry</span>'
+      const transportSectionHtml = '<div class="aware-section-head"><span class="aware-section-title">Daily Transport</span>'
         + '<span id="cat-total-' + activeScope + '" class="pill pill-accent mono">SGD ' + fmt2(activeTrptTotal) + '</span></div>'
         + '<div id="mobile-aware-transport-card" class="mobile-trpt-card">'
         + '<div class="mobile-trpt-tabs">'
-        + '<button type="button" class="mobile-trpt-tab' + (activeScope === 'overseasTransport' ? ' active' : '') + '" onclick="setMobileTransportTab(\'overseas\')"><span>🚅 Overseas</span><span class="mono">$' + fmt2(summary.overseasTransport.total) + '</span></button>'
-        + '<button type="button" class="mobile-trpt-tab' + (activeScope === 'sgTransport' ? ' active' : '') + '" onclick="setMobileTransportTab(\'sg\')"><span>🚕 SG Local</span><span class="mono">$' + fmt2(summary.sgTransport.total) + '</span></button>'
+        + '<button type="button" class="mobile-trpt-tab' + (activeScope === 'overseasTransport' ? ' active' : '') + '" onclick="setMobileTransportTab(\'overseas\')"><span>Overseas</span><span class="mono">$' + fmt2(summary.overseasTransport.total) + '</span></button>'
+        + '<button type="button" class="mobile-trpt-tab' + (activeScope === 'sgTransport' ? ' active' : '') + '" onclick="setMobileTransportTab(\'sg\')"><span>SG Local</span><span class="mono">$' + fmt2(summary.sgTransport.total) + '</span></button>'
         + '</div>'
         + '<div class="card-body">'
         + (trptRowsHtml ? '<div class="receipt-list">' + trptRowsHtml + '</div>' : '<div style="font-size:12px;color:var(--text-subtle);padding:4px 0;">No transport items yet — tap a quick chip below.</div>')
@@ -4935,8 +5018,11 @@
 
       const fixedTotal = round2(summary.airFare.total + summary.hotel.total + summary.data.total + summary.flights.overnightTotal + summary.otherMisc.total);
       const fixedCtaHtml = '<button type="button" class="mobile-fixed-cta" onclick="setMobileView(\'fixed\')">'
-        + '<div><strong style="color:var(--text);">🗂️ Fixed &amp; Trip Categories</strong>'
-        + '<div style="font-size:11px;color:var(--text-subtle);">Air Fare, Hotel, Data, Setup, FX Anchors, Overnight &amp; TOIL</div></div>'
+        + '<div style="display:flex;align-items:center;gap:10px;">'
+        + '<span class="inline-ico" style="width:32px;height:32px;border-radius:10px;background:var(--surface-3);color:var(--accent);">' + slickSvg('layers', 16) + '</span>'
+        + '<div><strong style="color:var(--text);">Fixed &amp; Trip Categories</strong>'
+        + '<div style="font-size:11px;color:var(--text-subtle);">Air Fare, Hotel, Data, Setup, FX &amp; TOIL</div></div>'
+        + '</div>'
         + '<span class="pill pill-neutral mono">SGD ' + fmt2(fixedTotal) + ' →</span>'
         + '</button>';
 
@@ -6914,9 +7000,11 @@
     }
 
     /* ==========================================================================
-       10B. CLOUD FOLDER, ZERO-FILE-PICKER PRIVATE GITHUB GIST & MULTI-DEVICE SYNC
+       10B. CLOUD FOLDER, DIRECT ONEDRIVE API, PRIVATE GITHUB GIST & MULTI-DEVICE SYNC
        ========================================================================== */
     const CLOUD_PREFS_KEY = 'claimflow_v3_cloud_prefs';
+    const ONEDRIVE_CFG_KEY = 'claimflow_v4_onedrive_cfg';
+    const ONEDRIVE_PKCE_KEY = 'claimflow_v4_onedrive_pkce';
     const GIST_CFG_KEY = 'claimflow_v4_gist_cfg';
     const DELETED_RECEIPTS_KEY = 'claimflow_v4_deleted_receipts';
     const CLOUD_DB_NAME = 'ClaimFlowCloudDB';
@@ -6924,6 +7012,8 @@
     const GIST_API_BASE = 'https://api.github.com/gists';
     const GIST_DATA_FILE = 'claimflow-db.json';
     const GIST_RECEIPTS_FILE = 'claimflow-receipts.json';
+    const GRAPH_API_BASE = 'https://graph.microsoft.com/v1.0';
+    const ONEDRIVE_SCOPES = 'Files.ReadWrite offline_access User.Read';
 
     const cloudSync = {
       handle: null,
@@ -6933,6 +7023,30 @@
       lastModifiedSeen: 0,
       writeTimer: null,
       prefs: { autoWrite: true, autoPull: true, embedReceipts: true }
+    };
+
+    const oneDriveSync = {
+      cfg: {
+        enabled: false,
+        clientId: '',
+        tenant: 'consumers',
+        folder: 'ClaimFlow',
+        accessToken: '',
+        refreshToken: '',
+        expiresAt: 0,
+        accountName: '',
+        accountEmail: '',
+        autoPush: true,
+        autoPull: true,
+        syncReceipts: true,
+        lastSyncedAt: 0,
+        lastReceiptsHash: ''
+      },
+      busy: false,
+      pendingPush: false,
+      lastError: '',
+      lastPullCheckAt: 0,
+      pushTimer: null
     };
 
     const gistSync = {
@@ -7040,6 +7154,19 @@
     }
 
     function renderMobileGistSyncChipHtml() {
+      if (oneDriveSync.cfg.enabled && oneDriveSync.cfg.clientId && (oneDriveSync.cfg.accessToken || oneDriveSync.cfg.refreshToken)) {
+        if (oneDriveSync.busy) {
+          return '<button type="button" class="aware-sync-chip syncing" onclick="openCloudModal()">↻ OneDrive…</button>';
+        }
+        if (oneDriveSync.lastError) {
+          return '<button type="button" class="aware-sync-chip error" onclick="syncOneDriveTwoWay(false,false)" title="' + esc(oneDriveSync.lastError) + '">⚠️ Retry OneDrive</button>';
+        }
+        if (oneDriveSync.pendingPush) {
+          return '<button type="button" class="aware-sync-chip pending" onclick="syncOneDriveTwoWay(false,true)">☁️ Queued</button>';
+        }
+        const tOd = oneDriveSync.cfg.lastSyncedAt ? (' · ' + fmtTimeHHMM(oneDriveSync.cfg.lastSyncedAt)) : '';
+        return '<button type="button" class="aware-sync-chip synced" onclick="syncOneDriveTwoWay(false,false)" title="Tap to sync with OneDrive now">☁️ OneDrive' + esc(tOd) + '</button>';
+      }
       if (gistSync.cfg.enabled && gistSync.cfg.gistId) {
         if (gistSync.busy) {
           return '<button type="button" class="aware-sync-chip syncing" onclick="openCloudModal()">↻ Syncing…</button>';
@@ -7056,210 +7183,369 @@
       return '<button type="button" class="aware-sync-chip" onclick="openCloudModal()">☁️ Auto-Sync</button>';
     }
 
-    async function connectGitHubGist(overrideToken, overrideGistId) {
-      const tokInp = document.getElementById('gist-token-input');
-      const idInp = document.getElementById('gist-id-input');
-      const token = (overrideToken != null ? String(overrideToken) : (tokInp ? tokInp.value : '')).trim();
-      let gistId = (overrideGistId != null ? String(overrideGistId) : (idInp ? idInp.value : '')).trim();
+    /* --- Direct OneDrive API (Microsoft Graph + OAuth2 PKCE SPA Flow) --- */
+    function loadOneDriveConfig() {
+      try {
+        const raw = localStorage.getItem(ONEDRIVE_CFG_KEY);
+        if (raw) {
+          oneDriveSync.cfg = Object.assign({
+            enabled: false, clientId: '', tenant: 'consumers', folder: 'ClaimFlow',
+            accessToken: '', refreshToken: '', expiresAt: 0,
+            accountName: '', accountEmail: '',
+            autoPush: true, autoPull: true, syncReceipts: true,
+            lastSyncedAt: 0, lastReceiptsHash: ''
+          }, JSON.parse(raw));
+        }
+      } catch (e) {}
+    }
 
-      // Allow pasting a full GitHub Gist URL and extract the ID automatically
-      if (gistId.indexOf('/') >= 0) {
-        const parts = gistId.replace(/\/+$/, '').split('/');
-        gistId = parts[parts.length - 1] || '';
+    function saveOneDriveConfig() {
+      try { localStorage.setItem(ONEDRIVE_CFG_KEY, JSON.stringify(oneDriveSync.cfg)); } catch (e) {}
+    }
+
+    function setOneDrivePref(key, val) {
+      oneDriveSync.cfg[key] = !!val;
+      saveOneDriveConfig();
+      if (key === 'syncReceipts' && val && oneDriveSync.cfg.enabled) {
+        oneDriveSync.cfg.lastReceiptsHash = '';
+        saveOneDriveConfig();
+        scheduleCloudWrite(true);
       }
+    }
 
-      if (!token) {
-        showToast('Paste your GitHub Personal Access Token (gist scope).', 'amber');
+    function getOneDriveRedirectUri() {
+      if (window.location && (window.location.protocol === 'https:' || window.location.protocol === 'http:')) {
+        return window.location.origin + window.location.pathname;
+      }
+      return 'https://YOUR-SITE-URL/travel-claims-hrms.html';
+    }
+
+    function copyOneDriveRedirectUri() {
+      const uri = getOneDriveRedirectUri();
+      copyToClipboard(uri);
+      showToast('Copied Redirect URI: ' + uri, 'green');
+    }
+
+    function base64UrlEncode(bytes) {
+      let bin = '';
+      for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+      return btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    }
+
+    function randomBase64Url(len) {
+      const arr = new Uint8Array(len || 48);
+      crypto.getRandomValues(arr);
+      return base64UrlEncode(arr);
+    }
+
+    async function sha256Base64Url(str) {
+      const data = new TextEncoder().encode(str);
+      const digest = await crypto.subtle.digest('SHA-256', data);
+      return base64UrlEncode(new Uint8Array(digest));
+    }
+
+    function sanitizeOneDriveFolder(raw) {
+      const cleaned = String(raw || '').trim().replace(/\\/g, '/').replace(/^\/+|\/+$/g, '');
+      return cleaned || 'ClaimFlow';
+    }
+
+    function buildOneDriveItemEndpoint(fileName) {
+      const folder = sanitizeOneDriveFolder(oneDriveSync.cfg.folder);
+      if (folder.toLowerCase() === 'approot') {
+        return GRAPH_API_BASE + '/me/drive/special/approot:/' + encodeURIComponent(fileName);
+      }
+      const encodedFolder = folder.split('/').filter(Boolean).map(encodeURIComponent).join('/');
+      return GRAPH_API_BASE + '/me/drive/root:/' + encodedFolder + '/' + encodeURIComponent(fileName);
+    }
+
+    async function startOneDriveLogin() {
+      const cidInp = document.getElementById('od-client-id-input');
+      const tenSel = document.getElementById('od-tenant-select');
+      const fldInp = document.getElementById('od-folder-input');
+
+      const clientId = (cidInp && cidInp.value ? cidInp.value : oneDriveSync.cfg.clientId || '').trim();
+      const tenant = (tenSel && tenSel.value) ? tenSel.value : (oneDriveSync.cfg.tenant || 'consumers');
+      const folder = sanitizeOneDriveFolder((fldInp && fldInp.value) ? fldInp.value : oneDriveSync.cfg.folder);
+
+      if (!clientId) {
+        showToast('Enter your Azure Application (Client) ID first.', 'amber');
+        return;
+      }
+      if (window.location.protocol !== 'https:' && window.location.protocol !== 'http:') {
+        showToast('Microsoft OneDrive sign-in requires hosting this file on HTTPS (e.g. GitHub Pages / Netlify) or localhost.', 'amber');
+        return;
+      }
+      if (!window.crypto || !window.crypto.subtle) {
+        showToast('Web Crypto API requires HTTPS or localhost for PKCE sign-in.', 'red');
         return;
       }
 
-      gistSync.busy = true;
-      gistSync.lastError = '';
+      oneDriveSync.cfg.clientId = clientId;
+      oneDriveSync.cfg.tenant = tenant;
+      oneDriveSync.cfg.folder = folder;
+      saveOneDriveConfig();
+
+      try {
+        flushLocalSave(false, false);
+        const verifier = randomBase64Url(64);
+        const challenge = await sha256Base64Url(verifier);
+        const stateToken = randomBase64Url(24);
+        const redirectUri = getOneDriveRedirectUri();
+
+        localStorage.setItem(ONEDRIVE_PKCE_KEY, JSON.stringify({
+          verifier: verifier,
+          state: stateToken,
+          redirectUri: redirectUri,
+          clientId: clientId,
+          tenant: tenant,
+          createdAt: Date.now()
+        }));
+
+        const params = new URLSearchParams({
+          client_id: clientId,
+          response_type: 'code',
+          redirect_uri: redirectUri,
+          response_mode: 'query',
+          scope: ONEDRIVE_SCOPES,
+          code_challenge: challenge,
+          code_challenge_method: 'S256',
+          state: stateToken,
+          prompt: 'select_account'
+        });
+
+        window.location.assign('https://login.microsoftonline.com/' + encodeURIComponent(tenant) + '/oauth2/v2.0/authorize?' + params.toString());
+      } catch (err) {
+        showToast('Could not start OneDrive login: ' + err.message, 'red');
+      }
+    }
+
+    async function handleOneDriveOAuthCallback() {
+      const qs = new URLSearchParams(window.location.search || '');
+      const code = qs.get('code');
+      const errParam = qs.get('error');
+      const retState = qs.get('state');
+      if (!code && !errParam) return false;
+
+      let pkce = null;
+      try {
+        const raw = localStorage.getItem(ONEDRIVE_PKCE_KEY);
+        pkce = raw ? JSON.parse(raw) : null;
+      } catch (e) {}
+
+      // Clean OAuth query params from address bar immediately
+      try {
+        const cleanUrl = window.location.origin + window.location.pathname + (window.location.hash || '');
+        window.history.replaceState({}, document.title, cleanUrl);
+      } catch (e) {}
+
+      if (errParam) {
+        const desc = qs.get('error_description') || errParam;
+        oneDriveSync.lastError = desc;
+        showToast('OneDrive sign-in canceled/failed: ' + errParam, 'red');
+        renderCloudStatusUI();
+        return true;
+      }
+
+      if (!pkce || !pkce.verifier || (pkce.state && retState !== pkce.state)) {
+        oneDriveSync.lastError = 'OAuth state mismatch — please sign in again.';
+        showToast(oneDriveSync.lastError, 'red');
+        renderCloudStatusUI();
+        return true;
+      }
+
+      try { localStorage.removeItem(ONEDRIVE_PKCE_KEY); } catch (e) {}
+      oneDriveSync.busy = true;
+      oneDriveSync.lastError = '';
       renderCloudStatusUI();
 
       try {
-        if (!gistId) {
-          // Auto-create a brand new Private GitHub Gist
-          const initialDb = {
-            activeTripId: store.activeTripId,
-            trips: store.trips,
-            deletedReceiptIds: getDeletedReceiptIds(),
-            updatedAt: Date.now()
-          };
-          const files = {};
-          files[GIST_DATA_FILE] = { content: JSON.stringify(initialDb, null, 2) };
-
-          let rHash = '';
-          if (gistSync.cfg.syncReceipts !== false) {
-            const allRecs = await idbGetAllReceipts();
-            rHash = computeReceiptsHash(allRecs);
-            const recStr = JSON.stringify({ hash: rHash, updatedAt: Date.now(), receipts: allRecs });
-            if (recStr.length <= 18 * 1024 * 1024) {
-              files[GIST_RECEIPTS_FILE] = { content: recStr };
-            }
-          }
-
-          const res = await fetch(GIST_API_BASE, {
-            method: 'POST',
-            headers: gistHeaders(token),
-            body: JSON.stringify({
-              description: 'ClaimFlow Private Travel Claims Sync Database',
-              public: false,
-              files: files
-            })
-          });
-          if (!res.ok) {
-            const errJson = await res.json().catch(function () { return {}; });
-            throw new Error(errJson.message || ('GitHub API ' + res.status));
-          }
-          const created = await res.json();
-          gistId = created.id;
-          gistSync.cfg.token = token;
-          gistSync.cfg.gistId = gistId;
-          gistSync.cfg.enabled = true;
-          gistSync.cfg.lastSyncedAt = Date.now();
-          gistSync.cfg.lastReceiptsHash = rHash;
-          gistSync.pendingPush = false;
-          saveGistConfig();
-          if (tokInp) tokInp.value = '';
-          if (idInp) idInp.value = '';
-          showToast('Private Gist created & Auto-Sync active! ✓', 'green');
-        } else {
-          // Validate & merge existing private Gist
-          const res = await fetch(GIST_API_BASE + '/' + encodeURIComponent(gistId), {
-            headers: gistHeaders(token)
-          });
-          if (!res.ok) {
-            const errJson = await res.json().catch(function () { return {}; });
-            throw new Error(errJson.message || ('Could not open Gist (' + res.status + ')'));
-          }
-          gistSync.cfg.token = token;
-          gistSync.cfg.gistId = gistId;
-          gistSync.cfg.enabled = true;
-          gistSync.cfg.lastReceiptsHash = '';
-          saveGistConfig();
-          if (tokInp) tokInp.value = '';
-          if (idInp) idInp.value = '';
-          gistSync.busy = false;
-          await syncGistTwoWay(false);
-          showToast('Connected & merged Private Gist ✓', 'green');
-          return;
-        }
-      } catch (err) {
-        gistSync.lastError = err.message || 'Connection failed';
-        showToast('Gist Sync failed: ' + gistSync.lastError, 'red');
-      } finally {
-        gistSync.busy = false;
-        renderCloudStatusUI();
-        if (document.documentElement.getAttribute('data-layout') === 'mobile') renderWorkspace();
-      }
-    }
-
-    function copyGistPairingCode() {
-      if (!gistSync.cfg.enabled || !gistSync.cfg.token || !gistSync.cfg.gistId) {
-        showToast('Connect Private Gist Sync first.', 'amber');
-        return;
-      }
-      try {
-        const json = JSON.stringify({
-          g: gistSync.cfg.gistId,
-          t: gistSync.cfg.token,
-          r: gistSync.cfg.syncReceipts !== false
+        const tenant = pkce.tenant || oneDriveSync.cfg.tenant || 'consumers';
+        const body = new URLSearchParams({
+          client_id: pkce.clientId || oneDriveSync.cfg.clientId,
+          grant_type: 'authorization_code',
+          code: code,
+          redirect_uri: pkce.redirectUri || getOneDriveRedirectUri(),
+          code_verifier: pkce.verifier,
+          scope: ONEDRIVE_SCOPES
         });
-        const code = 'CLAIMFLOW_GIST1:' + btoa(unescape(encodeURIComponent(json)));
-        copyToClipboard(code);
-        showToast('Copied 1-Tap Device Pairing Code! Paste on your iPhone/Laptop.', 'green');
-      } catch (e) {
-        showToast('Could not build pairing code.', 'red');
+
+        const res = await fetch('https://login.microsoftonline.com/' + encodeURIComponent(tenant) + '/oauth2/v2.0/token', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: body.toString()
+        });
+        const tok = await res.json();
+        if (!res.ok || !tok.access_token) {
+          throw new Error(tok.error_description || tok.error || ('Token exchange failed (' + res.status + ')'));
+        }
+
+        oneDriveSync.cfg.clientId = pkce.clientId || oneDriveSync.cfg.clientId;
+        oneDriveSync.cfg.tenant = tenant;
+        oneDriveSync.cfg.accessToken = tok.access_token;
+        if (tok.refresh_token) oneDriveSync.cfg.refreshToken = tok.refresh_token;
+        oneDriveSync.cfg.expiresAt = Date.now() + (Number(tok.expires_in) || 3599) * 1000;
+        oneDriveSync.cfg.enabled = true;
+        oneDriveSync.cfg.lastReceiptsHash = '';
+        saveOneDriveConfig();
+
+        await fetchOneDriveUser();
+        oneDriveSync.busy = false;
+        await syncOneDriveTwoWay(false, false);
+        showToast('Connected to OneDrive (' + (oneDriveSync.cfg.accountEmail || oneDriveSync.cfg.folder) + ') ✓', 'green');
+      } catch (err) {
+        oneDriveSync.busy = false;
+        oneDriveSync.lastError = err.message || 'Sign-in failed';
+        showToast('OneDrive auth error: ' + oneDriveSync.lastError, 'red');
+        renderCloudStatusUI();
       }
+      return true;
     }
 
-    async function pairGistFromCode() {
-      const inp = document.getElementById('gist-pair-code-input');
-      const raw = inp ? inp.value.trim() : '';
-      if (!raw || raw.indexOf('CLAIMFLOW_GIST1:') !== 0) {
-        showToast('Paste a valid CLAIMFLOW_GIST1:... pairing code.', 'amber');
+    async function refreshOneDriveToken() {
+      if (!oneDriveSync.cfg.refreshToken || !oneDriveSync.cfg.clientId) {
+        throw new Error('Session expired — tap Re-Sign In with Microsoft.');
+      }
+      const tenant = oneDriveSync.cfg.tenant || 'consumers';
+      const body = new URLSearchParams({
+        client_id: oneDriveSync.cfg.clientId,
+        grant_type: 'refresh_token',
+        refresh_token: oneDriveSync.cfg.refreshToken,
+        scope: ONEDRIVE_SCOPES
+      });
+      const res = await fetch('https://login.microsoftonline.com/' + encodeURIComponent(tenant) + '/oauth2/v2.0/token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: body.toString()
+      });
+      const tok = await res.json();
+      if (!res.ok || !tok.access_token) {
+        throw new Error(tok.error_description || tok.error || 'Token refresh failed — please sign in again');
+      }
+      oneDriveSync.cfg.accessToken = tok.access_token;
+      if (tok.refresh_token) oneDriveSync.cfg.refreshToken = tok.refresh_token;
+      oneDriveSync.cfg.expiresAt = Date.now() + (Number(tok.expires_in) || 3599) * 1000;
+      saveOneDriveConfig();
+      return oneDriveSync.cfg.accessToken;
+    }
+
+    async function ensureOneDriveToken() {
+      if (oneDriveSync.cfg.accessToken && Date.now() < (oneDriveSync.cfg.expiresAt || 0) - 120000) {
+        return oneDriveSync.cfg.accessToken;
+      }
+      return await refreshOneDriveToken();
+    }
+
+    async function fetchOneDriveUser() {
+      try {
+        const token = await ensureOneDriveToken();
+        const res = await fetch(GRAPH_API_BASE + '/me?$select=displayName,userPrincipalName,mail', {
+          headers: { 'Authorization': 'Bearer ' + token }
+        });
+        if (!res.ok) return;
+        const me = await res.json();
+        oneDriveSync.cfg.accountName = me.displayName || '';
+        oneDriveSync.cfg.accountEmail = me.mail || me.userPrincipalName || '';
+        saveOneDriveConfig();
+      } catch (e) {}
+    }
+
+    async function oneDriveReadJsonFile(fileName, token) {
+      const url = buildOneDriveItemEndpoint(fileName) + ':/content';
+      const res = await fetch(url, {
+        headers: { 'Authorization': 'Bearer ' + token },
+        cache: 'no-store'
+      });
+      if (res.status === 404) return null;
+      if (!res.ok) {
+        const txt = await res.text().catch(function () { return ''; });
+        throw new Error('OneDrive read ' + fileName + ' failed (' + res.status + ')' + (txt ? ': ' + txt.slice(0, 100) : ''));
+      }
+      const text = await res.text();
+      if (!text || !text.trim()) return null;
+      return JSON.parse(text);
+    }
+
+    /** Writes JSON to OneDrive (auto-switches to Graph Upload Session for files > 3.5 MB so large receipt vaults sync cleanly) */
+    async function oneDriveWriteJsonFile(fileName, jsonString, token) {
+      const bytes = new TextEncoder().encode(jsonString);
+      if (bytes.byteLength <= 3.5 * 1024 * 1024) {
+        const url = buildOneDriveItemEndpoint(fileName) + ':/content';
+        const res = await fetch(url, {
+          method: 'PUT',
+          headers: {
+            'Authorization': 'Bearer ' + token,
+            'Content-Type': 'application/json'
+          },
+          body: bytes
+        });
+        if (!res.ok) {
+          const errTxt = await res.text().catch(function () { return ''; });
+          throw new Error('OneDrive save ' + fileName + ' failed (' + res.status + ')' + (errTxt ? ': ' + errTxt.slice(0, 120) : ''));
+        }
         return;
       }
-      try {
-        const decoded = decodeURIComponent(escape(atob(raw.slice('CLAIMFLOW_GIST1:'.length))));
-        const obj = JSON.parse(decoded);
-        if (!obj || !obj.g || !obj.t) throw new Error('Incomplete pairing code');
-        gistSync.cfg.syncReceipts = obj.r !== false;
-        saveGistConfig();
-        if (inp) inp.value = '';
-        await connectGitHubGist(obj.t, obj.g);
-      } catch (err) {
-        showToast('Invalid pairing code: ' + err.message, 'red');
+
+      // Large file (> 3.5 MB): Microsoft Graph Resumable Upload Session (3.2 MB chunks, multiple of 320 KiB)
+      const sessUrl = buildOneDriveItemEndpoint(fileName) + ':/createUploadSession';
+      const sessRes = await fetch(sessUrl, {
+        method: 'POST',
+        headers: {
+          'Authorization': 'Bearer ' + token,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          item: { '@microsoft.graph.conflictBehavior': 'replace', name: fileName }
+        })
+      });
+      if (!sessRes.ok) {
+        throw new Error('Could not start OneDrive large-file upload session (' + sessRes.status + ')');
+      }
+      const sess = await sessRes.json();
+      const uploadUrl = sess.uploadUrl;
+      const chunkSize = 3276800; // 10 × 320 KiB (Graph requirement)
+      const total = bytes.byteLength;
+      for (let start = 0; start < total; start += chunkSize) {
+        const end = Math.min(total, start + chunkSize);
+        const slice = bytes.slice(start, end);
+        const putRes = await fetch(uploadUrl, {
+          method: 'PUT',
+          headers: {
+            'Content-Length': String(slice.byteLength),
+            'Content-Range': 'bytes ' + start + '-' + (end - 1) + '/' + total
+          },
+          body: slice
+        });
+        if (!putRes.ok && putRes.status !== 202) {
+          throw new Error('OneDrive chunk upload failed (' + putRes.status + ')');
+        }
       }
     }
 
-    function disconnectGitHubGist() {
-      openModal({
-        title: 'Disconnect Private Gist Auto-Sync?',
-        message: 'Stops syncing on this device and removes the saved GitHub token from this browser. Your local trips and private Gist remain intact.',
-        confirmLabel: 'Disconnect',
-        confirmClass: 'btn-red-soft',
-        onConfirm: function () {
-          gistSync.cfg.enabled = false;
-          gistSync.cfg.token = '';
-          gistSync.cfg.gistId = '';
-          gistSync.cfg.lastReceiptsHash = '';
-          gistSync.pendingPush = false;
-          gistSync.lastError = '';
-          saveGistConfig();
-          renderCloudStatusUI();
-          if (document.documentElement.getAttribute('data-layout') === 'mobile') renderWorkspace();
-          showToast('Disconnected Private Gist Auto-Sync.', 'amber');
-        }
-      });
-    }
-
-    /**
-     * Event-driven, battery-friendly 2-way Private GitHub Gist Sync:
-     * 1. Pulls remote trips & receipts -> Smart-Merges newer timestamps & deletions.
-     * 2. Pushes back ONLY if local data or receipts differ from remote (skipping receipts upload if hash unchanged!).
-     */
-    async function syncGistTwoWay(silent, pushPreferred) {
-      if (!gistSync.cfg.enabled || !gistSync.cfg.token || !gistSync.cfg.gistId) return;
-      if (gistSync.busy) {
-        if (pushPreferred) gistSync.pendingPush = true;
+    async function syncOneDriveTwoWay(silent, pushPreferred) {
+      if (!oneDriveSync.cfg.enabled || !oneDriveSync.cfg.clientId || (!oneDriveSync.cfg.accessToken && !oneDriveSync.cfg.refreshToken)) return;
+      if (oneDriveSync.busy) {
+        if (pushPreferred) oneDriveSync.pendingPush = true;
         return;
       }
       if (typeof navigator !== 'undefined' && navigator.onLine === false) {
-        gistSync.pendingPush = true;
-        gistSync.lastError = '';
+        oneDriveSync.pendingPush = true;
+        oneDriveSync.lastError = '';
         renderCloudStatusUI();
-        if (!silent) showToast('Offline — saved locally & queued for auto-sync when online.', 'amber');
+        if (!silent) showToast('Offline — saved locally & queued for OneDrive sync when online.', 'amber');
         return;
       }
 
-      gistSync.busy = true;
-      gistSync.lastError = '';
+      oneDriveSync.busy = true;
+      oneDriveSync.lastError = '';
       renderCloudStatusUI();
 
       try {
-        const res = await fetch(GIST_API_BASE + '/' + encodeURIComponent(gistSync.cfg.gistId), {
-          headers: gistHeaders(gistSync.cfg.token),
-          cache: 'no-store'
-        });
-        if (!res.ok) {
-          const errJson = await res.json().catch(function () { return {}; });
-          throw new Error(errJson.message || ('GitHub API ' + res.status));
-        }
-        const gistData = await res.json();
-        const remoteFiles = gistData.files || {};
-
+        const token = await ensureOneDriveToken();
         let needPushDb = !!pushPreferred;
         let pulledUpdates = 0;
 
-        // 1. Parse & Smart-Merge Remote Trips + Deleted Receipt Tombstones
-        const remoteDbText = await readGistFileContent(remoteFiles[GIST_DATA_FILE], gistSync.cfg.token);
-        let remoteDb = null;
-        if (remoteDbText && remoteDbText.trim()) {
-          try { remoteDb = JSON.parse(remoteDbText); } catch (e) { remoteDb = null; }
-        }
-
+        // 1. Pull & Smart-Merge Remote claimflow-db.json
+        const remoteDb = await oneDriveReadJsonFile(GIST_DATA_FILE, token);
         const localDeletedBefore = getDeletedReceiptIds();
         const mergedDeleted = mergeDeletedReceiptIds(remoteDb && remoteDb.deletedReceiptIds);
         if (mergedDeleted.length !== (remoteDb && remoteDb.deletedReceiptIds ? remoteDb.deletedReceiptIds.length : 0)) {
@@ -7271,7 +7557,6 @@
           const remoteById = {};
           remoteTrips.forEach(function (rt) { remoteById[rt.id] = rt; });
 
-          // Pull newer or missing remote trips
           remoteTrips.forEach(function (rt) {
             const idx = store.trips.findIndex(function (t) { return t.id === rt.id; });
             if (idx < 0) {
@@ -7285,7 +7570,6 @@
             }
           });
 
-          // Check if local has any brand-new trips not on remote yet
           store.trips.forEach(function (lt) {
             if (!remoteById[lt.id]) needPushDb = true;
           });
@@ -7299,50 +7583,35 @@
           needPushDb = true;
         }
 
-        // 2. Differential Receipt Photos Sync (only uploads claimflow-receipts.json if receipt hash actually changed)
+        // 2. Differential Receipt Photos Sync (claimflow-receipts.json)
         let needPushReceipts = false;
         let mergedReceipts = [];
         let pulledReceipts = 0;
 
-        if (gistSync.cfg.syncReceipts !== false) {
-          // Delete any locally stored receipts that were deleted on another device
+        if (oneDriveSync.cfg.syncReceipts !== false) {
           const deletedSet = {};
           mergedDeleted.forEach(function (id) { deletedSet[id] = true; });
 
           let localRecs = await idbGetAllReceipts();
           for (let i = 0; i < localRecs.length; i++) {
-            if (deletedSet[localRecs[i].id]) {
-              await idbDeleteReceipt(localRecs[i].id);
-            }
+            if (deletedSet[localRecs[i].id]) await idbDeleteReceipt(localRecs[i].id);
           }
           localRecs = localRecs.filter(function (r) { return !deletedSet[r.id]; });
 
           const localMap = {};
           localRecs.forEach(function (r) { localMap[r.id] = r; });
 
-          let remoteRecs = [];
-          let remoteHash = '';
-          if (remoteFiles[GIST_RECEIPTS_FILE]) {
-            const recText = await readGistFileContent(remoteFiles[GIST_RECEIPTS_FILE], gistSync.cfg.token);
-            if (recText && recText.trim()) {
-              try {
-                const parsedRec = JSON.parse(recText);
-                remoteRecs = Array.isArray(parsedRec.receipts) ? parsedRec.receipts : [];
-                remoteHash = parsedRec.hash || '';
-              } catch (e) {}
-            }
-          }
+          const parsedRec = await oneDriveReadJsonFile(GIST_RECEIPTS_FILE, token);
+          const remoteRecs = (parsedRec && Array.isArray(parsedRec.receipts)) ? parsedRec.receipts : [];
+          const remoteHash = (parsedRec && parsedRec.hash) ? parsedRec.hash : '';
 
           const toRestore = [];
-          const remoteMap = {};
           remoteRecs.forEach(function (rr) {
             if (!rr || !rr.id || deletedSet[rr.id]) return;
-            remoteMap[rr.id] = rr;
             const lr = localMap[rr.id];
             if (!lr) {
               toRestore.push(rr);
             } else {
-              // If metadata or cropped/rotated bytes differ and remote wasn't overridden locally, keep latest
               const lSig = computeReceiptsHash([lr]);
               const rSig = computeReceiptsHash([rr]);
               if (lSig !== rSig && !pushPreferred && (rr.createdAt || 0) >= (lr.createdAt || 0)) {
@@ -7368,67 +7637,191 @@
           }
         }
 
-        // 3. Patch Private Gist ONLY with files that changed
-        if (needPushDb || needPushReceipts) {
-          const patchFiles = {};
-          if (needPushDb) {
-            const dbPayload = {
-              activeTripId: store.activeTripId,
-              trips: store.trips,
-              deletedReceiptIds: mergedDeleted,
-              updatedAt: Date.now()
-            };
-            patchFiles[GIST_DATA_FILE] = { content: JSON.stringify(dbPayload, null, 2) };
-          }
-          let pushedHash = gistSync.cfg.lastReceiptsHash;
-          if (needPushReceipts && gistSync.cfg.syncReceipts !== false) {
-            const rHash = computeReceiptsHash(mergedReceipts);
-            const recStr = JSON.stringify({ hash: rHash, updatedAt: Date.now(), receipts: mergedReceipts });
-            if (recStr.length <= 18 * 1024 * 1024) {
-              patchFiles[GIST_RECEIPTS_FILE] = { content: recStr };
-              pushedHash = rHash;
-            } else if (!silent) {
-              showToast('Trips synced, but receipts exceed 18 MB Gist limit — export JSON backup for photos.', 'amber');
-            }
-          }
-
-          if (Object.keys(patchFiles).length > 0) {
-            const pRes = await fetch(GIST_API_BASE + '/' + encodeURIComponent(gistSync.cfg.gistId), {
-              method: 'PATCH',
-              headers: gistHeaders(gistSync.cfg.token),
-              body: JSON.stringify({ files: patchFiles })
-            });
-            if (!pRes.ok) {
-              const pErr = await pRes.json().catch(function () { return {}; });
-              throw new Error(pErr.message || ('Gist write failed (' + pRes.status + ')'));
-            }
-            gistSync.cfg.lastReceiptsHash = pushedHash;
-          }
+        // 3. Upload ONLY changed files to OneDrive
+        if (needPushDb) {
+          const dbPayload = {
+            activeTripId: store.activeTripId,
+            trips: store.trips,
+            deletedReceiptIds: mergedDeleted,
+            updatedAt: Date.now()
+          };
+          await oneDriveWriteJsonFile(GIST_DATA_FILE, JSON.stringify(dbPayload, null, 2), token);
+        }
+        if (needPushReceipts && oneDriveSync.cfg.syncReceipts !== false) {
+          const rHash = computeReceiptsHash(mergedReceipts);
+          const recStr = JSON.stringify({ hash: rHash, updatedAt: Date.now(), receipts: mergedReceipts });
+          await oneDriveWriteJsonFile(GIST_RECEIPTS_FILE, recStr, token);
+          oneDriveSync.cfg.lastReceiptsHash = rHash;
         }
 
-        gistSync.cfg.lastSyncedAt = Date.now();
-        gistSync.lastPullCheckAt = Date.now();
-        gistSync.pendingPush = false;
-        saveGistConfig();
+        oneDriveSync.cfg.lastSyncedAt = Date.now();
+        oneDriveSync.lastPullCheckAt = Date.now();
+        oneDriveSync.pendingPush = false;
+        saveOneDriveConfig();
 
         if (!silent) {
           if (pulledUpdates > 0 || pulledReceipts > 0) {
-            showToast('Synced ✓ Pulled ' + pulledUpdates + ' trip(s)' + (pulledReceipts > 0 ? (' & ' + pulledReceipts + ' receipt(s)') : ''), 'green');
+            showToast('OneDrive synced ✓ Pulled ' + pulledUpdates + ' trip(s)' + (pulledReceipts > 0 ? (' & ' + pulledReceipts + ' receipt(s)') : ''), 'green');
           } else {
-            showToast('Private Gist synced ✓', 'green');
+            showToast('OneDrive synced ✓ (' + sanitizeOneDriveFolder(oneDriveSync.cfg.folder) + ')', 'green');
           }
         } else if (pulledUpdates > 0 || pulledReceipts > 0) {
-          showToast('Auto-synced newer edits from other device ✓', 'green');
+          showToast('Auto-synced newer edits from OneDrive ✓', 'green');
         }
       } catch (err) {
-        gistSync.lastError = err.message || 'Sync error';
-        if (pushPreferred) gistSync.pendingPush = true;
-        if (!silent) showToast('Sync failed: ' + gistSync.lastError, 'red');
+        oneDriveSync.lastError = err.message || 'OneDrive sync error';
+        if (pushPreferred) oneDriveSync.pendingPush = true;
+        if (!silent) showToast('OneDrive sync failed: ' + oneDriveSync.lastError, 'red');
       } finally {
-        gistSync.busy = false;
+        oneDriveSync.busy = false;
         renderCloudStatusUI();
         if (document.documentElement.getAttribute('data-layout') === 'mobile') renderWorkspace();
       }
+    }
+
+    async function connectGitHubGist() {
+      const tokInp = document.getElementById('gist-token-input');
+      const idInp = document.getElementById('gist-id-input');
+      const token = (tokInp ? tokInp.value : gistSync.cfg.token || '').trim();
+      let gistId = (idInp ? idInp.value : gistSync.cfg.gistId || '').trim();
+      if (!token) {
+        showToast('Paste a GitHub Personal Access Token (gist scope) first.', 'amber');
+        return;
+      }
+
+      gistSync.busy = true;
+      gistSync.lastError = '';
+      renderCloudStatusUI();
+
+      try {
+        if (!gistId) {
+          flushLocalSave(false, false);
+          const dbPayload = {
+            activeTripId: store.activeTripId,
+            trips: store.trips,
+            deletedReceiptIds: getDeletedReceiptIds(),
+            updatedAt: Date.now()
+          };
+          const createFiles = {};
+          createFiles[GIST_DATA_FILE] = { content: JSON.stringify(dbPayload, null, 2) };
+          if (gistSync.cfg.syncReceipts !== false) {
+            const localRecs = await idbGetAllReceipts();
+            const rHash = computeReceiptsHash(localRecs);
+            const recStr = JSON.stringify({ hash: rHash, updatedAt: Date.now(), receipts: localRecs });
+            if (recStr.length <= 18 * 1024 * 1024) {
+              createFiles[GIST_RECEIPTS_FILE] = { content: recStr };
+              gistSync.cfg.lastReceiptsHash = rHash;
+            }
+          }
+          const res = await fetch(GIST_API_BASE, {
+            method: 'POST',
+            headers: gistHeaders(token),
+            body: JSON.stringify({
+              description: 'ClaimFlow Private Travel Claims Backup',
+              public: false,
+              files: createFiles
+            })
+          });
+          const created = await res.json().catch(function () { return {}; });
+          if (!res.ok || !created.id) {
+            throw new Error(created.message || ('Could not create private Gist (' + res.status + ')'));
+          }
+          gistId = created.id;
+          gistSync.cfg.enabled = true;
+          gistSync.cfg.token = token;
+          gistSync.cfg.gistId = gistId;
+          gistSync.cfg.lastSyncedAt = Date.now();
+          gistSync.lastPullCheckAt = Date.now();
+          gistSync.pendingPush = false;
+          saveGistConfig();
+          if (tokInp) tokInp.value = '';
+          if (idInp) idInp.value = '';
+          gistSync.busy = false;
+          renderCloudStatusUI();
+          if (document.documentElement.getAttribute('data-layout') === 'mobile') renderWorkspace();
+          showToast('Created private Gist & enabled Auto-Sync ✓', 'green');
+          return;
+        }
+
+        gistSync.cfg.enabled = true;
+        gistSync.cfg.token = token;
+        gistSync.cfg.gistId = gistId;
+        gistSync.cfg.lastReceiptsHash = '';
+        saveGistConfig();
+        if (tokInp) tokInp.value = '';
+        if (idInp) idInp.value = '';
+        gistSync.busy = false;
+        await syncGistTwoWay(false, false);
+      } catch (err) {
+        gistSync.busy = false;
+        gistSync.lastError = err.message || 'Gist connection failed';
+        renderCloudStatusUI();
+        showToast('Gist connect failed: ' + gistSync.lastError, 'red');
+      }
+    }
+
+    function copyGistPairingCode() {
+      if (!gistSync.cfg.token || !gistSync.cfg.gistId) {
+        showToast('Connect Private GitHub Gist first.', 'amber');
+        return;
+      }
+      try {
+        const json = JSON.stringify({
+          t: gistSync.cfg.token,
+          g: gistSync.cfg.gistId,
+          r: gistSync.cfg.syncReceipts !== false
+        });
+        const code = 'CLAIMFLOW_GIST1:' + btoa(unescape(encodeURIComponent(json)));
+        copyToClipboard(code);
+        showToast('Copied 1-Tap Device Pair Code! Paste on your other device.', 'green');
+      } catch (e) {
+        showToast('Could not build pairing code.', 'red');
+      }
+    }
+
+    async function pairGistFromCode() {
+      const inp = document.getElementById('gist-pair-code-input');
+      const raw = inp ? inp.value.trim() : '';
+      if (!raw || raw.indexOf('CLAIMFLOW_GIST1:') !== 0) {
+        showToast('Paste a valid CLAIMFLOW_GIST1:... pairing code.', 'amber');
+        return;
+      }
+      try {
+        const decoded = decodeURIComponent(escape(atob(raw.slice('CLAIMFLOW_GIST1:'.length))));
+        const obj = JSON.parse(decoded);
+        if (!obj || !obj.t || !obj.g) throw new Error('Incomplete pairing code');
+        gistSync.cfg.enabled = true;
+        gistSync.cfg.token = String(obj.t).trim();
+        gistSync.cfg.gistId = String(obj.g).trim();
+        gistSync.cfg.syncReceipts = obj.r !== false;
+        gistSync.cfg.lastReceiptsHash = '';
+        saveGistConfig();
+        if (inp) inp.value = '';
+        await syncGistTwoWay(false, false);
+      } catch (err) {
+        showToast('Invalid pairing code: ' + err.message, 'red');
+      }
+    }
+
+    function disconnectGitHubGist() {
+      openModal({
+        title: 'Disconnect Private GitHub Gist?',
+        message: 'Stops automatic Gist syncing on this device. Your local trips and private Gist remain untouched.',
+        confirmLabel: 'Disconnect',
+        confirmClass: 'btn-red-soft',
+        onConfirm: function () {
+          gistSync.cfg.enabled = false;
+          gistSync.cfg.token = '';
+          gistSync.cfg.gistId = '';
+          gistSync.cfg.lastReceiptsHash = '';
+          gistSync.pendingPush = false;
+          gistSync.lastError = '';
+          saveGistConfig();
+          renderCloudStatusUI();
+          if (document.documentElement.getAttribute('data-layout') === 'mobile') renderWorkspace();
+          showToast('Disconnected Private GitHub Gist.', 'amber');
+        }
+      });
     }
 
     function loadCloudPrefs() {
@@ -7494,6 +7887,7 @@
 
     async function initCloudSync() {
       loadCloudPrefs();
+      loadOneDriveConfig();
       loadGistConfig();
       const chkW = document.getElementById('chk-cloud-autowrite');
       const chkP = document.getElementById('chk-cloud-autopull');
@@ -7502,6 +7896,13 @@
       if (chkP) chkP.checked = !!cloudSync.prefs.autoPull;
       if (chkE) chkE.checked = cloudSync.prefs.embedReceipts !== false;
 
+      const chkOdPush = document.getElementById('chk-od-autopush');
+      const chkOdPull = document.getElementById('chk-od-autopull');
+      const chkOdRec = document.getElementById('chk-od-receipts');
+      if (chkOdPush) chkOdPush.checked = oneDriveSync.cfg.autoPush !== false;
+      if (chkOdPull) chkOdPull.checked = oneDriveSync.cfg.autoPull !== false;
+      if (chkOdRec) chkOdRec.checked = oneDriveSync.cfg.syncReceipts !== false;
+
       const chkGPush = document.getElementById('chk-gist-autopush');
       const chkGPull = document.getElementById('chk-gist-autopull');
       const chkGRec = document.getElementById('chk-gist-receipts');
@@ -7509,26 +7910,29 @@
       if (chkGPull) chkGPull.checked = gistSync.cfg.autoPull !== false;
       if (chkGRec) chkGRec.checked = gistSync.cfg.syncReceipts !== false;
 
+      const handledOdCallback = await handleOneDriveOAuthCallback();
+      if (!handledOdCallback && oneDriveSync.cfg.enabled && oneDriveSync.cfg.clientId && (oneDriveSync.cfg.accessToken || oneDriveSync.cfg.refreshToken) && oneDriveSync.cfg.autoPull !== false) {
+        syncOneDriveTwoWay(true, false);
+      }
+
       if (gistSync.cfg.enabled && gistSync.cfg.token && gistSync.cfg.gistId && gistSync.cfg.autoPull !== false) {
         syncGistTwoWay(true, false);
       }
 
-      if (!window.showOpenFilePicker || !window.showSaveFilePicker) {
-        renderCloudStatusUI();
-        return;
-      }
-      try {
-        const saved = await idbLoadHandle();
-        if (saved) {
-          cloudSync.handle = saved;
-          cloudSync.fileName = saved.name || 'claimflow-db.json';
-          const perm = saved.queryPermission ? await saved.queryPermission({ mode: 'readwrite' }) : 'prompt';
-          cloudSync.needsReconnect = (perm !== 'granted');
-          if (!cloudSync.needsReconnect) {
-            await checkCloudFileUpdates();
+      if (window.showOpenFilePicker && window.showSaveFilePicker) {
+        try {
+          const saved = await idbLoadHandle();
+          if (saved) {
+            cloudSync.handle = saved;
+            cloudSync.fileName = saved.name || 'claimflow-db.json';
+            const perm = saved.queryPermission ? await saved.queryPermission({ mode: 'readwrite' }) : 'prompt';
+            cloudSync.needsReconnect = (perm !== 'granted');
+            if (!cloudSync.needsReconnect) {
+              await checkCloudFileUpdates();
+            }
           }
-        }
-      } catch (e) {}
+        } catch (e) {}
+      }
       renderCloudStatusUI();
     }
 
@@ -7550,6 +7954,80 @@
       const statusEl = document.getElementById('cloud-fs-status');
       const actionsEl = document.getElementById('cloud-fs-actions');
       const fsSupported = !!(window.showOpenFilePicker && window.showSaveFilePicker);
+
+      // Update Direct OneDrive API Auto-Sync UI
+      const odConnected = !!(oneDriveSync.cfg.enabled && oneDriveSync.cfg.clientId && (oneDriveSync.cfg.accessToken || oneDriveSync.cfg.refreshToken));
+      const odPill = document.getElementById('od-mode-pill');
+      const odBox = document.getElementById('od-status-box');
+      const odActs = document.getElementById('od-connected-actions');
+      const odSetup = document.getElementById('od-setup-panel');
+      const odUriEl = document.getElementById('od-redirect-uri-display');
+      const odWarnEl = document.getElementById('od-https-warning');
+      const odCidInp = document.getElementById('od-client-id-input');
+      const odTenSel = document.getElementById('od-tenant-select');
+      const odFldInp = document.getElementById('od-folder-input');
+
+      if (odUriEl) odUriEl.value = getOneDriveRedirectUri();
+      if (odWarnEl) {
+        const isHttp = window.location.protocol === 'https:' || window.location.protocol === 'http:';
+        odWarnEl.style.display = isHttp ? 'none' : 'block';
+        if (!isHttp) {
+          odWarnEl.innerHTML = '<strong>Note:</strong> This page is currently open from <code>' + esc(window.location.protocol) + '</code>. Microsoft OAuth requires hosting this single HTML file on free HTTPS (e.g. GitHub Pages, Cloudflare Pages, or Netlify Drop) so Microsoft can redirect back on iPhone.';
+        }
+      }
+      if (odCidInp && !odCidInp.value && oneDriveSync.cfg.clientId) odCidInp.value = oneDriveSync.cfg.clientId;
+      if (odTenSel && oneDriveSync.cfg.tenant) odTenSel.value = oneDriveSync.cfg.tenant;
+      if (odFldInp && oneDriveSync.cfg.folder) odFldInp.value = oneDriveSync.cfg.folder;
+
+      if (odPill) {
+        if (oneDriveSync.busy) {
+          odPill.className = 'pill pill-sky';
+          odPill.textContent = 'Syncing…';
+        } else if (odConnected && oneDriveSync.lastError) {
+          odPill.className = 'pill pill-red';
+          odPill.textContent = 'Needs Attention';
+        } else if (odConnected && oneDriveSync.pendingPush) {
+          odPill.className = 'pill pill-amber';
+          odPill.textContent = 'Offline Queued';
+        } else if (odConnected) {
+          odPill.className = 'pill pill-green';
+          odPill.textContent = 'OneDrive Auto-Sync ✓';
+        } else {
+          odPill.className = 'pill pill-neutral';
+          odPill.textContent = 'Not Connected';
+        }
+      }
+
+      if (odBox) {
+        if (odConnected) {
+          const acct = oneDriveSync.cfg.accountEmail || oneDriveSync.cfg.accountName || 'Microsoft Account';
+          const folderLbl = sanitizeOneDriveFolder(oneDriveSync.cfg.folder);
+          const lastOdStr = oneDriveSync.cfg.lastSyncedAt ? fmtTimeHHMM(oneDriveSync.cfg.lastSyncedAt) : 'Just connected';
+          odBox.innerHTML = '<div style="font-size:12px;">'
+            + '<strong>' + esc(acct) + '</strong> · <span class="mono" style="font-size:11px;color:var(--sky-text);">OneDrive/' + esc(folderLbl) + '</span>'
+            + '<div style="font-size:11px;color:' + (oneDriveSync.lastError ? 'var(--red-text)' : 'var(--text-subtle)') + ';">'
+            + (oneDriveSync.lastError ? ('Error: ' + esc(oneDriveSync.lastError)) : ('Last synced: ' + lastOdStr + ' · ' + store.trips.length + ' trip(s) · ' + receiptVault.photos.length + ' photo(s)'))
+            + '</div></div>'
+            + '<span class="pill ' + (oneDriveSync.lastError ? 'pill-red' : 'pill-green') + '">' + (oneDriveSync.busy ? '↻ Syncing' : (oneDriveSync.pendingPush ? 'Queued' : 'Auto ✓')) + '</span>';
+        } else {
+          odBox.innerHTML = '<div style="font-size:12px;color:var(--text-muted);">Auto-save trips &amp; receipt photos directly to <code>OneDrive/' + esc(sanitizeOneDriveFolder(oneDriveSync.cfg.folder)) + '/</code> from iPhone Safari and Laptop with <strong>zero file pickers</strong> and silent token refresh.</div>';
+        }
+      }
+
+      if (odActs) {
+        odActs.style.display = odConnected ? 'flex' : 'none';
+        if (odConnected) {
+          odActs.innerHTML =
+            '<button type="button" class="btn btn-sm btn-primary" onclick="syncOneDriveTwoWay(false,false)"' + (oneDriveSync.busy ? ' disabled' : '') + '>↻ Sync OneDrive Now</button>'
+            + '<button type="button" class="btn btn-sm btn-sky-soft" onclick="copyOneDriveSetupCode()">📲 Copy Setup Code</button>'
+            + (oneDriveSync.lastError ? '<button type="button" class="btn btn-sm btn-soft" onclick="startOneDriveLogin()">🔓 Re-Sign In</button>' : '')
+            + '<button type="button" class="btn btn-sm btn-red-soft" onclick="disconnectOneDrive()">Disconnect</button>';
+        }
+      }
+
+      if (odSetup) {
+        odSetup.style.display = odConnected ? 'none' : 'flex';
+      }
 
       // Update Private GitHub Gist Auto-Sync UI
       const gistConnected = !!(gistSync.cfg.enabled && gistSync.cfg.token && gistSync.cfg.gistId);
@@ -7606,15 +8084,17 @@
         gistSetup.style.display = gistConnected ? 'none' : 'flex';
       }
 
-      // Topbar Cloud Sync Button reflects Gist OR Desktop Folder Sync
+      // Topbar Cloud Sync Button reflects OneDrive OR Gist OR Desktop Folder Sync
       if (btn) {
-        const isLinked = gistConnected || !!(cloudSync.handle && !cloudSync.needsReconnect);
-        const isWarn = (gistConnected && !!gistSync.lastError) || !!(cloudSync.handle && cloudSync.needsReconnect);
+        const isLinked = odConnected || gistConnected || !!(cloudSync.handle && !cloudSync.needsReconnect);
+        const isWarn = (odConnected && !!oneDriveSync.lastError) || (gistConnected && !!gistSync.lastError) || !!(cloudSync.handle && cloudSync.needsReconnect);
         btn.classList.toggle('linked', isLinked && !isWarn);
         btn.classList.toggle('reconnect', isWarn);
       }
       if (btnTxt) {
-        if (gistConnected) {
+        if (odConnected) {
+          btnTxt.textContent = oneDriveSync.busy ? 'Syncing…' : (oneDriveSync.lastError ? 'Retry OneDrive' : 'OneDrive ✓');
+        } else if (gistConnected) {
           btnTxt.textContent = gistSync.busy ? 'Syncing…' : (gistSync.lastError ? 'Retry Sync' : 'Auto-Synced');
         } else if (cloudSync.handle) {
           btnTxt.textContent = cloudSync.needsReconnect ? 'Reconnect Cloud' : 'Synced';
@@ -7750,6 +8230,13 @@
     }
 
     function scheduleCloudWrite(immediate) {
+      if (oneDriveSync.cfg.enabled && oneDriveSync.cfg.clientId && (oneDriveSync.cfg.accessToken || oneDriveSync.cfg.refreshToken) && oneDriveSync.cfg.autoPush !== false) {
+        oneDriveSync.pendingPush = true;
+        clearTimeout(oneDriveSync.pushTimer);
+        oneDriveSync.pushTimer = setTimeout(function () {
+          syncOneDriveTwoWay(true, true);
+        }, immediate ? 350 : 2500);
+      }
       if (gistSync.cfg.enabled && gistSync.cfg.token && gistSync.cfg.gistId && gistSync.cfg.autoPush !== false) {
         gistSync.pendingPush = true;
         clearTimeout(gistSync.pushTimer);
@@ -7776,6 +8263,12 @@
     }
 
     async function checkCloudFileUpdates(force) {
+      if (oneDriveSync.cfg.enabled && oneDriveSync.cfg.clientId && (oneDriveSync.cfg.accessToken || oneDriveSync.cfg.refreshToken) && (force || oneDriveSync.cfg.autoPull !== false)) {
+        const nowOd = Date.now();
+        if (force || oneDriveSync.pendingPush || (nowOd - oneDriveSync.lastPullCheckAt > 15000)) {
+          syncOneDriveTwoWay(true, !!oneDriveSync.pendingPush);
+        }
+      }
       if (gistSync.cfg.enabled && gistSync.cfg.token && gistSync.cfg.gistId && (force || gistSync.cfg.autoPull !== false)) {
         const now = Date.now();
         if (force || gistSync.pendingPush || (now - gistSync.lastPullCheckAt > 15000)) {
@@ -10923,6 +11416,10 @@
       const m = (mode === 'dark' || mode === 'grey') ? mode : 'light';
       document.documentElement.classList.toggle('dark', m === 'dark');
       document.documentElement.classList.toggle('grey', m === 'grey');
+      const barHex = m === 'dark' ? '#0b1120' : (m === 'grey' ? '#1e2228' : '#f4f6fa');
+      document.documentElement.style.backgroundColor = barHex;
+      const metaTheme = document.getElementById('meta-theme-color');
+      if (metaTheme) metaTheme.setAttribute('content', barHex);
       try { localStorage.setItem(THEME_KEY, m); } catch (e) {}
       renderThemeIcon();
     }
@@ -10976,6 +11473,9 @@
 
     window.addEventListener('focus', function () { checkCloudFileUpdates(); });
     window.addEventListener('online', function () {
+      if (oneDriveSync.cfg.enabled && (oneDriveSync.pendingPush || oneDriveSync.cfg.autoPull !== false)) {
+        syncOneDriveTwoWay(true, !!oneDriveSync.pendingPush);
+      }
       if (gistSync.cfg.enabled && (gistSync.pendingPush || gistSync.cfg.autoPull !== false)) {
         syncGistTwoWay(true, !!gistSync.pendingPush);
       }
