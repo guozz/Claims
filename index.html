@@ -470,6 +470,8 @@
     .section-sep { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); }
 
     /* Destination Preset Strip */
+    .preset-head-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 6px; }
+    .preset-head-row .field-label { margin-bottom: 0; }
     .preset-strip { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
     .preset-btn {
       display: inline-flex; align-items: center; gap: 6px; padding: 6px 10px;
@@ -486,6 +488,57 @@
       background: rgba(15, 23, 42, 0.08);
     }
     .preset-btn.active .tz-tag { background: rgba(255, 255, 255, 0.22); color: #fff; }
+    .preset-del-x {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 17px; height: 17px; margin-left: 1px; border-radius: 999px;
+      font-size: 10px; line-height: 1; opacity: 0.72; transition: all 0.14s ease;
+    }
+    .preset-del-x:hover { opacity: 1; background: rgba(239, 68, 68, 0.22); color: var(--red); }
+    .preset-btn.active .preset-del-x:hover { background: rgba(255, 255, 255, 0.28); color: #fff; }
+    .preset-cap-tag {
+      font-family: var(--font-mono); font-size: 10px; font-weight: 800;
+      padding: 1px 6px; border-radius: 999px;
+      background: var(--amber-soft); color: var(--amber-text); border: 1px solid var(--amber-border);
+    }
+    .preset-btn.active .preset-cap-tag {
+      background: rgba(255, 255, 255, 0.24); color: #ffffff; border-color: rgba(255, 255, 255, 0.35);
+    }
+    .preset-btn.preset-custom-btn {
+      border-style: dashed; border-color: var(--accent-border); color: var(--accent);
+      background: color-mix(in srgb, var(--accent-soft) 65%, var(--surface-2));
+    }
+    .preset-btn.preset-custom-btn.active {
+      border-style: solid; background: var(--accent); border-color: var(--accent); color: #ffffff;
+    }
+    .setup-badges-bar {
+      display: flex; flex-wrap: wrap; align-items: center; gap: 7px;
+      margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border);
+    }
+    .setup-badge-item {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 5px 10px; border-radius: 999px;
+      font-size: 11.5px; font-weight: 700;
+      background: var(--surface-2); border: 1px solid var(--border); color: var(--text-muted);
+    }
+    .setup-badge-item.cap-badge {
+      background: var(--amber-soft); border-color: var(--amber-border); color: var(--amber-text);
+    }
+    .setup-badge-item.curr-badge {
+      background: var(--accent-soft); border-color: var(--accent-border); color: var(--accent);
+    }
+    .setup-badge-item.tz-badge {
+      background: var(--sky-soft); border-color: var(--sky-border); color: var(--sky-text);
+    }
+    .custom-dest-panel {
+      margin-top: 12px; padding: 11px 12px; border-radius: 12px;
+      background: color-mix(in srgb, var(--accent-soft) 45%, var(--surface-2));
+      border: 1px solid var(--accent-border);
+      display: flex; flex-direction: column; gap: 9px;
+    }
+    .custom-dest-head {
+      display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap;
+      font-size: 11.5px; font-weight: 800; color: var(--accent);
+    }
 
     .chip-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 10px; }
     .chip-btn {
@@ -1999,9 +2052,9 @@
       <span class="mnav-ico"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></span>
       <span>All Days</span>
     </button>
-    <button type="button" id="mnav-fixed" class="mnav-btn" onclick="setMobileView('fixed')">
-      <span class="mnav-ico"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg></span>
-      <span>Fixed</span>
+    <button type="button" id="mnav-setup" class="mnav-btn" onclick="setMobileView('setup')">
+      <span class="mnav-ico"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg></span>
+      <span>Setup</span>
     </button>
     <button type="button" id="mnav-photos" class="mnav-btn" onclick="openReceiptModal()">
       <span class="mnav-ico"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg></span>
@@ -2508,6 +2561,8 @@
     const LAYOUT_PREF_KEY = 'claimflow_v3_layout_mode';
     const BW_MODE_KEY = 'claimflow_v3_bw_mode';
     const PRINT_PREFS_KEY = 'claimflow_v4_print_prefs';
+    const CUSTOM_PRESETS_KEY = 'claimflow_v4_custom_presets';
+    const FIXED_OVERNIGHT_RATE = 50;
 
     const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -2530,12 +2585,12 @@
     ];
 
     const ROUTE_PRESETS = [
-      { id: 'SG-TYO', label: 'SG↔TYO', country: 'Japan',         destCode: 'TYO', currency: 'JPY' },
-      { id: 'SG-BKK', label: 'SG↔BKK', country: 'Thailand',      destCode: 'BKK', currency: 'THB' },
-      { id: 'SG-VN',  label: 'SG↔VN',  country: 'Vietnam',       destCode: 'VN',  currency: 'VND' },
-      { id: 'SG-PNH', label: 'SG↔PNH', country: 'Cambodia',      destCode: 'PNH', currency: 'USD' },
-      { id: 'SG-KUL', label: 'SG↔KUL', country: 'Malaysia',      destCode: 'KUL', currency: 'MYR' },
-      { id: 'SG-ORD', label: 'SG↔ORD', country: 'USA (Chicago)', destCode: 'ORD', currency: 'USD' }
+      { id: 'SG-TYO', label: 'SG↔TYO', country: 'Japan',         destCode: 'TYO', currency: 'JPY', mealCap: 100 },
+      { id: 'SG-BKK', label: 'SG↔BKK', country: 'Thailand',      destCode: 'BKK', currency: 'THB', mealCap: 50 },
+      { id: 'SG-VN',  label: 'SG↔VN',  country: 'Vietnam',       destCode: 'VN',  currency: 'VND', mealCap: 50 },
+      { id: 'SG-PNH', label: 'SG↔PNH', country: 'Cambodia',      destCode: 'PNH', currency: 'USD', mealCap: 50 },
+      { id: 'SG-KUL', label: 'SG↔KUL', country: 'Malaysia',      destCode: 'KUL', currency: 'MYR', mealCap: 50 },
+      { id: 'SG-ORD', label: 'SG↔ORD', country: 'USA (Chicago)', destCode: 'ORD', currency: 'USD', mealCap: 100 }
     ];
 
     const TIME_OFF_SUBCATS = {
@@ -2547,6 +2602,99 @@
       'setup', 'fxAnchors', 'airFare', 'hotel', 'sgTransport',
       'overseasTransport', 'data', 'flights', 'otherMisc', 'meals', 'timeOff'
     ];
+
+    const SETUP_SECTION_KEYS = [
+      'setup', 'fxAnchors', 'airFare', 'hotel', 'data', 'flights', 'otherMisc', 'timeOff'
+    ];
+
+    function getDefaultCollapsedMap() {
+      const map = {};
+      SETUP_SECTION_KEYS.forEach(function (k) { map[k] = true; });
+      return map;
+    }
+
+    /** Daily meal allowance rule: SGD 100 for Japan & US, SGD 50 for all other destinations */
+    function getDefaultMealCapForDestination(destCode, currency, route) {
+      const code = String(destCode || '').trim().toUpperCase();
+      const curr = String(currency || '').trim().toUpperCase();
+      const rStr = String(route || '').trim().toUpperCase();
+      if (curr === 'JPY' || ['TYO', 'NRT', 'HND', 'KIX', 'OSA', 'JP'].indexOf(code) >= 0) return 100;
+      if (['ORD', 'JFK', 'SFO', 'LAX', 'NYC', 'SEA', 'BOS', 'DFW', 'ATL', 'IAD', 'EWR', 'US', 'USA'].indexOf(code) >= 0) return 100;
+      if (/\b(JP|JPN|JAPAN|TYO|TOKYO|OSAKA|KIX|NRT|HND|US|USA|ORD|CHICAGO|NYC|JFK|SFO|LAX|AMERICA)\b/.test(rStr)) return 100;
+      return 50;
+    }
+
+    function loadCustomRoutePresets() {
+      try {
+        const raw = localStorage.getItem(CUSTOM_PRESETS_KEY);
+        const arr = raw ? JSON.parse(raw) : [];
+        if (!Array.isArray(arr)) return [];
+        return arr.filter(function (p) { return p && p.id && p.label; }).map(function (p) {
+          const curr = String(p.currency || 'USD').trim().toUpperCase();
+          const capNum = parseFloat(p.mealCap);
+          const tzNum = parseFloat(p.tzDiffFromSgt);
+          return {
+            id: String(p.id),
+            label: String(p.label).trim(),
+            country: String(p.country || 'Custom').trim(),
+            destCode: String(p.destCode || '').trim().toUpperCase(),
+            currency: curr,
+            mealCap: Number.isFinite(capNum) && capNum >= 0 ? capNum : getDefaultMealCapForDestination(p.destCode, curr, p.label),
+            tzDiffFromSgt: Number.isFinite(tzNum) ? tzNum : null,
+            custom: true
+          };
+        });
+      } catch (e) { return []; }
+    }
+
+    function saveCustomRoutePresets(list) {
+      try {
+        localStorage.setItem(CUSTOM_PRESETS_KEY, JSON.stringify(list || []));
+      } catch (e) {}
+    }
+
+    function getAllRoutePresets() {
+      return ROUTE_PRESETS.concat(loadCustomRoutePresets());
+    }
+
+    function findRoutePresetById(presetId) {
+      return getAllRoutePresets().find(function (p) { return p.id === presetId; }) || null;
+    }
+
+    function mergeCustomRoutePresets(incoming) {
+      if (!Array.isArray(incoming) || incoming.length === 0) return 0;
+      const current = loadCustomRoutePresets();
+      let changed = 0;
+      incoming.forEach(function (inc) {
+        if (!inc || !inc.label) return;
+        const cleanLabel = String(inc.label).trim();
+        const curr = String(inc.currency || 'USD').trim().toUpperCase();
+        const capNum = parseFloat(inc.mealCap);
+        const tzNum = parseFloat(inc.tzDiffFromSgt);
+        const rec = {
+          id: String(inc.id || uid('preset')),
+          label: cleanLabel,
+          country: String(inc.country || 'Custom').trim(),
+          destCode: String(inc.destCode || '').trim().toUpperCase(),
+          currency: curr,
+          mealCap: Number.isFinite(capNum) && capNum >= 0 ? capNum : getDefaultMealCapForDestination(inc.destCode, curr, cleanLabel),
+          tzDiffFromSgt: Number.isFinite(tzNum) ? tzNum : null,
+          custom: true
+        };
+        const idx = current.findIndex(function (x) {
+          return x.id === rec.id || x.label.toLowerCase() === rec.label.toLowerCase();
+        });
+        if (idx < 0) {
+          current.push(rec);
+          changed++;
+        } else if (current[idx].currency !== rec.currency || current[idx].mealCap !== rec.mealCap || current[idx].destCode !== rec.destCode || current[idx].tzDiffFromSgt !== rec.tzDiffFromSgt) {
+          current[idx] = rec;
+          changed++;
+        }
+      });
+      if (changed > 0) saveCustomRoutePresets(current);
+      return changed;
+    }
 
     function uid(prefix) {
       return (prefix || 'id') + '_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 7);
@@ -2665,8 +2813,105 @@
 
     function getAirportDispCode(code) {
       if (!code || code === 'SG' || code === 'SIN') return 'SIN';
+      if (code === 'CUSTOM') {
+        const r = (typeof state !== 'undefined' && state && state.trip && state.trip.route) ? String(state.trip.route) : '';
+        const parts = r.split(/[-–—↔>/]+/).map(function (s) { return s.trim().toUpperCase(); }).filter(Boolean);
+        const cand = parts.length > 1 ? parts[parts.length - 1] : (parts[0] || 'DEST');
+        return cand.replace(/[^A-Z0-9]/g, '').slice(0, 5) || 'DEST';
+      }
       const z = AIRPORT_ZONES.find(function (item) { return item.code === code || item.disp === code; });
       return z ? (z.disp || z.code) : code;
+    }
+
+    function getZoneAbbr(code, isoDate) {
+      const c = (code === 'SIN') ? 'SG' : (code || 'SG');
+      if (c === 'SG') return 'SGT';
+      if (c === 'TYO') return 'JST';
+      if (c === 'BKK' || c === 'VN' || c === 'SGN' || c === 'PNH') return 'ICT';
+      if (c === 'KUL') return 'MYT';
+      if (c === 'ORD') return isUsDst(isoDate) ? 'CDT' : 'CST';
+      const off = getUtcOffset(c, isoDate);
+      return formatUtcLabel(off);
+    }
+
+    /** US Daylight Saving Time check: 2nd Sunday of March to 1st Sunday of November */
+    function isUsDst(isoDate) {
+      const dt = parseISODate(isoDate) || new Date();
+      const y = dt.getFullYear();
+      const mar1 = new Date(y, 2, 1);
+      const dstStart = new Date(y, 2, 1 + ((7 - mar1.getDay()) % 7) + 7);
+      const nov1 = new Date(y, 10, 1);
+      const dstEnd = new Date(y, 10, 1 + ((7 - nov1.getDay()) % 7));
+      return dt >= dstStart && dt < dstEnd;
+    }
+
+    /** Returns UTC offset in hours for a given airport code & date */
+    function getUtcOffset(code, isoDate) {
+      if (code === 'CUSTOM') {
+        const diff = (typeof state !== 'undefined' && state && state.trip && Number.isFinite(parseFloat(state.trip.tzDiffFromSgt)))
+          ? parseFloat(state.trip.tzDiffFromSgt)
+          : 0;
+        return round2(8 + diff);
+      }
+      const norm = code === 'SIN' ? 'SG' : (code === 'SGN' ? 'VN' : code);
+      const z = AIRPORT_ZONES.find(function (item) { return item.code === norm || item.disp === code; });
+      if (!z) return 8;
+      if (z.dstRule === 'US') {
+        return isUsDst(isoDate) ? z.stdOffset + 1 : z.stdOffset;
+      }
+      return z.stdOffset;
+    }
+
+    function formatTzDiffFromSgt(offsetHours) {
+      const diff = round2(offsetHours - 8);
+      if (diff === 0) return '0 HR';
+      const txt = Math.abs(diff - Math.round(diff)) < 1e-6 ? String(Math.round(diff)) : String(diff);
+      return (diff > 0 ? '+' : '') + txt + ' HR';
+    }
+
+    function formatUtcLabel(offsetHours) {
+      const v = round2(offsetHours);
+      const txt = Math.abs(v - Math.round(v)) < 1e-6 ? String(Math.round(v)) : String(v);
+      return 'UTC' + (v >= 0 ? '+' : '') + txt;
+    }
+
+    function getZoneShortLabel(code, isoDate) {
+      const off = getUtcOffset(code, isoDate);
+      if (code === 'SG') return 'SGT (UTC+8)';
+      if (code === 'TYO') return 'JST (UTC+9)';
+      if (code === 'BKK') return 'ICT (UTC+7)';
+      if (code === 'VN') return 'ICT (UTC+7)';
+      if (code === 'PNH') return 'ICT (UTC+7)';
+      if (code === 'KUL') return 'MYT (UTC+8)';
+      if (code === 'ORD') return (isUsDst(isoDate) ? 'CDT (UTC-5)' : 'CST (UTC-6)');
+      if (code === 'CUSTOM') return getAirportDispCode('CUSTOM') + ' (' + formatUtcLabel(off) + ')';
+      return code + ' (' + formatUtcLabel(off) + ')';
+    }
+
+    function getCurrentTripTzDiff() {
+      if (state.trip.presetId === 'CUSTOM') {
+        const n = parseFloat(state.trip.tzDiffFromSgt);
+        return Number.isFinite(n) ? round2(n) : 0;
+      }
+      const preset = findRoutePresetById(state.trip.presetId);
+      if (preset) {
+        if (preset.tzDiffFromSgt !== null && preset.tzDiffFromSgt !== undefined && Number.isFinite(Number(preset.tzDiffFromSgt))) {
+          return round2(Number(preset.tzDiffFromSgt));
+        }
+        if (preset.destCode) {
+          return round2(getUtcOffset(preset.destCode, state.trip.startDate) - 8);
+        }
+      }
+      const n = parseFloat(state.trip.tzDiffFromSgt);
+      return Number.isFinite(n) ? round2(n) : 0;
+    }
+
+    function getTripDestAirportCode() {
+      if (state.trip.presetId === 'CUSTOM') return 'CUSTOM';
+      const preset = findRoutePresetById(state.trip.presetId);
+      if (preset && preset.destCode) return preset.destCode;
+      if (preset && preset.tzDiffFromSgt !== null && preset.tzDiffFromSgt !== undefined) return 'CUSTOM';
+      return 'TYO';
     }
 
     function getZoneAbbr(code, isoDate) {
@@ -3132,7 +3377,7 @@
           endDate: '2026-10-10',
           foreignCurrency: 'JPY',
           dailyMealCap: 100.00,
-          overnightRate: 50.00
+          overnightRate: FIXED_OVERNIGHT_RATE
         },
         fxAnchors: [
           { id: 'fx_transit', name: 'JP Transit Card', foreignAmount: 2900, sgdAmount: 24.46 },
@@ -3235,15 +3480,21 @@
           foldedMap: {},
           manualDescriptions: {}
         },
-        ui: { collapsed: {} }
+        ui: { collapsed: getDefaultCollapsedMap(), setupDefaultsApplied: true }
       };
     }
 
     function createBlankTripSkeleton(prevTrip) {
       const presetId = (prevTrip && prevTrip.trip && prevTrip.trip.presetId) || 'SG-TYO';
-      const preset = ROUTE_PRESETS.find(function (p) { return p.id === presetId; }) || ROUTE_PRESETS[0];
-      const cap = (prevTrip && prevTrip.trip && prevTrip.trip.dailyMealCap != null) ? prevTrip.trip.dailyMealCap : 100.00;
-      const rate = (prevTrip && prevTrip.trip && prevTrip.trip.overnightRate != null) ? prevTrip.trip.overnightRate : 50.00;
+      const preset = findRoutePresetById(presetId) || ROUTE_PRESETS[0];
+      const cap = Number.isFinite(Number(preset.mealCap))
+        ? Number(preset.mealCap)
+        : getDefaultMealCapForDestination(preset.destCode, preset.currency, preset.label);
+      const rate = FIXED_OVERNIGHT_RATE;
+      const destCode = preset.destCode || (preset.tzDiffFromSgt != null ? 'CUSTOM' : 'TYO');
+      const tzDiff = (preset.tzDiffFromSgt != null && Number.isFinite(Number(preset.tzDiffFromSgt)))
+        ? Number(preset.tzDiffFromSgt)
+        : (preset.destCode ? round2(getUtcOffset(preset.destCode, toISODate(new Date())) - 8) : 0);
 
       const today = new Date();
       const startIso = toISODate(today);
@@ -3271,7 +3522,8 @@
           endDate: endIso,
           foreignCurrency: preset.currency,
           dailyMealCap: cap,
-          overnightRate: rate
+          overnightRate: rate,
+          tzDiffFromSgt: tzDiff
         },
         fxAnchors: [{ id: fxId, name: 'Card Ref 1', foreignAmount: 1000, sgdAmount: '' }],
         airFare: { includeInTotal: false, items: [{ id: uid('rc'), label: '', currency: 'SGD', amountExpr: '', deductionExpr: '', deductionReason: '', fxAnchorId: fxId, customRate: '' }] },
@@ -3294,19 +3546,30 @@
           manualOverride: false,
           overrideCount: 0,
           legs: [
-            { id: uid('fl'), label: 'Outbound', date: startIso, fromCode: 'SG', toCode: preset.destCode, depLocal: '', arrLocal: '', arrDayOffset: 0 },
-            { id: uid('fl'), label: 'Return', date: endIso, fromCode: preset.destCode, toCode: 'SG', depLocal: '', arrLocal: '', arrDayOffset: 0 }
+            { id: uid('fl'), label: 'Outbound', date: startIso, fromCode: 'SG', toCode: destCode, depLocal: '', arrLocal: '', arrDayOffset: 0 },
+            { id: uid('fl'), label: 'Return', date: endIso, fromCode: destCode, toCode: 'SG', depLocal: '', arrLocal: '', arrDayOffset: 0 }
           ]
         },
         timeOff: { countPreWork: true, displayZone: 'SGT', targetLeaveDate: leaveIso, entries: [] },
         meals: mealDays,
         console: { formatMode: 'compact', mealOutputMode: 'daily', includeRefPrefix: false, autoCompleteOnCopy: true, filterTab: 'all', completedMap: {}, copiedMap: {}, foldedMap: {}, manualDescriptions: {} },
-        ui: { collapsed: {} }
+        ui: { collapsed: getDefaultCollapsedMap(), setupDefaultsApplied: true }
       };
     }
 
     function normalizeTrip(t) {
-      t.trip = Object.assign({ presetId: 'SG-TYO', ref: '', route: 'SG–TYO', startDate: '', endDate: '', foreignCurrency: 'JPY', dailyMealCap: 100, overnightRate: 50 }, t.trip || {});
+      t.trip = Object.assign({ presetId: 'SG-TYO', ref: '', route: 'SG–TYO', startDate: '', endDate: '', foreignCurrency: 'JPY', dailyMealCap: 100, overnightRate: FIXED_OVERNIGHT_RATE, tzDiffFromSgt: null }, t.trip || {});
+      t.trip.overnightRate = FIXED_OVERNIGHT_RATE;
+      if (t.trip.tzDiffFromSgt === null || t.trip.tzDiffFromSgt === undefined || !Number.isFinite(Number(t.trip.tzDiffFromSgt))) {
+        const pInit = findRoutePresetById(t.trip.presetId);
+        if (pInit && pInit.tzDiffFromSgt != null && Number.isFinite(Number(pInit.tzDiffFromSgt))) {
+          t.trip.tzDiffFromSgt = Number(pInit.tzDiffFromSgt);
+        } else if (pInit && pInit.destCode) {
+          t.trip.tzDiffFromSgt = round2(getUtcOffset(pInit.destCode, t.trip.startDate) - 8);
+        } else {
+          t.trip.tzDiffFromSgt = 0;
+        }
+      }
       // Migrate legacy t.misc -> t.data (Data/Telco) + t.otherMisc (Misc > Other)
       if (!t.data) {
         const legacyItems = (t.misc && Array.isArray(t.misc.items)) ? t.misc.items : [];
@@ -3361,6 +3624,11 @@
       });
       t.console = Object.assign({ formatMode: 'compact', mealOutputMode: 'daily', includeRefPrefix: false, autoCompleteOnCopy: true, filterTab: 'all', completedMap: {}, copiedMap: {}, foldedMap: {}, manualDescriptions: {} }, t.console || {});
       t.ui = Object.assign({ collapsed: {} }, t.ui || {});
+      if (!t.ui.collapsed || typeof t.ui.collapsed !== 'object') t.ui.collapsed = {};
+      if (!t.ui.setupDefaultsApplied) {
+        SETUP_SECTION_KEYS.forEach(function (k) { t.ui.collapsed[k] = true; });
+        t.ui.setupDefaultsApplied = true;
+      }
       if (!t.id) t.id = uid('trip');
       if (!t.updatedAt) t.updatedAt = Date.now();
       return t;
@@ -3398,13 +3666,13 @@
     let toilDraft = null;
     function getToilDraft() {
       if (!toilDraft || toilDraft._tripId !== state.id) {
-        const preset = ROUTE_PRESETS.find(function (p) { return p.id === state.trip.presetId; }) || ROUTE_PRESETS[0];
+        const destCode = getTripDestAirportCode();
         toilDraft = {
           _tripId: state.id,
           type: 'Travel',
           subCategory: 'Outbound Flight',
           fromCode: 'SG',
-          toCode: preset.destCode,
+          toCode: destCode,
           tzCode: 'SG',
           date: state.trip.startDate || toISODate(new Date()),
           startTime: '07:00',
@@ -3601,33 +3869,124 @@
     }
 
     function applyRoutePreset(presetId) {
-      const preset = ROUTE_PRESETS.find(function (p) { return p.id === presetId; });
+      const preset = findRoutePresetById(presetId);
       if (!preset) return;
+      const cap = Number.isFinite(Number(preset.mealCap))
+        ? Number(preset.mealCap)
+        : getDefaultMealCapForDestination(preset.destCode, preset.currency, preset.label);
+      const tzDiff = (preset.tzDiffFromSgt !== null && preset.tzDiffFromSgt !== undefined && Number.isFinite(Number(preset.tzDiffFromSgt)))
+        ? round2(Number(preset.tzDiffFromSgt))
+        : (preset.destCode ? round2(getUtcOffset(preset.destCode, state.trip.startDate) - 8) : 0);
+
       state.trip.presetId = preset.id;
       state.trip.route = preset.label.replace('↔', '–');
       state.trip.foreignCurrency = preset.currency;
+      state.trip.dailyMealCap = cap;
+      state.trip.tzDiffFromSgt = tzDiff;
 
-      // Update default outbound/return flight airport codes if legs exist
+      const destAirport = preset.destCode || 'CUSTOM';
       if (state.flights && Array.isArray(state.flights.legs)) {
         if (state.flights.legs[0]) {
           state.flights.legs[0].fromCode = 'SG';
-          state.flights.legs[0].toCode = preset.destCode;
+          state.flights.legs[0].toCode = destAirport;
         }
         if (state.flights.legs[1]) {
-          state.flights.legs[1].fromCode = preset.destCode;
+          state.flights.legs[1].fromCode = destAirport;
           state.flights.legs[1].toCode = 'SG';
         }
       }
       persistStore(true);
       renderAll();
-      const tzOff = getUtcOffset(preset.destCode, state.trip.startDate);
-      showToast('Applied ' + preset.label + ' (' + preset.currency + ', ' + formatTzDiffFromSgt(tzOff) + ' vs SGT)', 'green');
+      showToast('Applied ' + preset.label + ' (' + preset.currency + ' · Cap $' + cap + ' · ' + formatTzDiffFromSgt(8 + tzDiff) + ' vs SGT)', 'green');
+    }
+
+    function activateCustomDestinationMode() {
+      const curTzDiff = getCurrentTripTzDiff();
+      state.trip.presetId = 'CUSTOM';
+      state.trip.tzDiffFromSgt = curTzDiff;
+      persistStore(true);
+      renderAll();
+      showToast('Custom mode enabled — edit Allowance, Currency & Time Diff.', 'indigo');
+    }
+
+    function saveCurrentDestinationAsPreset() {
+      const rawRoute = (state.trip.route || '').trim();
+      const curr = (state.trip.foreignCurrency || 'USD').trim().toUpperCase() || 'USD';
+      if (!rawRoute) {
+        showToast('Enter a Route / Title first (e.g. SG–LON or SG–ICN).', 'amber');
+        return;
+      }
+      const label = rawRoute.replace(/\s*[-–—]+\s*/, '↔');
+      const upper = rawRoute.toUpperCase();
+      let destCode = '';
+      if (state.trip.presetId !== 'CUSTOM') {
+        AIRPORT_ZONES.forEach(function (z) {
+          if (z.code === 'SG') return;
+          const re = new RegExp('\\b(' + z.code + '|' + z.disp + ')\\b');
+          if (re.test(upper)) destCode = z.code;
+        });
+      }
+      const parsedCap = parseFloat(state.trip.dailyMealCap);
+      const mealCap = (Number.isFinite(parsedCap) && parsedCap >= 0)
+        ? parsedCap
+        : getDefaultMealCapForDestination(destCode, curr, rawRoute);
+      const tzDiff = getCurrentTripTzDiff();
+
+      const list = loadCustomRoutePresets();
+      const existIdx = list.findIndex(function (p) { return p.label.toLowerCase() === label.toLowerCase(); });
+      const rec = {
+        id: existIdx >= 0 ? list[existIdx].id : uid('preset'),
+        label: label,
+        country: 'Custom',
+        destCode: destCode,
+        currency: curr,
+        mealCap: mealCap,
+        tzDiffFromSgt: tzDiff,
+        custom: true
+      };
+      if (existIdx >= 0) list[existIdx] = rec;
+      else list.push(rec);
+      saveCustomRoutePresets(list);
+      state.trip.presetId = rec.id;
+      state.trip.tzDiffFromSgt = tzDiff;
+      persistStore(true, true);
+      renderWorkspace();
+      showToast((existIdx >= 0 ? 'Updated' : 'Saved') + ' custom "' + rec.label + '" (' + curr + ' · $' + mealCap + '/d · ' + formatTzDiffFromSgt(8 + tzDiff) + ') ✓', 'green');
+    }
+
+    function deleteCustomRoutePreset(presetId, evt) {
+      if (evt) {
+        evt.preventDefault();
+        evt.stopPropagation();
+      }
+      const list = loadCustomRoutePresets();
+      const found = list.find(function (p) { return p.id === presetId; });
+      const next = list.filter(function (p) { return p.id !== presetId; });
+      saveCustomRoutePresets(next);
+      if (state.trip.presetId === presetId) {
+        state.trip.presetId = 'CUSTOM';
+        persistStore(true, false);
+      } else {
+        scheduleCloudWrite(false);
+      }
+      renderWorkspace();
+      showToast('Removed custom destination' + (found ? (' "' + found.label + '"') : '') + '.', 'amber');
     }
 
     function updateTripField(field, val, needsFullRender) {
-      if (field === 'dailyMealCap' || field === 'overnightRate') {
+      if (field === 'overnightRate') {
+        state.trip.overnightRate = FIXED_OVERNIGHT_RATE;
+        return;
+      }
+      if (field === 'dailyMealCap') {
         const n = parseFloat(val);
         state.trip[field] = Number.isFinite(n) && n >= 0 ? n : 0;
+      } else if (field === 'tzDiffFromSgt') {
+        const n = parseFloat(val);
+        state.trip.tzDiffFromSgt = Number.isFinite(n) ? Math.max(-16, Math.min(12, round2(n))) : 0;
+      } else if (field === 'foreignCurrency') {
+        const cleaned = String(val || '').replace(/[^a-zA-Z]/g, '').toUpperCase().slice(0, 6);
+        state.trip.foreignCurrency = cleaned || 'USD';
       } else {
         state.trip[field] = val;
       }
@@ -3686,6 +4045,15 @@
       persistStore(true);
       renderWorkspace();
       showToast(collapsed ? 'Closed all sections (marked Done).' : 'Expanded all sections.', 'indigo');
+    }
+
+    function setSetupSectionsCollapsed(collapsed) {
+      SETUP_SECTION_KEYS.forEach(function (k) {
+        state.ui.collapsed[k] = !!collapsed;
+      });
+      persistStore(true);
+      renderWorkspace();
+      showToast(collapsed ? 'Closed all Setup sections.' : 'Expanded all Setup sections.', 'indigo');
     }
 
     /* ==========================================================================
@@ -3751,8 +4119,8 @@
 
     function computeSummary() {
       const fxCode = (state.trip.foreignCurrency || 'JPY').trim().toUpperCase() || 'FX';
-      const cap = Number.isFinite(parseFloat(state.trip.dailyMealCap)) ? parseFloat(state.trip.dailyMealCap) : 100;
-      const overnightRate = Number.isFinite(parseFloat(state.trip.overnightRate)) ? parseFloat(state.trip.overnightRate) : 50;
+      const cap = Number.isFinite(parseFloat(state.trip.dailyMealCap)) ? parseFloat(state.trip.dailyMealCap) : 50;
+      const overnightRate = FIXED_OVERNIGHT_RATE;
 
       const airFare = calcCategory(state.airFare.items);
       const hotel = calcCategory(state.hotel.items);
@@ -4076,6 +4444,8 @@
       if (name === 'doc') return '<svg ' + a + '><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>';
       if (name === 'eye') return '<svg ' + a + '><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';
       if (name === 'layers') return '<svg ' + a + '><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>';
+      if (name === 'sliders') return '<svg ' + a + '><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg>';
+      if (name === 'bookmarkPlus') return '<svg ' + a + '><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/><line x1="12" y1="7" x2="12" y2="13"/><line x1="9" y1="10" x2="15" y2="10"/></svg>';
       if (name === 'lock') return '<svg ' + a + '><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>';
       if (name === 'unlock') return '<svg ' + a + '><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg>';
       if (name === 'paste') return '<svg ' + a + '><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg>';
@@ -4193,31 +4563,73 @@
     function renderTripSetupCard(summary) {
       const collapsed = !!state.ui.collapsed.setup;
       const range = fmtRangeNoYear(state.trip.startDate, state.trip.endDate);
-      const presetsHtml = ROUTE_PRESETS.map(function (p) {
-        const active = state.trip.presetId === p.id;
-        const off = getUtcOffset(p.destCode, state.trip.startDate);
-        return '<button type="button" class="preset-btn' + (active ? ' active' : '') + '" onclick="applyRoutePreset(\'' + p.id + '\')">'
+      const allPresets = getAllRoutePresets();
+      const isCustomMode = state.trip.presetId === 'CUSTOM' || !findRoutePresetById(state.trip.presetId);
+      const curTzDiff = getCurrentTripTzDiff();
+      const curUtcOffset = round2(8 + curTzDiff);
+
+      const presetsHtml = allPresets.map(function (p) {
+        const active = !isCustomMode && state.trip.presetId === p.id;
+        const capVal = Number.isFinite(Number(p.mealCap)) ? Number(p.mealCap) : getDefaultMealCapForDestination(p.destCode, p.currency, p.label);
+        const tzOff = (p.tzDiffFromSgt !== null && p.tzDiffFromSgt !== undefined && Number.isFinite(Number(p.tzDiffFromSgt)))
+          ? (8 + Number(p.tzDiffFromSgt))
+          : (p.destCode ? getUtcOffset(p.destCode, state.trip.startDate) : 8);
+        const tzPart = ' · ' + formatTzDiffFromSgt(tzOff);
+        const delHtml = p.custom
+          ? ('<span class="preset-del-x" role="button" tabindex="0" title="Remove custom destination" aria-label="Remove ' + esc(p.label) + '" onclick="deleteCustomRoutePreset(\'' + esc(p.id) + '\', event)">✕</span>')
+          : '';
+        return '<button type="button" class="preset-btn' + (active ? ' active' : '') + (p.custom ? ' is-custom' : '') + '" onclick="applyRoutePreset(\'' + esc(p.id) + '\')">'
           + '<span>' + esc(p.label) + '</span>'
-          + '<span class="tz-tag">' + esc(p.currency) + ' · ' + esc(formatTzDiffFromSgt(off)) + '</span>'
+          + '<span class="tz-tag">' + esc(p.currency + tzPart) + '</span>'
+          + '<span class="preset-cap-tag">$' + capVal + '</span>'
+          + delHtml
           + '</button>';
+      }).join('')
+        + '<button type="button" class="preset-btn preset-custom-btn' + (isCustomMode ? ' active' : '') + '" onclick="activateCustomDestinationMode()" title="Manually edit Daily Meal Allowance, Currency &amp; Time Difference">'
+        + slickSvg('sliders', 13) + '<span>Custom</span>'
+        + '</button>';
+
+      const currDatalistOpts = PRESET_CURRENCIES.map(function (c) {
+        return '<option value="' + c + '"></option>';
       }).join('');
 
-      const currOpts = PRESET_CURRENCIES.map(function (c) {
-        return '<option value="' + c + '"' + (summary.fxCode === c ? ' selected' : '') + '>' + c + '</option>';
-      }).join('');
+      const policyBadgesHtml = '<div class="setup-badges-bar">'
+        + '<span class="setup-badge-item cap-badge">🍽️ Meal Cap <strong id="setup-cap-badge-body" class="mono">SGD $' + fmtForeign(summary.cap) + '/day</strong></span>'
+        + '<span class="setup-badge-item curr-badge">💱 Currency <strong id="setup-curr-badge-body" class="mono">' + esc(summary.fxCode) + '</strong></span>'
+        + '<span class="setup-badge-item tz-badge">🕒 Time Diff <strong id="setup-tz-badge-body" class="mono">' + esc(formatTzDiffFromSgt(curUtcOffset)) + ' (' + esc(formatUtcLabel(curUtcOffset)) + ')</strong></span>'
+        + '</div>';
+
+      const customPanelHtml = isCustomMode ? (
+        '<div class="custom-dest-panel">'
+        + '<div class="custom-dest-head">'
+        + '<span>Custom Allowance, Currency &amp; Time Difference</span>'
+        + '<button type="button" class="btn btn-sm btn-soft" onclick="saveCurrentDestinationAsPreset()" title="Save as reusable destination preset">' + slickSvg('bookmarkPlus', 13) + '<span>Save Preset</span></button>'
+        + '</div>'
+        + '<div class="grid-3">'
+        + '<div><label class="field-label">Daily Meal Cap (SGD)</label><input class="input mono input-right" type="number" step="1" min="0" value="' + esc(state.trip.dailyMealCap) + '" oninput="updateTripField(\'dailyMealCap\',this.value)" /></div>'
+        + '<div><label class="field-label">Foreign Currency</label><input class="input mono" type="text" list="cf-curr-datalist" maxlength="6" placeholder="e.g. EUR" value="' + esc(summary.fxCode) + '" oninput="updateTripField(\'foreignCurrency\',this.value)" onchange="updateTripField(\'foreignCurrency\',this.value,true)" /><datalist id="cf-curr-datalist">' + currDatalistOpts + '</datalist></div>'
+        + '<div><label class="field-label">Time Diff vs SGT (hrs)</label><input class="input mono input-right" type="number" step="0.5" min="-16" max="12" placeholder="e.g. -6" value="' + esc(curTzDiff) + '" oninput="updateTripField(\'tzDiffFromSgt\',this.value)" /><div id="setup-custom-tz-utc" class="mono" style="font-size:10.5px;color:var(--sky-text);margin-top:3px;text-align:right;">' + esc(formatTzDiffFromSgt(curUtcOffset) + ' · ' + formatUtcLabel(curUtcOffset)) + '</div></div>'
+        + '</div>'
+        + '</div>'
+      ) : '';
 
       return '<div class="card' + (collapsed ? ' collapsed' : '') + '">'
         + '<div class="card-head">'
         + '<button type="button" class="card-head-toggle" onclick="toggleCollapse(\'setup\')">'
         + chevronSvg()
         + '<div><div class="card-title">Trip Setup &amp; Destination Preset</div>'
-        + '<div class="card-sub">' + esc((state.trip.ref ? 'Ref ' + state.trip.ref + ' · ' : '') + (state.trip.route || 'Trip') + (range ? ' (' + range + ')' : '') + ' · ' + summary.fxCode) + '</div></div>'
+        + '<div class="card-sub">' + esc((state.trip.ref ? 'Ref ' + state.trip.ref + ' · ' : '') + (state.trip.route || 'Trip') + (range ? ' (' + range + ')' : '')) + '</div></div>'
         + '</button>'
-        + '<div class="card-head-right">' + closedBadgeHtml(collapsed) + '<span class="pill pill-accent mono">' + esc(summary.fxCode) + '</span></div>'
+        + '<div class="card-head-right">' + closedBadgeHtml(collapsed)
+        + '<span id="setup-cap-badge" class="pill pill-amber mono">Cap $' + fmtForeign(summary.cap) + '/d</span>'
+        + '<span id="setup-curr-badge-head" class="pill pill-accent mono">' + esc(summary.fxCode) + '</span></div>'
         + '</div>'
         + (collapsed ? '' : (
           '<div class="card-body">'
-          + '<label class="field-label">Quick Destination Preset (Auto Currency &amp; Timezone)</label>'
+          + '<div class="preset-head-row">'
+          + '<label class="field-label">Quick Destination Preset</label>'
+          + '<button type="button" class="btn btn-icon-sm btn-soft" onclick="saveCurrentDestinationAsPreset()" title="Save current Route, Allowance, Currency &amp; Time Diff as a custom destination preset" aria-label="Save custom destination">' + slickSvg('bookmarkPlus', 14) + '</button>'
+          + '</div>'
           + '<div class="preset-strip">' + presetsHtml + '</div>'
           + '<div class="grid-4">'
           + '<div><label class="field-label">Trip Ref #</label><input class="input mono" type="text" placeholder="e.g. 2300" value="' + esc(state.trip.ref) + '" oninput="updateTripField(\'ref\',this.value)" /></div>'
@@ -4225,11 +4637,8 @@
           + '<div><label class="field-label">Start Date</label><div class="date-pill-wrap"><div class="date-pill-btn"><span>' + esc(fmtDateNoYear(state.trip.startDate, 'short')) + '</span><span>📅</span></div><input class="date-pill-native" type="date" value="' + esc(state.trip.startDate) + '" onchange="updateTripField(\'startDate\',this.value,true)" /></div></div>'
           + '<div><label class="field-label">End Date</label><div class="date-pill-wrap"><div class="date-pill-btn"><span>' + esc(fmtDateNoYear(state.trip.endDate, 'short')) + '</span><span>📅</span></div><input class="date-pill-native" type="date" value="' + esc(state.trip.endDate) + '" onchange="updateTripField(\'endDate\',this.value,true)" /></div></div>'
           + '</div>'
-          + '<div class="grid-3 section-sep">'
-          + '<div><label class="field-label">Foreign Currency</label><select class="select mono" onchange="updateTripField(\'foreignCurrency\',this.value,true)">' + currOpts + '</select></div>'
-          + '<div><label class="field-label">Daily Meal Cap (SGD)</label><input class="input mono input-right" type="number" step="1" min="0" value="' + esc(state.trip.dailyMealCap) + '" oninput="updateTripField(\'dailyMealCap\',this.value)" /></div>'
-          + '<div><label class="field-label">Overnight Rate (SGD/leg)</label><input class="input mono input-right" type="number" step="1" min="0" value="' + esc(state.trip.overnightRate) + '" oninput="updateTripField(\'overnightRate\',this.value)" /></div>'
-          + '</div>'
+          + policyBadgesHtml
+          + customPanelHtml
           + '<div class="chip-bar" style="justify-content:space-between;">'
           + '<button type="button" class="btn btn-sm btn-soft" onclick="syncMealDaysToDateRange()">↻ Sync Meal Days to Trip Dates</button>'
           + closeTabFooterBtn('setup')
@@ -4329,20 +4738,26 @@
       const subList = TIME_OFF_SUBCATS[draft.type] || TIME_OFF_SUBCATS.Travel;
 
       const airportOpts = function (selected) {
-        return AIRPORT_ZONES.map(function (z) {
+        const base = AIRPORT_ZONES.map(function (z) {
           return '<option value="' + z.code + '"' + (z.code === selected ? ' selected' : '') + '>' + esc(z.disp + ' (' + getZoneAbbr(z.code, draft.date) + ')') + '</option>';
-        }).join('');
+        });
+        if (state.trip.presetId === 'CUSTOM' || selected === 'CUSTOM' || getTripDestAirportCode() === 'CUSTOM') {
+          base.push('<option value="CUSTOM"' + (selected === 'CUSTOM' ? ' selected' : '') + '>' + esc(getAirportDispCode('CUSTOM') + ' (' + getZoneAbbr('CUSTOM', draft.date) + ')') + '</option>');
+        }
+        return base.join('');
       };
       const subOpts = subList.map(function (s) {
         return '<option value="' + esc(s) + '"' + (draft.subCategory === s ? ' selected' : '') + '>' + esc(s) + '</option>';
       }).join('');
 
-      const preset = ROUTE_PRESETS.find(function (p) { return p.id === state.trip.presetId; }) || ROUTE_PRESETS[0];
-      const destCode = preset.destCode;
+      const preset = findRoutePresetById(state.trip.presetId);
+      const destCode = getTripDestAirportCode();
       const destOff = getUtcOffset(destCode, state.trip.startDate);
+      const destLabel = preset ? preset.label : (state.trip.route || 'Custom');
+      const destCountry = preset ? preset.country : getAirportDispCode(destCode);
       const tzGuideHtml = '<div class="tz-guide-bar">'
-        + '<div><strong>SGT Window Policy (' + esc(preset.label) + '):</strong> '
-        + esc(preset.country) + ' is <span class="mono"><strong>' + esc(getZoneShortLabel(destCode, state.trip.startDate)) + '</strong></span> (' + esc(formatTzDiffFromSgt(destOff)) + ' vs SGT). '
+        + '<div><strong>SGT Window Policy (' + esc(destLabel) + '):</strong> '
+        + esc(destCountry) + ' is <span class="mono"><strong>' + esc(getZoneShortLabel(destCode, state.trip.startDate)) + '</strong></span> (' + esc(formatTzDiffFromSgt(destOff)) + ' vs SGT). '
         + 'All Travel &amp; Work claims are converted and calculated in <strong>SGT</strong> (4h = 0.5d, 6h = 1.0d; Weekday after 18:00 / red-eye; Full day Weekends/PH).</div>'
         + '<button type="button" class="btn btn-sm btn-sky-soft" onclick="syncToilFromFlights()">↻ Sync from Flight Log</button>'
         + '</div>';
@@ -4584,9 +4999,13 @@
     function renderFlightsCard(summary) {
       const collapsed = !!state.ui.collapsed.flights;
       const airportOpts = function (selected) {
-        return AIRPORT_ZONES.map(function (z) {
+        const base = AIRPORT_ZONES.map(function (z) {
           return '<option value="' + z.code + '"' + (z.code === selected ? ' selected' : '') + '>' + z.code + '</option>';
-        }).join('');
+        });
+        if (state.trip.presetId === 'CUSTOM' || selected === 'CUSTOM' || getTripDestAirportCode() === 'CUSTOM') {
+          base.push('<option value="CUSTOM"' + (selected === 'CUSTOM' ? ' selected' : '') + '>' + esc(getAirportDispCode('CUSTOM')) + '</option>');
+        }
+        return base.join('');
       };
 
       const legsHtml = summary.flights.analyses.map(function (item, idx) {
@@ -4747,10 +5166,11 @@
         + '<div class="card-head">'
         + '<button type="button" class="card-head-toggle" onclick="toggleCollapse(\'meals\')">'
         + chevronSvg()
-        + '<div><div class="card-title">Daily Meals (Cap SGD ' + fmt2(summary.cap) + '/day)</div>'
+        + '<div><div class="card-title">Daily Meals</div>'
         + '<div class="card-sub">Misc &gt; Meals · Day-by-day cap enforcement, inline photo strip &amp; 1-Page Landscape PDF/Share</div></div>'
         + '</button>'
-        + '<div class="card-head-right">' + closedBadgeHtml(collapsed) + '<span class="pill pill-amber">Misc &gt; Meals</span>'
+        + '<div class="card-head-right">' + closedBadgeHtml(collapsed)
+        + '<span id="meals-cap-badge" class="pill pill-amber mono">Cap $' + fmtForeign(summary.cap) + '/d</span>'
         + '<button type="button" class="btn btn-sm btn-soft" onclick="openSlidePreviewModal({ type: \'meals\' })" title="Print Preview for All Daily Meals">👁️ Preview</button>'
         + '<span id="cat-total-meals" class="cat-total-pill">SGD ' + fmt2(summary.meals.cappedTotal) + '</span></div>'
         + '</div>'
@@ -4850,7 +5270,7 @@
             const collapseKey = target.scope === 'overnight' ? 'flights' : target.scope;
             state.ui.collapsed[collapseKey] = false;
             persistStore(false);
-            setMobileView('fixed');
+            setMobileView('setup');
           }
         } else {
           const collapseKey = target.scope === 'overnight' ? 'flights' : target.scope;
@@ -5219,17 +5639,17 @@
         + '</div>'
         + '</div>';
 
-      const fixedTotal = round2(summary.airFare.total + summary.hotel.total + summary.data.total + summary.flights.overnightTotal + summary.otherMisc.total);
-      const fixedCtaHtml = '<button type="button" class="mobile-fixed-cta" onclick="setMobileView(\'fixed\')">'
+      const setupTotal = round2(summary.airFare.total + summary.hotel.total + summary.data.total + summary.flights.overnightTotal + summary.otherMisc.total);
+      const setupCtaHtml = '<button type="button" class="mobile-fixed-cta" onclick="setMobileView(\'setup\')">'
         + '<div style="display:flex;align-items:center;gap:10px;">'
-        + '<span class="inline-ico" style="width:32px;height:32px;border-radius:10px;background:var(--surface-3);color:var(--accent);">' + slickSvg('layers', 16) + '</span>'
-        + '<div><strong style="color:var(--text);">Fixed &amp; Trip Categories</strong>'
-        + '<div style="font-size:11px;color:var(--text-subtle);">Air Fare, Hotel, Data, Setup, FX &amp; TOIL</div></div>'
+        + '<span class="inline-ico" style="width:32px;height:32px;border-radius:10px;background:var(--surface-3);color:var(--accent);">' + slickSvg('sliders', 16) + '</span>'
+        + '<div><strong style="color:var(--text);">Setup &amp; Trip Categories</strong>'
+        + '<div style="font-size:11px;color:var(--text-subtle);">Trip Setup, FX, Air Fare, Hotel, Data, Overnight &amp; TOIL</div></div>'
         + '</div>'
-        + '<span class="pill pill-neutral mono">SGD ' + fmt2(fixedTotal) + ' →</span>'
+        + '<span class="pill pill-neutral mono">SGD ' + fmt2(setupTotal) + ' →</span>'
         + '</button>';
 
-      return [heroHtml, mealSectionHtml, transportSectionHtml, fixedCtaHtml].join('');
+      return [heroHtml, mealSectionHtml, transportSectionHtml, setupCtaHtml].join('');
     }
 
     function renderWorkspace() {
@@ -5251,7 +5671,7 @@
         return;
       }
 
-      // MOBILE VIEW 2: 🍽️ All Days (All Daily Meals + Overseas & SG Transport — Zero Fixed Clutter)
+      // MOBILE VIEW 2: 🍽️ All Days (All Daily Meals + Overseas & SG Transport — Zero Setup Clutter)
       if (isMobile && currentMobileView === 'daily') {
         const dailyTotal = round2(summary.meals.cappedTotal + summary.overseasTransport.total + summary.sgTransport.total);
         const dailyBanner = '<div class="mobile-view-banner">'
@@ -5282,25 +5702,25 @@
         return;
       }
 
-      // MOBILE VIEW 3: 🗂️ Fixed (Fixed Categories, Trip Setup, FX Anchors, Overnight & TOIL)
-      if (isMobile && currentMobileView === 'fixed') {
-        const fixedTotal = round2(summary.airFare.total + summary.hotel.total + summary.data.total + summary.flights.overnightTotal + summary.otherMisc.total);
-        const fixedBanner = '<div class="mobile-view-banner">'
+      // MOBILE VIEW 3: Setup (Trip Setup, FX Anchors, Fixed Categories, Overnight & TOIL — Start Closed)
+      if (isMobile && (currentMobileView === 'setup' || currentMobileView === 'fixed')) {
+        const setupTotal = round2(summary.airFare.total + summary.hotel.total + summary.data.total + summary.flights.overnightTotal + summary.otherMisc.total);
+        const setupBanner = '<div class="mobile-view-banner">'
           + '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">'
-          + '<div><strong style="font-size:14.5px;">🗂️ Fixed &amp; Trip Setup</strong>'
-          + '<div style="font-size:11.5px;color:var(--text-subtle);">Setup, FX, Flights, Hotel, Data, Overnight &amp; TOIL</div></div>'
-          + '<span class="cat-total-pill">SGD ' + fmt2(fixedTotal) + '</span>'
+          + '<div><strong style="font-size:14.5px;">Setup &amp; Trip Categories</strong>'
+          + '<div style="font-size:11.5px;color:var(--text-subtle);">Trip Setup, FX, Air Fare, Hotel, Data, Overnight &amp; TOIL</div></div>'
+          + '<span class="cat-total-pill">SGD ' + fmt2(setupTotal) + '</span>'
           + '</div>'
           + '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;">'
           + radarBtnHtml
           + '<div style="display:flex;gap:6px;">'
-          + '<button type="button" class="btn btn-sm" onclick="setAllWorkspaceCollapsed(false)">Expand All</button>'
-          + '<button type="button" class="btn btn-sm btn-green-soft" onclick="setAllWorkspaceCollapsed(true)">Close All</button>'
+          + '<button type="button" class="btn btn-sm" onclick="setSetupSectionsCollapsed(false)">Expand All</button>'
+          + '<button type="button" class="btn btn-sm btn-green-soft" onclick="setSetupSectionsCollapsed(true)">Close All</button>'
           + '</div>'
           + '</div>'
           + '</div>';
         col.innerHTML = [
-          fixedBanner,
+          setupBanner,
           renderTripSetupCard(summary),
           renderFxAnchorsCard(summary),
           renderCategoryCard({
@@ -5420,6 +5840,14 @@
       setTxt('cat-total-flights', 'SGD ' + fmt2(summary.flights.overnightTotal));
       setTxt('cat-total-timeOff', summary.timeOff.totalDays.toFixed(1) + ' Day(s)');
       setTxt('cat-total-meals', 'SGD ' + fmt2(summary.meals.cappedTotal));
+      setTxt('setup-cap-badge', 'Cap $' + fmtForeign(summary.cap) + '/d');
+      setTxt('meals-cap-badge', 'Cap $' + fmtForeign(summary.cap) + '/d');
+      setTxt('setup-cap-badge-body', 'SGD $' + fmtForeign(summary.cap) + '/day');
+      setTxt('setup-curr-badge-head', summary.fxCode);
+      setTxt('setup-curr-badge-body', summary.fxCode);
+      const liveUtc = round2(8 + getCurrentTripTzDiff());
+      setTxt('setup-tz-badge-body', formatTzDiffFromSgt(liveUtc) + ' (' + formatUtcLabel(liveUtc) + ')');
+      setTxt('setup-custom-tz-utc', formatTzDiffFromSgt(liveUtc) + ' · ' + formatUtcLabel(liveUtc));
       setTxt('ws-misc-group-total', 'Misc Total: SGD ' + fmt2(summary.reportingMiscTotal));
       setTxt('aware-trip-total', 'SGD ' + fmt2(summary.grandClaimable));
       setTxt('aware-trpt-total', 'SGD ' + fmt2(round2(summary.overseasTransport.total + summary.sgTransport.total)));
@@ -7087,6 +7515,8 @@
       flushLocalSave(false, false);
       const ref = (state.trip.ref || 'draft').replace(/[^a-zA-Z0-9_-]/g, '');
       const payload = JSON.parse(JSON.stringify(state));
+      const customPresets = loadCustomRoutePresets();
+      if (customPresets.length > 0) payload._customPresets = customPresets;
       let photoCount = 0;
       if (cloudSync.prefs.embedReceipts !== false) {
         const tripReceipts = await idbGetReceiptsForTrip(state.id);
@@ -7113,7 +7543,9 @@
           }
           if (!parsed || !parsed.trip) throw new Error('Unrecognized ClaimFlow JSON format');
           const embeddedReceipts = Array.isArray(parsed._receipts) ? parsed._receipts : [];
+          if (Array.isArray(parsed._customPresets)) mergeCustomRoutePresets(parsed._customPresets);
           delete parsed._receipts;
+          delete parsed._customPresets;
           const imported = normalizeTrip(parsed);
           const idx = store.trips.findIndex(function (t) { return t.id === imported.id; });
           if (idx >= 0) store.trips[idx] = imported;
@@ -7787,6 +8219,7 @@
         }
 
         if (remoteDb && Array.isArray(remoteDb.trips)) {
+          if (Array.isArray(remoteDb._customPresets)) mergeCustomRoutePresets(remoteDb._customPresets);
           const remoteTrips = remoteDb.trips.map(function (rt) { return normalizeTrip(Object.assign({}, rt)); });
           const remoteById = {};
           remoteTrips.forEach(function (rt) { remoteById[rt.id] = rt; });
@@ -7876,6 +8309,7 @@
           const dbPayload = {
             activeTripId: store.activeTripId,
             trips: store.trips,
+            _customPresets: loadCustomRoutePresets(),
             deletedReceiptIds: mergedDeleted,
             updatedAt: Date.now()
           };
@@ -8027,6 +8461,7 @@
         }
 
         if (remoteDb && Array.isArray(remoteDb.trips)) {
+          if (Array.isArray(remoteDb._customPresets)) mergeCustomRoutePresets(remoteDb._customPresets);
           const remoteTrips = remoteDb.trips.map(function (rt) { return normalizeTrip(Object.assign({}, rt)); });
           const remoteById = {};
           remoteTrips.forEach(function (rt) { remoteById[rt.id] = rt; });
@@ -8064,6 +8499,7 @@
             content: JSON.stringify({
               activeTripId: store.activeTripId,
               trips: store.trips,
+              _customPresets: loadCustomRoutePresets(),
               deletedReceiptIds: mergedDeleted,
               updatedAt: Date.now()
             }, null, 2)
@@ -8237,6 +8673,7 @@
           const dbPayload = {
             activeTripId: store.activeTripId,
             trips: store.trips,
+            _customPresets: loadCustomRoutePresets(),
             deletedReceiptIds: getDeletedReceiptIds(),
             updatedAt: Date.now()
           };
@@ -8787,6 +9224,8 @@
       if (!cloudSync.handle || cloudSync.needsReconnect) return;
       try {
         const payload = { activeTripId: store.activeTripId, trips: store.trips };
+        const customPresets = loadCustomRoutePresets();
+        if (customPresets.length > 0) payload._customPresets = customPresets;
         if (cloudSync.prefs.embedReceipts !== false) {
           const allReceipts = await idbGetAllReceipts();
           if (allReceipts.length > 0) payload._receipts = allReceipts;
@@ -8868,6 +9307,9 @@
     }
 
     async function mergeWorkspacePayload(payload, silent) {
+      if (payload && Array.isArray(payload._customPresets)) {
+        mergeCustomRoutePresets(payload._customPresets);
+      }
       const rawTrips = (payload && Array.isArray(payload.trips)) ? payload.trips : [];
       const collectedReceipts = Array.isArray(payload && payload._receipts) ? payload._receipts.slice() : [];
       const incomingTrips = rawTrips.map(function (rawT) {
@@ -8909,6 +9351,8 @@
     async function exportFullWorkspaceJSON() {
       flushLocalSave(false, false);
       const payload = { activeTripId: store.activeTripId, trips: store.trips };
+      const customPresets = loadCustomRoutePresets();
+      if (customPresets.length > 0) payload._customPresets = customPresets;
       let photoCount = 0;
       if (cloudSync.prefs.embedReceipts !== false) {
         const allReceipts = await idbGetAllReceipts();
@@ -12273,10 +12717,10 @@
     function updateMobileNavActive() {
       const btnToday = document.getElementById('mnav-today');
       const btnDaily = document.getElementById('mnav-daily');
-      const btnFixed = document.getElementById('mnav-fixed');
+      const btnSetup = document.getElementById('mnav-setup');
       if (btnToday) btnToday.classList.toggle('active', currentMobileView === 'today');
       if (btnDaily) btnDaily.classList.toggle('active', currentMobileView === 'daily');
-      if (btnFixed) btnFixed.classList.toggle('active', currentMobileView === 'fixed');
+      if (btnSetup) btnSetup.classList.toggle('active', currentMobileView === 'setup');
     }
 
     function cycleLayoutMode() {
@@ -12302,8 +12746,9 @@
     }
 
     function setMobileView(view) {
-      const allowed = ['today', 'daily', 'fixed', 'hrms'];
-      currentMobileView = allowed.indexOf(view) >= 0 ? view : 'today';
+      const normView = view === 'fixed' ? 'setup' : view;
+      const allowed = ['today', 'daily', 'setup', 'hrms'];
+      currentMobileView = allowed.indexOf(normView) >= 0 ? normView : 'today';
       document.body.classList.toggle('mobile-view-hrms', currentMobileView === 'hrms');
       updateMobileNavActive();
       if (currentMobileView === 'daily' && state.ui.collapsed.meals) {
