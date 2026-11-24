@@ -447,13 +447,14 @@
 
     .card-head-toggle {
       display: flex; align-items: center; gap: 9px; background: none; border: none;
-      padding: 0; text-align: left; cursor: pointer; min-width: 0; flex: 1;
+      padding: 0; text-align: left; cursor: pointer; min-width: 0; flex: 1; overflow: hidden;
     }
+    .card-head-toggle > div { min-width: 0; flex: 1; overflow: hidden; }
     .card-chevron { color: var(--text-subtle); transition: transform 0.16s ease; flex-shrink: 0; }
     .card.collapsed .card-chevron { transform: rotate(-90deg); }
-    .card-title { font-size: 13.5px; font-weight: 700; margin: 0; }
+    .card-title { font-size: 13.5px; font-weight: 700; margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .card-sub { font-size: 11.5px; color: var(--text-subtle); margin: 1px 0 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .card-head-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+    .card-head-right { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
     .cat-total-pill {
       font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-size: 13px; font-weight: 700;
       padding: 4px 10px; border-radius: 8px; background: var(--surface-3); border: 1px solid var(--border); white-space: nowrap;
@@ -899,40 +900,92 @@
     }
     .radar-flash { box-shadow: 0 0 0 3px var(--amber) !important; transition: box-shadow 0.25s ease; }
 
-    /* Built-In Bank Screenshot & Receipt Cropper Modal */
+    /* Zero-File-Picker Auto-Sync Badges & Mobile Status Chip */
+    .aware-sync-chip {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 3px 8px; border-radius: 999px; font-size: 10.5px; font-weight: 800;
+      border: 1px solid var(--border-strong); background: var(--surface); color: var(--text-muted);
+      cursor: pointer; transition: all 0.14s ease; white-space: nowrap;
+    }
+    .aware-sync-chip.synced { background: var(--green-soft); border-color: var(--green-border); color: var(--green-text); }
+    .aware-sync-chip.syncing { background: var(--sky-soft); border-color: var(--sky-border); color: var(--sky-text); }
+    .aware-sync-chip.pending { background: var(--amber-soft); border-color: var(--amber-border); color: var(--amber-text); }
+    .aware-sync-chip.error { background: var(--red-soft); border-color: var(--red-border); color: var(--red-text); }
+    .gist-setup-steps {
+      font-size: 11.5px; color: var(--text-muted); line-height: 1.5;
+      padding: 8px 10px; border-radius: 9px; background: var(--surface); border: 1px dashed var(--border-strong);
+    }
+    .gist-setup-steps code {
+      font-family: var(--font-mono); font-size: 11px; padding: 1px 4px; border-radius: 4px;
+      background: var(--surface-3); color: var(--accent);
+    }
+    /* Built-In Bank Screenshot & Receipt Cropper Modal (Pinch-Zoom, Pan & Drag Handles) */
     .crop-modal-box {
-      width: 100%; max-width: 680px; max-height: 92dvh; overflow-y: auto;
+      width: 100%; max-width: 720px; max-height: 94dvh; overflow-y: auto;
       background: var(--surface); border: 1px solid var(--border);
-      border-radius: var(--radius-lg); padding: 16px; box-shadow: var(--shadow-lg);
-      display: flex; flex-direction: column; gap: 11px;
+      border-radius: var(--radius-lg); padding: 15px; box-shadow: var(--shadow-lg);
+      display: flex; flex-direction: column; gap: 10px;
     }
     .crop-stage {
-      background: #0b1120; border-radius: 10px; padding: 12px;
-      display: flex; align-items: center; justify-content: center;
-      min-height: 220px; max-height: 48dvh; overflow: hidden;
+      position: relative; width: 100%; height: min(50dvh, 420px); min-height: 240px;
+      background: #0b1120; border-radius: 11px; overflow: hidden;
+      touch-action: none; user-select: none; -webkit-user-select: none;
+      cursor: grab; border: 1px solid var(--border-strong);
     }
-    .crop-img-wrap {
-      position: relative; display: inline-block; max-width: 100%; max-height: 44dvh;
-      overflow: hidden; border-radius: 4px; line-height: 0; user-select: none;
-    }
-    .crop-img-wrap img {
-      display: block; max-width: 100%; max-height: 44dvh; width: auto; height: auto;
-      pointer-events: none;
+    .crop-stage.dragging { cursor: grabbing; }
+    .crop-stage img {
+      position: absolute; top: 0; left: 0;
+      transform-origin: 0 0; pointer-events: none; user-select: none; -webkit-user-drag: none;
+      max-width: none; max-height: none; display: block;
     }
     .crop-rect {
-      position: absolute; pointer-events: none;
+      position: absolute;
       border: 2px solid #38bdf8;
-      box-shadow: 0 0 0 9999px rgba(15, 23, 42, 0.64);
+      box-shadow: 0 0 0 9999px rgba(11, 17, 32, 0.66);
       border-radius: 2px;
+      touch-action: none;
+      cursor: move;
     }
-    .crop-sliders-grid {
-      display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 14px;
-      padding: 10px 12px; border-radius: 10px; background: var(--surface-2); border: 1px solid var(--border);
+    .crop-grid-lines {
+      position: absolute; inset: 0; pointer-events: none;
+      background-image:
+        linear-gradient(to right, rgba(255,255,255,0.22) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(255,255,255,0.22) 1px, transparent 1px);
+      background-size: 33.333% 33.333%;
+      opacity: 0.65;
     }
-    @media (max-width: 520px) { .crop-sliders-grid { grid-template-columns: 1fr; } }
-    .crop-slider-row { display: flex; flex-direction: column; gap: 4px; }
-    .crop-slider-head { display: flex; justify-content: space-between; font-size: 11.5px; font-weight: 700; color: var(--text-muted); }
-    .crop-slider-row input[type="range"] { width: 100%; accent-color: var(--accent); cursor: pointer; }
+    .crop-handle {
+      position: absolute; width: 32px; height: 32px;
+      display: flex; align-items: center; justify-content: center;
+      touch-action: none; z-index: 4;
+    }
+    .crop-handle::after {
+      content: ''; display: block; background: #ffffff;
+      border: 2px solid #0284c7; border-radius: 3px;
+      box-shadow: 0 1px 5px rgba(0, 0, 0, 0.5);
+    }
+    .crop-handle.corner::after { width: 14px; height: 14px; border-radius: 4px; }
+    .crop-handle.edge-h::after { width: 26px; height: 7px; border-radius: 999px; }
+    .crop-handle.edge-v::after { width: 7px; height: 26px; border-radius: 999px; }
+    .crop-handle.nw { top: -16px; left: -16px; cursor: nwse-resize; }
+    .crop-handle.ne { top: -16px; right: -16px; cursor: nesw-resize; }
+    .crop-handle.sw { bottom: -16px; left: -16px; cursor: nesw-resize; }
+    .crop-handle.se { bottom: -16px; right: -16px; cursor: nwse-resize; }
+    .crop-handle.n  { top: -16px; left: 50%; transform: translateX(-50%); cursor: ns-resize; }
+    .crop-handle.s  { bottom: -16px; left: 50%; transform: translateX(-50%); cursor: ns-resize; }
+    .crop-handle.w  { left: -16px; top: 50%; transform: translateY(-50%); cursor: ew-resize; }
+    .crop-handle.e  { right: -16px; top: 50%; transform: translateY(-50%); cursor: ew-resize; }
+    .crop-zoom-bar {
+      display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px;
+      padding: 8px 11px; border-radius: 10px; background: var(--surface-2); border: 1px solid var(--border);
+    }
+    .crop-zoom-slider-wrap {
+      display: flex; align-items: center; gap: 8px; flex: 1 1 200px; min-width: 170px;
+    }
+    .crop-zoom-slider-wrap input[type="range"] { flex: 1; accent-color: var(--accent); cursor: pointer; }
+    .crop-gesture-hint {
+      font-size: 11px; color: var(--text-subtle); display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+    }
 
     /* Receipt Photo Vault & Lightbox */
     .vault-modal-box {
@@ -1552,20 +1605,195 @@
     }
 
     /* Auto Desktop / Mobile Layout Mode */
+    .mobile-aware-hero {
+      border-radius: 18px;
+      padding: 14px;
+      background: linear-gradient(145deg, color-mix(in srgb, var(--accent) 16%, var(--surface)), var(--surface-2));
+      border: 1.5px solid var(--accent-border);
+      box-shadow: var(--shadow-sm);
+      display: flex; flex-direction: column; gap: 11px;
+    }
+    .aware-top-row {
+      display: flex; align-items: flex-start; justify-content: space-between; gap: 10px;
+    }
+    .aware-live-pill {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 3px 9px; border-radius: 999px;
+      background: var(--green-soft); border: 1px solid var(--green-border); color: var(--green-text);
+      font-size: 10.5px; font-weight: 800; letter-spacing: 0.02em; text-transform: uppercase;
+    }
+    .aware-live-pill.nearest {
+      background: var(--accent-soft); border-color: var(--accent-border); color: var(--accent);
+    }
+    .aware-live-dot {
+      width: 7px; height: 7px; border-radius: 50%; background: var(--green);
+      box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.28);
+    }
+    .aware-live-pill.nearest .aware-live-dot {
+      background: var(--accent); box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.25);
+    }
+    .aware-hero-date {
+      font-size: 19px; font-weight: 800; letter-spacing: -0.02em; margin: 4px 0 0; line-height: 1.15;
+    }
+    .aware-hero-sub {
+      font-size: 11.5px; color: var(--text-subtle); margin-top: 2px;
+    }
+    .aware-trip-stat {
+      text-align: right; flex-shrink: 0;
+      padding: 6px 10px; border-radius: 11px;
+      background: var(--surface); border: 1px solid var(--border);
+    }
+    .aware-day-strip {
+      display: flex; gap: 6px; overflow-x: auto; padding: 2px 0 4px;
+      -webkit-overflow-scrolling: touch; scrollbar-width: none;
+    }
+    .aware-day-strip::-webkit-scrollbar { display: none; }
+    .aware-day-chip {
+      flex: 0 0 auto; min-width: 74px;
+      display: flex; flex-direction: column; align-items: center; gap: 2px;
+      padding: 7px 10px; border-radius: 12px;
+      border: 1px solid var(--border); background: var(--surface);
+      color: var(--text-muted); cursor: pointer; transition: all 0.14s ease;
+    }
+    .aware-day-chip.active {
+      background: var(--accent); border-color: var(--accent); color: #ffffff;
+      box-shadow: 0 4px 12px rgba(79, 70, 229, 0.32);
+    }
+    .aware-day-chip.is-today:not(.active) {
+      border-color: var(--green); background: var(--green-soft); color: var(--green-text);
+    }
+    .aware-day-chip.add-today {
+      border-style: dashed; border-color: var(--green-border);
+      background: var(--green-soft); color: var(--green-text);
+    }
+    .aware-day-chip-top { font-size: 10.5px; font-weight: 800; opacity: 0.9; white-space: nowrap; }
+    .aware-day-chip-amt { font-family: var(--font-mono); font-size: 11.5px; font-weight: 800; }
+    .aware-metrics-row {
+      display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px;
+    }
+    .aware-metric-box {
+      padding: 9px 11px; border-radius: 12px;
+      background: var(--surface); border: 1px solid var(--border);
+      display: flex; flex-direction: column; gap: 4px;
+    }
+    .aware-metric-lbl {
+      font-size: 10px; font-weight: 800; text-transform: uppercase;
+      letter-spacing: 0.04em; color: var(--text-subtle);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .aware-metric-val { font-family: var(--font-mono); font-size: 16px; font-weight: 800; line-height: 1.15; }
+    .aware-capture-grid {
+      display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 7px;
+    }
+    .aware-capture-btn {
+      display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
+      padding: 9px 6px; border-radius: 12px; border: 1px solid var(--border-strong);
+      background: var(--surface); color: var(--text);
+      font-size: 11px; font-weight: 800; cursor: pointer; min-height: 54px;
+      transition: transform 0.12s ease, border-color 0.14s ease;
+    }
+    .aware-capture-btn:active { transform: scale(0.97); }
+    .aware-capture-btn .cap-ico { font-size: 17px; line-height: 1; }
+    .aware-capture-btn.primary {
+      background: linear-gradient(135deg, var(--accent), #6d28d9);
+      border-color: transparent; color: #ffffff;
+      box-shadow: 0 4px 12px rgba(79, 70, 229, 0.28);
+    }
+    .aware-capture-btn.sky {
+      background: var(--sky-soft); border-color: var(--sky-border); color: var(--sky-text);
+    }
+    .aware-capture-btn.green {
+      background: var(--green-soft); border-color: var(--green-border); color: var(--green-text);
+    }
+    .aware-section-head {
+      display: flex; align-items: center; justify-content: space-between; gap: 8px;
+      padding: 2px 2px 0;
+    }
+    .aware-section-title {
+      font-size: 12px; font-weight: 800; text-transform: uppercase;
+      letter-spacing: 0.05em; color: var(--text-subtle);
+      display: flex; align-items: center; gap: 6px;
+    }
+    .mobile-trpt-card {
+      background: var(--surface); border: 1.5px solid var(--border-strong);
+      border-radius: 16px; overflow: hidden; box-shadow: var(--shadow-xs);
+    }
+    .mobile-trpt-head {
+      padding: 10px 12px; background: var(--surface-2); border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap;
+    }
+    .mobile-trpt-tabs {
+      display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px;
+      padding: 9px 12px 0;
+    }
+    .mobile-trpt-tab {
+      display: flex; align-items: center; justify-content: space-between; gap: 6px;
+      padding: 8px 10px; border-radius: 10px; border: 1px solid var(--border);
+      background: var(--surface-2); color: var(--text-muted);
+      font-size: 12px; font-weight: 700; cursor: pointer;
+    }
+    .mobile-trpt-tab.active {
+      background: var(--accent-soft); border-color: var(--accent); color: var(--accent);
+    }
+    .mobile-fixed-cta {
+      display: flex; align-items: center; justify-content: space-between; gap: 10px;
+      padding: 11px 14px; border-radius: 14px;
+      background: var(--surface); border: 1px dashed var(--border-strong);
+      color: var(--text-muted); font-size: 12px; font-weight: 600; cursor: pointer;
+      width: 100%; text-align: left;
+    }
+    .mobile-fixed-cta:active { background: var(--surface-2); }
+    .mobile-view-banner {
+      display: flex; flex-direction: column; gap: 8px;
+      padding: 12px 14px; border-radius: 16px;
+      background: var(--surface); border: 1px solid var(--border);
+      box-shadow: var(--shadow-xs);
+    }
+
     html[data-layout="mobile"] .desktop-only,
     html[data-layout="mobile"] .desktop-only-flex { display: none !important; }
-    html[data-layout="mobile"] .topbar-inner { padding: 6px 10px; gap: 6px; }
+    html[data-layout="mobile"] #receipt-vault-btn { display: none !important; }
+    html[data-layout="mobile"] .topbar-inner { padding: 7px 12px; gap: 8px; }
     html[data-layout="mobile"] .brand-title { display: none; }
     html[data-layout="mobile"] .lbl-txt { display: none; }
+    html[data-layout="mobile"] .trip-select { max-width: none; height: 34px; font-size: 13px; }
+    html[data-layout="mobile"] .save-badge { height: 28px; padding: 0 8px; font-size: 10.5px; }
     html[data-layout="mobile"] .main-grid {
-      grid-template-columns: 1fr; padding: 10px 10px calc(76px + env(safe-area-inset-bottom, 0px)); gap: 12px;
+      grid-template-columns: 1fr; padding: 10px 11px calc(84px + env(safe-area-inset-bottom, 0px)); gap: 12px;
     }
+    html[data-layout="mobile"] .workspace-col { gap: 11px; }
+    html[data-layout="mobile"] .card { border-radius: 15px; }
+    html[data-layout="mobile"] .card-head { padding: 11px 12px; gap: 8px; }
+    html[data-layout="mobile"] .card.collapsed .card-sub { display: none; }
+    html[data-layout="mobile"] .card.collapsed .card-closed-pill { display: none; }
+    html[data-layout="mobile"] .card-head-right { gap: 5px; }
+    html[data-layout="mobile"] .card-head-right .pill { display: none; }
+    html[data-layout="mobile"] .card-head-right .btn-preview-cat { padding: 0 7px; font-size: 11px; }
+    html[data-layout="mobile"] .cat-total-pill { font-size: 12px; padding: 4px 8px; }
+    html[data-layout="mobile"] .card-body { padding: 11px 12px; }
+    html[data-layout="mobile"] .input,
+    html[data-layout="mobile"] .select,
+    html[data-layout="mobile"] .textarea { font-size: 15px; padding: 8px 10px; min-height: 38px; }
+    html[data-layout="mobile"] .receipt-row { padding: 9px 10px; border-radius: 12px; }
+    html[data-layout="mobile"] .receipt-main {
+      display: grid;
+      grid-template-columns: auto auto minmax(0, 1fr);
+      gap: 7px; align-items: center;
+    }
+    html[data-layout="mobile"] .rc-label-wrap { grid-column: 3; min-width: 0; }
+    html[data-layout="mobile"] .rc-amt-wrap { grid-column: 1 / 3; min-width: 0; }
+    html[data-layout="mobile"] .rc-sgd-wrap { grid-column: 3; margin-left: 0; min-width: 0; justify-content: flex-end; }
     html[data-layout="mobile"] .console-sticky { position: static; }
     html[data-layout="mobile"] .console-card { max-height: none; }
     html[data-layout="mobile"] .mobile-bottom-nav { display: grid; }
-    html[data-layout="mobile"] body.mobile-view-entry .console-sticky { display: none; }
+    html[data-layout="mobile"] .mnav-btn { position: relative; border-radius: 12px; transition: all 0.15s ease; }
+    html[data-layout="mobile"] .mnav-btn.active {
+      background: var(--accent-soft); color: var(--accent); border-color: var(--accent-border);
+      box-shadow: 0 2px 10px rgba(79, 70, 229, 0.16);
+    }
+    html[data-layout="mobile"] body:not(.mobile-view-hrms) .console-sticky { display: none; }
     html[data-layout="mobile"] body.mobile-view-hrms #workspace-col { display: none; }
-    html[data-layout="mobile"] .toast-stack { bottom: calc(74px + env(safe-area-inset-bottom, 0px)); right: 10px; left: 10px; max-width: none; }
+    html[data-layout="mobile"] .toast-stack { bottom: calc(78px + env(safe-area-inset-bottom, 0px)); right: 12px; left: 12px; max-width: none; }
   </style>
   <style id="dynamic-print-page-style"></style>
 </head>
@@ -1648,19 +1876,19 @@
 
   <!-- IPHONE / MOBILE BOTTOM NAVIGATION BAR -->
   <nav class="mobile-bottom-nav no-print" aria-label="Mobile View Switcher">
-    <button type="button" id="mnav-meals" class="mnav-btn" onclick="jumpToMealsMobile()">
+    <button type="button" id="mnav-today" class="mnav-btn active" onclick="setMobileView('today')">
+      <span class="mnav-ico">⚡</span>
+      <span>Today</span>
+    </button>
+    <button type="button" id="mnav-daily" class="mnav-btn" onclick="setMobileView('daily')">
       <span class="mnav-ico">🍽️</span>
-      <span>Meals</span>
+      <span>All Days</span>
     </button>
-    <button type="button" id="mnav-entry" class="mnav-btn active" onclick="setMobileView('entry')">
-      <span class="mnav-ico">📝</span>
-      <span>All Entry</span>
+    <button type="button" id="mnav-fixed" class="mnav-btn" onclick="setMobileView('fixed')">
+      <span class="mnav-ico">🗂️</span>
+      <span>Fixed</span>
     </button>
-    <button type="button" id="mnav-hrms" class="mnav-btn" onclick="setMobileView('hrms')">
-      <span class="mnav-ico">📋</span>
-      <span>HRMS <span id="mnav-hrms-badge" class="mnav-badge">0</span></span>
-    </button>
-    <button type="button" class="mnav-btn" onclick="openReceiptModal()">
+    <button type="button" id="mnav-photos" class="mnav-btn" onclick="openReceiptModal()">
       <span class="mnav-ico">📷</span>
       <span>Photos (<span id="mnav-photo-count">0</span>)</span>
     </button>
@@ -1670,7 +1898,7 @@
   <div id="print-view" class="print-doc-root"></div>
 
   <!-- HIDDEN FILE INPUTS (OFF-SCREEN FOR IOS SAFARI RELIABILITY) -->
-  <input id="receipt-upload-input" class="sr-file-input" type="file" accept="image/*" multiple onchange="handleReceiptFilesSelected(event)" />
+  <input id="receipt-upload-input" class="sr-file-input" type="file" accept="image/*,application/pdf,.pdf" multiple onchange="handleReceiptFilesSelected(event)" />
   <input id="receipt-camera-input" class="sr-file-input" type="file" accept="image/*" capture="environment" onchange="handleReceiptFilesSelected(event)" />
   <input id="import-json-input" class="sr-file-input" type="file" accept=".json,application/json" onchange="handleImportJSON(event)" />
   <input id="import-workspace-input" class="sr-file-input" type="file" accept=".json,application/json" onchange="handleImportWorkspaceJSON(event)" />
@@ -1706,6 +1934,7 @@
           </div>
         </div>
         <button type="button" class="sheet-action" onclick="cycleLayoutMode()"><span id="quick-menu-layout-lbl">📱 Layout: Auto</span></button>
+        <button type="button" class="sheet-action" onclick="closeQuickMenu(); setMobileView('hrms');">📋 HRMS Copy Console</button>
         <button type="button" class="sheet-action danger" onclick="closeQuickMenu(); confirmDeleteCurrentTrip();">🗑️ Delete Trip</button>
       </div>
     </div>
@@ -1716,15 +1945,54 @@
     <div class="cloud-modal-box">
       <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
         <div>
-          <strong style="font-size:15px;">☁️ Cloud Folder &amp; Multi-Device Sync</strong>
-          <div style="font-size:11.5px;color:var(--text-subtle);">Sync claims across laptop &amp; iPhone via OneDrive, Google Drive, iCloud, or Sync Code</div>
+          <strong style="font-size:15px;">☁️ Automatic Cloud &amp; Multi-Device Sync</strong>
+          <div style="font-size:11.5px;color:var(--text-subtle);">Zero-file-picker auto-sync between iPhone &amp; Laptop via Private GitHub Gist, plus Drive backups</div>
         </div>
         <button type="button" class="btn btn-icon-sm btn-ghost" onclick="closeCloudModal()">✕</button>
       </div>
 
+      <div class="cloud-section" style="border-color:var(--accent-border);background:color-mix(in srgb, var(--accent-soft) 35%, var(--surface-2));">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;">
+          <strong style="font-size:13px;">1. ⚡ Zero-File-Picker Auto-Sync (iPhone &amp; Laptop — Private GitHub Gist)</strong>
+          <span id="gist-mode-pill" class="pill pill-neutral">Not Connected</span>
+        </div>
+        <div id="gist-status-box" class="cloud-status-box"></div>
+        <div id="gist-connected-actions" style="display:none;flex-wrap:wrap;gap:7px;"></div>
+        <div id="gist-setup-panel" style="display:flex;flex-direction:column;gap:8px;">
+          <div class="gist-setup-steps">
+            <strong>One-time 30-second setup (100% free &amp; private):</strong><br/>
+            1. Open <strong>github.com/settings/tokens</strong> → <em>Generate new token (classic)</em> → tick <strong>only <code>gist</code></strong> → copy token.<br/>
+            2. Paste token below &amp; tap <strong>Connect &amp; Auto-Create Private Gist</strong> (leave Gist ID blank).<br/>
+            3. On your iPhone, tap <strong>Copy 1-Tap Device Pair Code</strong> on laptop and paste it below!
+          </div>
+          <div class="grid-2">
+            <div>
+              <label class="field-label">GitHub Token (gist scope)</label>
+              <input id="gist-token-input" class="input mono" type="password" autocomplete="off" placeholder="ghp_... or github_pat_..." />
+            </div>
+            <div>
+              <label class="field-label">Private Gist ID (optional)</label>
+              <input id="gist-id-input" class="input mono" type="text" autocomplete="off" placeholder="Leave blank to auto-create" />
+            </div>
+          </div>
+          <div style="display:flex;flex-wrap:wrap;gap:7px;">
+            <button type="button" class="btn btn-primary" onclick="connectGitHubGist()">⚡ Connect &amp; Auto-Sync</button>
+          </div>
+          <div style="display:flex;gap:7px;padding-top:6px;border-top:1px solid var(--border);">
+            <input id="gist-pair-code-input" class="input mono" type="text" autocomplete="off" placeholder="Or paste CLAIMFLOW_GIST1:... device pairing code here" />
+            <button type="button" class="btn btn-green-soft" onclick="pairGistFromCode()">📲 Pair Device</button>
+          </div>
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:12px;">
+          <label class="check-opt"><input id="chk-gist-autopush" type="checkbox" checked onchange="setGistPref('autoPush',this.checked)" /><span>Auto-push edits (2.5s debounce)</span></label>
+          <label class="check-opt"><input id="chk-gist-autopull" type="checkbox" checked onchange="setGistPref('autoPull',this.checked)" /><span>Auto-pull on open / return (zero polling)</span></label>
+          <label class="check-opt"><input id="chk-gist-receipts" type="checkbox" checked onchange="setGistPref('syncReceipts',this.checked)" /><span>Sync receipt photos (differential)</span></label>
+        </div>
+      </div>
+
       <div class="cloud-section">
         <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;">
-          <strong style="font-size:13px;">1. Direct Cloud Folder Auto-Sync (Desktop Chrome / Edge)</strong>
+          <strong style="font-size:13px;">2. Direct Cloud Folder Auto-Sync (Desktop Chrome / Edge)</strong>
           <span id="cloud-mode-pill" class="pill pill-neutral">Not Linked</span>
         </div>
         <div id="cloud-fs-status" class="cloud-status-box"></div>
@@ -1737,16 +2005,16 @@
       </div>
 
       <div class="cloud-section">
-        <strong style="font-size:13px;">2. iPhone / Universal Backup File (iCloud / OneDrive / Google Drive)</strong>
+        <strong style="font-size:13px;">3. Manual Backup File (iCloud / OneDrive / Google Drive)</strong>
         <div style="font-size:11.5px;color:var(--text-subtle);">Save all trips (with embedded receipt photos when enabled) to a single <code>claimflow-db.json</code> via iOS Share Sheet or download, and Smart-Merge newer edits on any device.</div>
         <div style="display:flex;flex-wrap:wrap;gap:7px;">
-          <button type="button" class="btn btn-primary" onclick="exportFullWorkspaceJSON()">📲 Save / Share All Trips (claimflow-db.json)</button>
-          <button type="button" class="btn btn-soft" onclick="document.getElementById('import-workspace-input').click()">📥 Open &amp; Smart-Merge File</button>
+          <button type="button" class="btn btn-soft" onclick="exportFullWorkspaceJSON()">📲 Save / Share All Trips (claimflow-db.json)</button>
+          <button type="button" class="btn" onclick="document.getElementById('import-workspace-input').click()">📥 Open &amp; Smart-Merge File</button>
         </div>
       </div>
 
       <div class="cloud-section">
-        <strong style="font-size:13px;">3. Instant Cross-Device Sync Code</strong>
+        <strong style="font-size:13px;">4. One-Time Cross-Device Sync Code (No Account Needed)</strong>
         <div style="display:flex;flex-wrap:wrap;gap:7px;">
           <button type="button" class="btn btn-sm btn-soft" onclick="copySyncCode(false)">Copy Current Trip Code</button>
           <button type="button" class="btn btn-sm" onclick="copySyncCode(true)">Copy All Trips Code</button>
@@ -1773,8 +2041,8 @@
       <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px;">
         <div style="display:flex;flex-wrap:wrap;gap:6px;">
           <button type="button" class="btn btn-sm btn-primary" onclick="triggerVaultUpload('receipt', true)">📸 Snap Photo</button>
-          <button type="button" class="btn btn-sm btn-soft" onclick="triggerVaultUpload('receipt', false)">🖼️ +Receipts</button>
-          <button type="button" id="vault-bank-upload-btn" class="btn btn-sm btn-sky-soft" onclick="triggerVaultUpload('bank', false)">💳 +Bank SGD</button>
+          <button type="button" class="btn btn-sm btn-soft" onclick="triggerVaultUpload('receipt', false)">🖼️ +Photos / PDF</button>
+          <button type="button" id="vault-bank-upload-btn" class="btn btn-sm btn-sky-soft" onclick="triggerVaultUpload('bank', false)">💳 +Bank / PDF</button>
           <button type="button" id="vault-bw-toggle-btn" class="btn btn-sm btn-green-soft" onclick="toggleReceiptBWMode()" title="High-Resolution 2200px Black &amp; White document scan mode">🖤 Hi-Res B&amp;W: ON</button>
           <button type="button" id="vault-slidebg-btn" class="btn btn-sm" onclick="cyclePrintSlideBg()" title="Cycle PDF &amp; Share Sheet background: Light Paper / Dark Box / Dark Slides">☀️ Light Paper</button>
         </div>
@@ -1814,45 +2082,52 @@
     </div>
   </div>
 
-  <!-- BUILT-IN BANK SCREENSHOT & RECEIPT CROPPER MODAL -->
+  <!-- BUILT-IN BANK SCREENSHOT & RECEIPT CROPPER MODAL (PINCH, PAN & DRAG HANDLES) -->
   <div id="receipt-crop-backdrop" class="modal-backdrop no-print" onclick="if(event.target===this) closeReceiptCropper()">
     <div class="crop-modal-box">
       <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;">
         <div>
-          <strong style="font-size:14.5px;">✂️ Crop Receipt / Bank Screenshot</strong>
-          <div id="crop-dims-readout" class="mono" style="font-size:11px;color:var(--text-subtle);">Trim headers/bars so receipts print larger on A4</div>
+          <strong style="font-size:14.5px;">✂️ Crop Receipt / PDF / Bank Screenshot</strong>
+          <div id="crop-dims-readout" class="mono" style="font-size:11px;color:var(--text-subtle);">Pinch to zoom, drag to pan, or drag corners/edges</div>
         </div>
         <button type="button" class="btn btn-icon-sm btn-ghost" onclick="closeReceiptCropper()">✕</button>
       </div>
-      <div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;">
-        <button type="button" class="btn btn-sm btn-sky-soft" onclick="applyCropPreset(18, 28, 2, 2)">💳 Bank Strip</button>
-        <button type="button" class="btn btn-sm btn-soft" onclick="applyCropPreset(0, 50, 0, 0)">⬆️ Top Half</button>
-        <button type="button" class="btn btn-sm btn-soft" onclick="applyCropPreset(50, 0, 0, 0)">⬇️ Bottom Half</button>
-        <button type="button" class="btn btn-sm" onclick="applyCropPreset(10, 10, 10, 10)">📐 Trim 10%</button>
-        <button type="button" class="btn btn-sm btn-ghost" onclick="applyCropPreset(0, 0, 0, 0)">↺ Reset</button>
-      </div>
-      <div class="crop-stage">
-        <div class="crop-img-wrap">
-          <img id="crop-img" src="" alt="Crop Preview" />
-          <div id="crop-rect" class="crop-rect"></div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;justify-content:space-between;">
+        <div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;">
+          <button type="button" class="btn btn-sm btn-sky-soft" onclick="applyCropPreset(18, 28, 2, 2)">💳 Bank Strip</button>
+          <button type="button" class="btn btn-sm btn-soft" onclick="applyCropPreset(0, 50, 0, 0)">⬆️ Top Half</button>
+          <button type="button" class="btn btn-sm btn-soft" onclick="applyCropPreset(50, 0, 0, 0)">⬇️ Bottom Half</button>
+          <button type="button" class="btn btn-sm" onclick="applyCropPreset(10, 10, 10, 10)">📐 Trim 10%</button>
+          <button type="button" class="btn btn-sm btn-ghost" onclick="applyCropPreset(0, 0, 0, 0)">↺ Reset</button>
         </div>
       </div>
-      <div class="crop-sliders-grid">
-        <div class="crop-slider-row">
-          <div class="crop-slider-head"><span>Trim Top</span><span id="crop-val-top" class="mono">0%</span></div>
-          <input id="crop-rng-top" type="range" min="0" max="80" value="0" oninput="updateCropSlider('top', this.value)" />
+      <div id="crop-stage" class="crop-stage">
+        <img id="crop-img" src="" alt="Crop Preview" draggable="false" />
+        <div id="crop-rect" class="crop-rect">
+          <div class="crop-grid-lines"></div>
+          <div class="crop-handle corner nw" data-handle="nw" aria-label="Resize top-left"></div>
+          <div class="crop-handle corner ne" data-handle="ne" aria-label="Resize top-right"></div>
+          <div class="crop-handle corner sw" data-handle="sw" aria-label="Resize bottom-left"></div>
+          <div class="crop-handle corner se" data-handle="se" aria-label="Resize bottom-right"></div>
+          <div class="crop-handle edge-h n" data-handle="n" aria-label="Resize top edge"></div>
+          <div class="crop-handle edge-h s" data-handle="s" aria-label="Resize bottom edge"></div>
+          <div class="crop-handle edge-v w" data-handle="w" aria-label="Resize left edge"></div>
+          <div class="crop-handle edge-v e" data-handle="e" aria-label="Resize right edge"></div>
         </div>
-        <div class="crop-slider-row">
-          <div class="crop-slider-head"><span>Trim Bottom</span><span id="crop-val-bottom" class="mono">0%</span></div>
-          <input id="crop-rng-bottom" type="range" min="0" max="80" value="0" oninput="updateCropSlider('bottom', this.value)" />
+      </div>
+      <div class="crop-zoom-bar">
+        <div class="crop-zoom-slider-wrap">
+          <button type="button" class="btn btn-icon-sm" onclick="nudgeCropZoom(-0.25)" title="Zoom out">−</button>
+          <input id="crop-zoom-range" type="range" min="100" max="500" step="5" value="100" oninput="setCropZoomFromSlider(this.value)" aria-label="Zoom level" />
+          <button type="button" class="btn btn-icon-sm" onclick="nudgeCropZoom(0.25)" title="Zoom in">＋</button>
+          <span id="crop-zoom-badge" class="pill pill-accent mono">1.00×</span>
         </div>
-        <div class="crop-slider-row">
-          <div class="crop-slider-head"><span>Trim Left</span><span id="crop-val-left" class="mono">0%</span></div>
-          <input id="crop-rng-left" type="range" min="0" max="80" value="0" oninput="updateCropSlider('left', this.value)" />
-        </div>
-        <div class="crop-slider-row">
-          <div class="crop-slider-head"><span>Trim Right</span><span id="crop-val-right" class="mono">0%</span></div>
-          <input id="crop-rng-right" type="range" min="0" max="80" value="0" oninput="updateCropSlider('right', this.value)" />
+        <div class="crop-gesture-hint">
+          <span>🤌 Pinch / Wheel to Zoom</span>
+          <span>·</span>
+          <span>✋ Drag to Pan</span>
+          <span>·</span>
+          <span>⤢ Drag Corners</span>
         </div>
       </div>
       <div style="display:flex;justify-content:flex-end;gap:8px;">
@@ -1994,10 +2269,15 @@
     <div class="slide-preview-modal-box">
       <div class="slide-preview-toolbar">
         <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-          <strong style="font-size:14px;">👁️ On-Screen Slide &amp; PDF Preview</strong>
+          <strong id="slide-preview-title" style="font-size:14px;">👁️ On-Screen Slide &amp; PDF Preview</strong>
           <span id="slide-preview-count-pill" class="pill pill-accent mono">0 pages</span>
+          <button type="button" id="btn-sp-view-all" class="btn btn-sm btn-soft" style="display:none;" onclick="openSlidePreviewModal({ type: 'all' })">📑 View Full Claim</button>
         </div>
         <div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap;">
+          <div class="seg-control">
+            <button type="button" id="btn-sporient-landscape" onclick="setPrintOrientation('landscape')">Land</button>
+            <button type="button" id="btn-sporient-portrait" onclick="setPrintOrientation('portrait')">Port</button>
+          </div>
           <div class="seg-control">
             <button type="button" id="btn-spbg-light" onclick="setPrintSlideBg('light')">☀️ Light</button>
             <button type="button" id="btn-spbg-darkbox" onclick="setPrintSlideBg('darkbox')">🖼️ Dark Box</button>
@@ -2007,7 +2287,7 @@
             <button type="button" id="btn-spprice-split" onclick="setPrintPriceLayout('split')">Split</button>
             <button type="button" id="btn-spprice-centered" onclick="setPrintPriceLayout('centered')">Centered</button>
           </div>
-          <button type="button" class="btn btn-sm btn-primary" onclick="closeSlidePreviewModal(); executePrintAuditSummary();">🖨️ Print PDF</button>
+          <button type="button" class="btn btn-sm btn-primary" onclick="printCurrentSlidePreview()">🖨️ Print PDF</button>
           <button type="button" class="btn btn-icon-sm btn-ghost" onclick="closeSlidePreviewModal()">✕</button>
         </div>
       </div>
@@ -3008,7 +3288,10 @@
 
     function manualSaveNow() {
       persistStore(true, true);
-      if (cloudSync.handle && !cloudSync.needsReconnect) {
+      if (gistSync.cfg.enabled && gistSync.cfg.token && gistSync.cfg.gistId) {
+        syncGistTwoWay(false);
+        showToast('Saved locally & auto-syncing to Private Gist…', 'green');
+      } else if (cloudSync.handle && !cloudSync.needsReconnect) {
         showToast('Saved locally & syncing to ' + cloudSync.fileName + '…', 'green');
       } else {
         showToast('Saved "' + formatTripOptionLabel(state) + '"', 'green');
@@ -3593,7 +3876,7 @@
     }
 
     function closedBadgeHtml(collapsed) {
-      return collapsed ? '<span class="pill pill-green">✓ Closed</span>' : '';
+      return collapsed ? '<span class="pill pill-green card-closed-pill">✓ Closed</span>' : '';
     }
 
     function closeTabFooterBtn(sectionKey) {
@@ -3928,7 +4211,9 @@
         + '<div><div class="card-title">Time Off Claim (TOIL — SGT Window)</div>'
         + '<div class="card-sub">Calculated in SGT · 4h = 0.5d · 6h = 1.0d · Outlook, Excel (TSV), CSV &amp; SGT PDF Export</div></div>'
         + '</button>'
-        + '<div class="card-head-right">' + closedBadgeHtml(collapsed) + '<span id="cat-total-timeOff" class="cat-total-pill">' + summary.timeOff.totalDays.toFixed(1) + ' Day(s)</span></div>'
+        + '<div class="card-head-right">' + closedBadgeHtml(collapsed)
+        + '<button type="button" class="btn btn-sm btn-soft" onclick="openSlidePreviewModal({ type: \'toil\' })" title="Print Preview TOIL Statement">👁️ Preview</button>'
+        + '<span id="cat-total-timeOff" class="cat-total-pill">' + summary.timeOff.totalDays.toFixed(1) + ' Day(s)</span></div>'
         + '</div>'
         + (collapsed ? '' : (
           '<div class="card-body">'
@@ -3977,18 +4262,18 @@
       const titleTxt = isPolicySection
         ? (photos.length > 0
           ? ('📄 ' + photos.length + ' Policy / Boarding Document' + (photos.length === 1 ? '' : 's') + ' Attached')
-          : 'Attach Policy Document / Boarding Pass')
+          : 'Attach Policy PDF / Image / Boarding Pass')
         : (photos.length > 0
-          ? ('📷 ' + photos.length + ' Receipt Photo' + (photos.length === 1 ? '' : 's') + ' Attached')
-          : 'Attach Receipts / Bank SGD');
+          ? ('📷 ' + photos.length + ' Receipt Photo' + (photos.length === 1 ? '' : 's') + ' / PDF Page' + (photos.length === 1 ? '' : 's') + ' Attached')
+          : 'Attach Receipts, PDFs or Bank SGD');
 
       const btnsHtml = isPolicySection
         ? ('<button type="button" class="btn btn-sm btn-primary" onclick="triggerReceiptUpload({ scope:\'overnight\', dayId:\'\', itemId:\'\', role:\'policy\' }, true)">📸 Snap</button>'
-          + '<button type="button" class="btn btn-sm btn-soft" onclick="triggerReceiptUpload({ scope:\'overnight\', dayId:\'\', itemId:\'\', role:\'policy\' }, false)">📄 +Policy Doc</button>'
-          + '<button type="button" class="btn btn-sm btn-sky-soft" onclick="triggerReceiptUpload({ scope:\'overnight\', dayId:\'\', itemId:\'\', role:\'receipt\' }, false)">🎫 +Boarding Pass</button>')
+          + '<button type="button" class="btn btn-sm btn-soft" onclick="triggerReceiptUpload({ scope:\'overnight\', dayId:\'\', itemId:\'\', role:\'policy\' }, false)">📄 +Policy / PDF</button>'
+          + '<button type="button" class="btn btn-sm btn-sky-soft" onclick="triggerReceiptUpload({ scope:\'overnight\', dayId:\'\', itemId:\'\', role:\'receipt\' }, false)">🎫 +Boarding / PDF</button>')
         : ('<button type="button" class="btn btn-sm btn-primary" onclick="triggerReceiptUpload({ scope:\'' + esc(scope) + '\', dayId:\'\', itemId:\'\', role:\'receipt\' }, true)">📸 Snap</button>'
-          + '<button type="button" class="btn btn-sm btn-soft" onclick="triggerReceiptUpload({ scope:\'' + esc(scope) + '\', dayId:\'\', itemId:\'\', role:\'receipt\' }, false)">🖼️ +Receipts</button>'
-          + '<button type="button" class="btn btn-sm btn-sky-soft" onclick="triggerReceiptUpload({ scope:\'' + esc(scope) + '\', dayId:\'\', itemId:\'\', role:\'bank\' }, false)">💳 +Bank SGD</button>');
+          + '<button type="button" class="btn btn-sm btn-soft" onclick="triggerReceiptUpload({ scope:\'' + esc(scope) + '\', dayId:\'\', itemId:\'\', role:\'receipt\' }, false)">🖼️ +Photos / PDF</button>'
+          + '<button type="button" class="btn btn-sm btn-sky-soft" onclick="triggerReceiptUpload({ scope:\'' + esc(scope) + '\', dayId:\'\', itemId:\'\', role:\'bank\' }, false)">💳 +Bank / PDF</button>');
 
       return '<div style="margin-top:10px;display:flex;flex-direction:column;gap:8px;">'
         + '<div class="meal-upload-strip' + (photos.length > 0 ? ' has-photos' : '') + '">'
@@ -4020,6 +4305,7 @@
         + '<div><div class="card-title">' + esc(opts.title) + '</div><div class="card-sub">' + esc(opts.subtitle) + '</div></div>'
         + '</button>'
         + '<div class="card-head-right">' + closedBadgeHtml(collapsed) + extraHeader
+        + '<button type="button" class="btn btn-sm btn-soft" onclick="openSlidePreviewModal({ type: \'category\', scope: \'' + esc(opts.scope) + '\' })" title="Print Preview for ' + esc(opts.title) + '">👁️ Preview</button>'
         + '<span id="cat-total-' + opts.scope + '" class="cat-total-pill">SGD ' + fmt2(opts.total) + '</span></div>'
         + '</div>'
         + (collapsed ? '' : (
@@ -4086,6 +4372,7 @@
         + '<div class="card-sub">Misc &gt; Overnight · Auto timezone → SGT · Detects 22:00–06:00 SGT legs (SGD ' + fmt2(summary.overnightRate) + '/leg)</div></div>'
         + '</button>'
         + '<div class="card-head-right">' + closedBadgeHtml(collapsed) + '<span class="pill pill-accent">Misc &gt; Overnight</span>'
+        + '<button type="button" class="btn btn-sm btn-soft" onclick="openSlidePreviewModal({ type: \'overnight\' })" title="Print Preview for Overnight Allowance">👁️ Preview</button>'
         + '<span id="cat-total-flights" class="cat-total-pill">SGD ' + fmt2(summary.flights.overnightTotal) + '</span></div>'
         + '</div>'
         + (collapsed ? '' : (
@@ -4171,6 +4458,7 @@
           + '<input class="date-pill-native" type="date" value="' + esc(d.day.date) + '" onchange="updateMealDayDate(\'' + esc(d.day.id) + '\',this.value)" />'
           + '</div>'
           + '<div class="day-actions">'
+          + '<button type="button" class="btn btn-sm btn-soft" onclick="openSlidePreviewModal({ type: \'mealDay\', dayId: \'' + esc(d.day.id) + '\' })" title="Print Preview for this day">👁️ Preview</button>'
           + '<button type="button" class="btn btn-sm btn-soft" onclick="printMealDayPDF(\'' + esc(d.day.id) + '\')">📄 PDF</button>'
           + '<button type="button" class="btn btn-sm btn-green-soft" onclick="exportMealDaySheet(\'' + esc(d.day.id) + '\')">📲 Share</button>'
           + '<button type="button" class="btn btn-icon-sm btn-ghost btn-danger-ghost" title="Remove meal day" onclick="removeMealDay(\'' + esc(d.day.id) + '\')">✕</button>'
@@ -4190,11 +4478,11 @@
           + '</form>'
           + '</div>'
           + '<div class="meal-upload-strip' + (dayPhotos.length > 0 ? ' has-photos' : '') + '">'
-          + '<div style="font-size:11.5px;font-weight:700;">📷 ' + (dayPhotos.length > 0 ? (dayPhotos.length + ' Receipt Photo' + (dayPhotos.length === 1 ? '' : 's') + ' Attached') : 'Attach Receipts / Bank SGD') + '</div>'
+          + '<div style="font-size:11.5px;font-weight:700;">📷 ' + (dayPhotos.length > 0 ? (dayPhotos.length + ' Receipt Photo' + (dayPhotos.length === 1 ? '' : 's') + ' / PDF Page' + (dayPhotos.length === 1 ? '' : 's') + ' Attached') : 'Attach Receipts, PDFs or Bank SGD') + '</div>'
           + '<div class="meal-upload-btns">'
           + '<button type="button" class="btn btn-sm btn-primary" onclick="triggerReceiptUpload({ scope:\'mealDay\', dayId:\'' + esc(d.day.id) + '\', itemId:\'\', role:\'receipt\' }, true)">📸 Snap</button>'
-          + '<button type="button" class="btn btn-sm btn-soft" onclick="triggerReceiptUpload({ scope:\'mealDay\', dayId:\'' + esc(d.day.id) + '\', itemId:\'\', role:\'receipt\' }, false)">🖼️ +Receipts</button>'
-          + '<button type="button" class="btn btn-sm btn-sky-soft" onclick="triggerReceiptUpload({ scope:\'mealDay\', dayId:\'' + esc(d.day.id) + '\', itemId:\'\', role:\'bank\' }, false)">💳 +Bank SGD</button>'
+          + '<button type="button" class="btn btn-sm btn-soft" onclick="triggerReceiptUpload({ scope:\'mealDay\', dayId:\'' + esc(d.day.id) + '\', itemId:\'\', role:\'receipt\' }, false)">🖼️ +Photos / PDF</button>'
+          + '<button type="button" class="btn btn-sm btn-sky-soft" onclick="triggerReceiptUpload({ scope:\'mealDay\', dayId:\'' + esc(d.day.id) + '\', itemId:\'\', role:\'bank\' }, false)">💳 +Bank / PDF</button>'
           + '</div>'
           + '</div>'
           + photosHtml
@@ -4210,6 +4498,7 @@
         + '<div class="card-sub">Misc &gt; Meals · Day-by-day cap enforcement, inline photo strip &amp; 1-Page Landscape PDF/Share</div></div>'
         + '</button>'
         + '<div class="card-head-right">' + closedBadgeHtml(collapsed) + '<span class="pill pill-amber">Misc &gt; Meals</span>'
+        + '<button type="button" class="btn btn-sm btn-soft" onclick="openSlidePreviewModal({ type: \'meals\' })" title="Print Preview for All Daily Meals">👁️ Preview</button>'
         + '<span id="cat-total-meals" class="cat-total-pill">SGD ' + fmt2(summary.meals.cappedTotal) + '</span></div>'
         + '</div>'
         + (collapsed ? '' : (
@@ -4280,8 +4569,12 @@
         return;
       }
       const target = audit.firstMissing;
+      const isMobile = document.documentElement.getAttribute('data-layout') === 'mobile';
       if (target.type === 'meal') {
-        if (state.ui.collapsed.meals) {
+        if (isMobile) {
+          mobileAwareDayId = target.dayId;
+          setMobileView('today');
+        } else if (state.ui.collapsed.meals) {
           state.ui.collapsed.meals = false;
           persistStore(false);
           renderWorkspace();
@@ -4293,24 +4586,361 @@
             el.classList.add('radar-flash');
             setTimeout(function () { el.classList.remove('radar-flash'); }, 1400);
           }
-        }, 50);
+        }, 70);
       } else {
-        const collapseKey = target.scope === 'overnight' ? 'flights' : target.scope;
-        if (state.ui.collapsed[collapseKey]) {
-          state.ui.collapsed[collapseKey] = false;
-          persistStore(false);
-          renderWorkspace();
+        const isDailyTrpt = target.scope === 'overseasTransport' || target.scope === 'sgTransport';
+        if (isMobile) {
+          if (isDailyTrpt) {
+            mobileTransportTab = target.scope === 'sgTransport' ? 'sg' : 'overseas';
+            setMobileView('today');
+          } else {
+            const collapseKey = target.scope === 'overnight' ? 'flights' : target.scope;
+            state.ui.collapsed[collapseKey] = false;
+            persistStore(false);
+            setMobileView('fixed');
+          }
+        } else {
+          const collapseKey = target.scope === 'overnight' ? 'flights' : target.scope;
+          if (state.ui.collapsed[collapseKey]) {
+            state.ui.collapsed[collapseKey] = false;
+            persistStore(false);
+            renderWorkspace();
+          }
         }
         setTimeout(function () {
-          const el = document.getElementById('cat-card-' + target.scope);
+          const el = document.getElementById(isMobile && isDailyTrpt ? 'mobile-aware-transport-card' : ('cat-card-' + target.scope));
           if (el) {
             el.scrollIntoView({ behavior: 'smooth', block: 'center' });
             el.classList.add('radar-flash');
             setTimeout(function () { el.classList.remove('radar-flash'); }, 1400);
           }
-        }, 50);
+        }, 70);
       }
       showToast('Missing receipt: ' + target.label, 'amber');
+    }
+
+    /**
+     * Mobile Aware Mode Helpers:
+     * Detects today's date against the trip's meal days (or picks the closest day / user-selected day)
+     * and keeps Today's Meals + Daily Transport open and ready for instant entry & capture.
+     */
+    let mobileAwareDayId = null;
+    let mobileAwareTripId = null;
+    let mobileTransportTab = 'overseas';
+    let mobileTransportUserPicked = false;
+
+    function detectAwareMealDay(summary) {
+      const todayIso = toISODate(new Date());
+      const days = (summary && summary.meals && summary.meals.days) || [];
+      if (mobileAwareTripId !== state.id) {
+        mobileAwareTripId = state.id;
+        mobileAwareDayId = null;
+        mobileTransportUserPicked = false;
+      }
+
+      const todayIndex = days.findIndex(function (d) { return d.day.date === todayIso; });
+      const hasToday = todayIndex >= 0;
+
+      // Respect explicit day selection made by the user in the Aware strip
+      if (mobileAwareDayId) {
+        const pickedIdx = days.findIndex(function (d) { return d.day.id === mobileAwareDayId; });
+        if (pickedIdx >= 0) {
+          return {
+            dayEntry: days[pickedIdx],
+            dayIndex: pickedIdx,
+            totalDays: days.length,
+            isExactToday: days[pickedIdx].day.date === todayIso,
+            hasTodayInTrip: hasToday,
+            todayIso: todayIso
+          };
+        }
+      }
+
+      // Auto-detect today's date first
+      if (hasToday) {
+        mobileAwareDayId = days[todayIndex].day.id;
+        return {
+          dayEntry: days[todayIndex],
+          dayIndex: todayIndex,
+          totalDays: days.length,
+          isExactToday: true,
+          hasTodayInTrip: true,
+          todayIso: todayIso
+        };
+      }
+
+      if (days.length === 0) {
+        return {
+          dayEntry: null, dayIndex: -1, totalDays: 0,
+          isExactToday: false, hasTodayInTrip: false, todayIso: todayIso
+        };
+      }
+
+      // Otherwise choose the nearest trip day (Day 1 if future trip, Last Day if past trip)
+      let bestIdx = 0;
+      let bestDiff = Infinity;
+      const todayDt = parseISODate(todayIso);
+      days.forEach(function (d, idx) {
+        const dt = parseISODate(d.day.date);
+        if (!dt || !todayDt) return;
+        const diff = Math.abs(dt.getTime() - todayDt.getTime());
+        if (diff < bestDiff) {
+          bestDiff = diff;
+          bestIdx = idx;
+        }
+      });
+
+      mobileAwareDayId = days[bestIdx].day.id;
+      return {
+        dayEntry: days[bestIdx],
+        dayIndex: bestIdx,
+        totalDays: days.length,
+        isExactToday: false,
+        hasTodayInTrip: false,
+        todayIso: todayIso
+      };
+    }
+
+    function selectAwareMealDay(dayId) {
+      mobileAwareDayId = dayId;
+      renderWorkspace();
+    }
+
+    function setMobileTransportTab(tab) {
+      mobileTransportTab = tab === 'sg' ? 'sg' : 'overseas';
+      mobileTransportUserPicked = true;
+      renderWorkspace();
+    }
+
+    function addTodayMealDayAndSelect() {
+      const todayIso = toISODate(new Date());
+      const existing = (state.meals || []).find(function (d) { return d.date === todayIso; });
+      if (existing) {
+        mobileAwareDayId = existing.id;
+        renderWorkspace();
+        showToast('Switched to Today (' + fmtDateNoYear(todayIso, 'paren') + ')', 'green');
+        return;
+      }
+      const defaultFxId = (state.fxAnchors[0] && state.fxAnchors[0].id) || '';
+      const newDay = {
+        id: uid('day'),
+        date: todayIso,
+        items: [{ id: uid('rc'), label: '', currency: 'SGD', amountExpr: '', deductionExpr: '', deductionReason: '', fxAnchorId: defaultFxId, customRate: '' }]
+      };
+      state.meals.push(newDay);
+      state.meals.sort(function (a, b) { return String(a.date || '').localeCompare(String(b.date || '')); });
+      mobileAwareDayId = newDay.id;
+      persistStore(true);
+      renderAll();
+      showToast('Created Today (' + fmtDateNoYear(todayIso, 'paren') + ') — ready for entry!', 'green');
+    }
+
+    function renderSingleAwareMealDayCardHtml(d, summary) {
+      const cap = summary.cap > 0 ? summary.cap : 0;
+      const rowsHtml = d.day.items.map(function (it, idx) {
+        return renderReceiptRow('meal', it, idx, summary.fxCode, d.day.id);
+      }).join('');
+
+      const pct = cap > 0 ? Math.min(100, Math.round((d.raw / cap) * 100)) : 0;
+      const remain = cap > 0 ? Math.max(0, round2(cap - d.raw)) : 0;
+      const barColor = d.isCapped ? 'var(--amber)' : (pct >= 80 ? 'var(--sky)' : 'var(--green)');
+      const capMetaLeft = d.isCapped
+        ? ('<span style="color:var(--amber-text);">Raw SGD ' + fmt2(d.raw) + ' → Capped @ SGD ' + fmt2(d.capped) + '</span>')
+        : ('<span>SGD ' + fmt2(d.capped) + (cap > 0 ? (' / ' + fmt2(cap)) : '') + '</span>');
+      const capMetaRight = cap > 0
+        ? (d.isCapped
+          ? '<span class="pill pill-amber mono">Cap Reached</span>'
+          : '<span class="mono" style="color:var(--text-subtle);">SGD ' + fmt2(remain) + ' left</span>')
+        : '';
+
+      const dayPhotos = getReceiptsForMealDay(d.day);
+      const pairedSet = getPairedItemIdSet(dayPhotos);
+      const photosHtml = dayPhotos.length > 0
+        ? '<div class="day-photos-strip">' + dayPhotos.map(function (ph) {
+            const info = getReceiptDisplayInfo(ph, d.day);
+            const sz = getReceiptSizeMeta(ph);
+            const isBank = ph.role === 'bank';
+            const isPol = ph.role === 'policy';
+            const isPaired = !!(ph.itemId && pairedSet[ph.itemId]);
+            const effOrient = getPhotoEffectiveOrient(ph);
+            return '<div class="day-photo-thumb" style="border-top:3px solid ' + info.colors.bg + ';" onclick="openReceiptLightbox(\'' + esc(ph.id) + '\')">'
+              + '<span class="day-photo-role' + (isPol ? ' policy' : (isBank ? ' bank' : '')) + '">' + (isPol ? '📄 Policy' : (isBank ? '💳 Bank' : '🧾 Rec')) + '</span>'
+              + '<span class="day-photo-size">' + esc(sz.sizeStr) + '</span>'
+              + (isPaired ? '<span class="day-photo-pair">🔗 Pair</span>' : '')
+              + '<span class="day-photo-orient">' + (effOrient === 'landscape' ? '▭' : '▯') + '</span>'
+              + '<img src="' + ph.dataUrl + '" alt="' + esc(info.tagLeft) + '" loading="lazy" />'
+              + '<div class="day-photo-cap">' + (info.idx >= 0 ? ('<span class="rc-num-pill" style="background:' + info.colors.bg + ';">' + esc(info.numBadge) + '</span> ') : '') + esc(info.amountStr || info.tagLeft) + '</div>'
+              + '</div>';
+          }).join('') + '</div>'
+        : '';
+
+      return '<div id="day-card-' + esc(d.day.id) + '" class="day-card' + (d.isCapped ? ' cap-hit' : '') + '">'
+        + '<div class="day-head">'
+        + '<div class="day-date-trigger">'
+        + '<span class="day-badge-pill"><span>🍽️ ' + esc(fmtDateNoYear(d.day.date, 'paren')) + '</span><span>📅</span></span>'
+        + '<input class="date-pill-native" type="date" value="' + esc(d.day.date) + '" onchange="updateMealDayDate(\'' + esc(d.day.id) + '\',this.value)" />'
+        + '</div>'
+        + '<div class="day-actions">'
+        + '<button type="button" class="btn btn-sm btn-soft" onclick="printMealDayPDF(\'' + esc(d.day.id) + '\')">📄 PDF</button>'
+        + '<button type="button" class="btn btn-sm btn-green-soft" onclick="exportMealDaySheet(\'' + esc(d.day.id) + '\')">📲 Share</button>'
+        + '</div>'
+        + '</div>'
+        + '<div class="day-cap-bar-wrap">'
+        + '<div class="day-cap-meta"><span id="day-meta-' + esc(d.day.id) + '">' + capMetaLeft + '</span><span id="day-rem-' + esc(d.day.id) + '">' + capMetaRight + '</span></div>'
+        + (cap > 0 ? ('<div class="day-cap-track"><div id="day-cap-fill-' + esc(d.day.id) + '" class="day-cap-fill" style="width:' + pct + '%;background:' + barColor + ';"></div></div>') : '')
+        + '</div>'
+        + '<div class="day-body">'
+        + '<div class="receipt-list">' + rowsHtml + '</div>'
+        + '<div class="quick-meal-bar">'
+        + '<button type="button" class="btn btn-sm btn-soft" onclick="addReceipt(\'meal\',\'' + esc(d.day.id) + '\')">+ Meal Line</button>'
+        + '<form class="quick-meal-form" onsubmit="handleQuickMealSubmit(event,\'' + esc(d.day.id) + '\')">'
+        + '<input id="qm-' + esc(d.day.id) + '" class="input mono" type="text" placeholder="Quick add: 12.68 + 34.47 or 2280 ' + esc(summary.fxCode) + '" />'
+        + '<button type="submit" class="btn btn-sm btn-primary">Add</button>'
+        + '</form>'
+        + '</div>'
+        + '<div class="meal-upload-strip' + (dayPhotos.length > 0 ? ' has-photos' : '') + '">'
+        + '<div style="font-size:11.5px;font-weight:700;">📷 ' + (dayPhotos.length > 0 ? (dayPhotos.length + ' Receipt' + (dayPhotos.length === 1 ? '' : 's') + ' Attached') : 'Capture Today\'s Meal Receipt') + '</div>'
+        + '<div class="meal-upload-btns">'
+        + '<button type="button" class="btn btn-sm btn-primary" onclick="triggerReceiptUpload({ scope:\'mealDay\', dayId:\'' + esc(d.day.id) + '\', itemId:\'\', role:\'receipt\' }, true)">📸 Snap</button>'
+        + '<button type="button" class="btn btn-sm btn-soft" onclick="triggerReceiptUpload({ scope:\'mealDay\', dayId:\'' + esc(d.day.id) + '\', itemId:\'\', role:\'receipt\' }, false)">🖼️ Library</button>'
+        + '<button type="button" class="btn btn-sm btn-sky-soft" onclick="triggerReceiptUpload({ scope:\'mealDay\', dayId:\'' + esc(d.day.id) + '\', itemId:\'\', role:\'bank\' }, false)">💳 Bank</button>'
+        + '</div>'
+        + '</div>'
+        + photosHtml
+        + '</div>'
+        + '</div>';
+    }
+
+    function renderMobileTodayView(summary) {
+      const aware = detectAwareMealDay(summary);
+      const d = aware.dayEntry;
+      const cap = summary.cap > 0 ? summary.cap : 0;
+      const activeScope = mobileTransportTab === 'sg' ? 'sgTransport' : 'overseasTransport';
+      const activeTrptItems = activeScope === 'sgTransport' ? state.sgTransport.items : state.overseasTransport.items;
+      const activeTrptTotal = activeScope === 'sgTransport' ? summary.sgTransport.total : summary.overseasTransport.total;
+      const combinedTrptTotal = round2(summary.overseasTransport.total + summary.sgTransport.total);
+
+      const livePillHtml = aware.isExactToday
+        ? '<span class="aware-live-pill"><span class="aware-live-dot"></span>Aware · Today Detected</span>'
+        : ('<span class="aware-live-pill nearest"><span class="aware-live-dot"></span>Aware · ' + (d ? ('Day ' + (aware.dayIndex + 1) + ' of ' + aware.totalDays) : 'Ready') + '</span>');
+
+      const heroTitle = d ? fmtDateNoYear(d.day.date, 'paren') : fmtDateNoYear(aware.todayIso, 'paren');
+      const range = fmtRangeNoYear(state.trip.startDate, state.trip.endDate);
+      const heroSub = (state.trip.route || 'Trip') + (range ? (' · ' + range) : '') + ' · ' + summary.fxCode;
+
+      // Swipeable Day Switcher Strip (with + Today chip if today isn't in trip yet)
+      const dayChipsHtml = (summary.meals.days || []).map(function (dayObj, idx) {
+        const isSelected = d && d.day.id === dayObj.day.id;
+        const isToday = dayObj.day.date === aware.todayIso;
+        const pCount = getReceiptsForMealDay(dayObj.day).length;
+        return '<button type="button" class="aware-day-chip' + (isSelected ? ' active' : '') + (isToday ? ' is-today' : '') + '" onclick="selectAwareMealDay(\'' + esc(dayObj.day.id) + '\')">'
+          + '<span class="aware-day-chip-top">' + (isToday ? '● Today' : ('D' + (idx + 1) + ' · ' + esc(fmtDateNoYear(dayObj.day.date, 'short')))) + '</span>'
+          + '<span id="aware-pill-amt-' + esc(dayObj.day.id) + '" class="aware-day-chip-amt">$' + fmt2(dayObj.capped) + (pCount > 0 ? ' 📷' : '') + '</span>'
+          + '</button>';
+      }).join('')
+        + (!aware.hasTodayInTrip
+          ? ('<button type="button" class="aware-day-chip add-today" onclick="addTodayMealDayAndSelect()">'
+            + '<span class="aware-day-chip-top">＋ Today</span>'
+            + '<span class="aware-day-chip-amt">' + esc(fmtDateNoYear(aware.todayIso, 'short')) + '</span>'
+            + '</button>')
+          : '');
+
+      const dayMealVal = d ? d.capped : 0;
+      const dayMealRaw = d ? d.raw : 0;
+      const dayMealPct = cap > 0 ? Math.min(100, Math.round((dayMealRaw / cap) * 100)) : 0;
+      const dayMealLeft = cap > 0 ? Math.max(0, round2(cap - dayMealRaw)) : 0;
+      const dayBarColor = (d && d.isCapped) ? 'var(--amber)' : (dayMealPct >= 80 ? 'var(--sky)' : 'var(--green)');
+
+      const snapMealAction = d
+        ? ('triggerReceiptUpload({ scope:\'mealDay\', dayId:\'' + esc(d.day.id) + '\', itemId:\'\', role:\'receipt\' }, true)')
+        : 'addTodayMealDayAndSelect()';
+      const snapBankAction = d
+        ? ('triggerReceiptUpload({ scope:\'mealDay\', dayId:\'' + esc(d.day.id) + '\', itemId:\'\', role:\'bank\' }, false)')
+        : 'addTodayMealDayAndSelect()';
+
+      const heroHtml = '<div class="mobile-aware-hero">'
+        + '<div class="aware-top-row">'
+        + '<div style="min-width:0;">'
+        + '<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">'
+        + livePillHtml
+        + renderMobileGistSyncChipHtml()
+        + '</div>'
+        + '<div class="aware-hero-date">' + esc(heroTitle) + '</div>'
+        + '<div class="aware-hero-sub">' + esc(heroSub) + '</div>'
+        + '</div>'
+        + '<div class="aware-trip-stat">'
+        + '<div style="font-size:9.5px;font-weight:800;text-transform:uppercase;color:var(--text-subtle);">Trip Total</div>'
+        + '<div id="aware-trip-total" class="mono" style="font-size:13.5px;font-weight:800;color:var(--accent);">SGD ' + fmt2(summary.grandClaimable) + '</div>'
+        + '</div>'
+        + '</div>'
+        + '<div class="aware-day-strip">' + dayChipsHtml + '</div>'
+        + '<div class="aware-metrics-row">'
+        + '<div class="aware-metric-box">'
+        + '<div class="aware-metric-lbl"><span>🍽️ Day Meals</span><span id="aware-day-meal-left" class="mono">' + (d && d.isCapped ? 'Capped' : ('$' + fmt2(dayMealLeft) + ' left')) + '</span></div>'
+        + '<div id="aware-day-meal-val" class="aware-metric-val">SGD ' + fmt2(dayMealVal) + '</div>'
+        + (cap > 0 ? ('<div class="day-cap-track"><div id="aware-day-meal-bar" class="day-cap-fill" style="width:' + dayMealPct + '%;background:' + dayBarColor + ';"></div></div>') : '')
+        + '</div>'
+        + '<div class="aware-metric-box">'
+        + '<div class="aware-metric-lbl"><span>🚆 Transport</span><span class="mono">OS + SG</span></div>'
+        + '<div id="aware-trpt-total" class="aware-metric-val">SGD ' + fmt2(combinedTrptTotal) + '</div>'
+        + '<div style="font-size:10.5px;color:var(--text-subtle);" class="mono">OS $' + fmt2(summary.overseasTransport.total) + ' · SG $' + fmt2(summary.sgTransport.total) + '</div>'
+        + '</div>'
+        + '</div>'
+        + '<div class="aware-capture-grid">'
+        + '<button type="button" class="aware-capture-btn primary" onclick="' + snapMealAction + '"><span class="cap-ico">📸</span><span>Snap Meal</span></button>'
+        + '<button type="button" class="aware-capture-btn sky" onclick="triggerReceiptUpload({ scope:\'' + activeScope + '\', dayId:\'\', itemId:\'\', role:\'receipt\' }, true)"><span class="cap-ico">🚕</span><span>Snap Trpt</span></button>'
+        + '<button type="button" class="aware-capture-btn green" onclick="' + snapBankAction + '"><span class="cap-ico">💳</span><span>+Bank SGD</span></button>'
+        + '</div>'
+        + '</div>';
+
+      // Open Card 1: Today's Daily Meals
+      const mealSectionHtml = d
+        ? ('<div class="aware-section-head"><span class="aware-section-title">🍽️ Today\'s Meals · Open for Entry</span>'
+          + '<button type="button" class="btn btn-sm btn-ghost" onclick="setMobileView(\'daily\')">All ' + summary.meals.days.length + ' Days →</button></div>'
+          + renderSingleAwareMealDayCardHtml(d, summary))
+        : ('<div class="card"><div class="card-body" style="text-align:center;padding:20px;">'
+          + '<div style="font-size:13px;font-weight:700;margin-bottom:8px;">No meal days created yet</div>'
+          + '<button type="button" class="btn btn-primary" onclick="addTodayMealDayAndSelect()">＋ Start Today\'s Meal Log</button>'
+          + '</div></div>');
+
+      // Open Card 2: Daily Transport (Overseas & SG Local — Open & Ready)
+      const trptRowsHtml = activeTrptItems.map(function (it, idx) {
+        return renderReceiptRow(activeScope, it, idx, summary.fxCode, null);
+      }).join('');
+
+      const trptChips = activeScope === 'sgTransport'
+        ? [{ label: 'To Airport', curr: 'SGD' }, { label: 'From Airport', curr: 'SGD' }, { label: 'Grab / Taxi', curr: 'SGD' }]
+        : [{ label: 'Metro / Rail', curr: 'SGD' }, { label: 'Taxi / Grab', curr: 'SGD' }, { label: 'Airport Express', curr: 'SGD' }, { label: 'Local FX', curr: 'FX' }];
+
+      const trptChipsHtml = trptChips.map(function (ch) {
+        return '<button type="button" class="chip-btn" onclick="addReceipt(\'' + activeScope + '\',null,\'' + esc(ch.label) + '\',\'' + ch.curr + '\')">+ ' + esc(ch.label) + '</button>';
+      }).join('');
+
+      const transportSectionHtml = '<div class="aware-section-head"><span class="aware-section-title">🚆 Daily Transport · Open for Entry</span>'
+        + '<span id="cat-total-' + activeScope + '" class="pill pill-accent mono">SGD ' + fmt2(activeTrptTotal) + '</span></div>'
+        + '<div id="mobile-aware-transport-card" class="mobile-trpt-card">'
+        + '<div class="mobile-trpt-tabs">'
+        + '<button type="button" class="mobile-trpt-tab' + (activeScope === 'overseasTransport' ? ' active' : '') + '" onclick="setMobileTransportTab(\'overseas\')"><span>🚅 Overseas</span><span class="mono">$' + fmt2(summary.overseasTransport.total) + '</span></button>'
+        + '<button type="button" class="mobile-trpt-tab' + (activeScope === 'sgTransport' ? ' active' : '') + '" onclick="setMobileTransportTab(\'sg\')"><span>🚕 SG Local</span><span class="mono">$' + fmt2(summary.sgTransport.total) + '</span></button>'
+        + '</div>'
+        + '<div class="card-body">'
+        + (trptRowsHtml ? '<div class="receipt-list">' + trptRowsHtml + '</div>' : '<div style="font-size:12px;color:var(--text-subtle);padding:4px 0;">No transport items yet — tap a quick chip below.</div>')
+        + '<div class="chip-bar">'
+        + '<button type="button" class="btn btn-sm btn-soft" onclick="addReceipt(\'' + activeScope + '\')">+ Add Ride</button>'
+        + trptChipsHtml
+        + '</div>'
+        + renderSectionUploadStripHtml(activeScope)
+        + '</div>'
+        + '</div>';
+
+      const fixedTotal = round2(summary.airFare.total + summary.hotel.total + summary.data.total + summary.flights.overnightTotal + summary.otherMisc.total);
+      const fixedCtaHtml = '<button type="button" class="mobile-fixed-cta" onclick="setMobileView(\'fixed\')">'
+        + '<div><strong style="color:var(--text);">🗂️ Fixed &amp; Trip Categories</strong>'
+        + '<div style="font-size:11px;color:var(--text-subtle);">Air Fare, Hotel, Data, Setup, FX Anchors, Overnight &amp; TOIL</div></div>'
+        + '<span class="pill pill-neutral mono">SGD ' + fmt2(fixedTotal) + ' →</span>'
+        + '</button>';
+
+      return [heroHtml, mealSectionHtml, transportSectionHtml, fixedCtaHtml].join('');
     }
 
     function renderWorkspace() {
@@ -4318,7 +4948,7 @@
       const col = document.getElementById('workspace-col');
       if (!col) return;
 
-      const closedCount = WORKSPACE_SECTION_KEYS.filter(function (k) { return !!state.ui.collapsed[k]; }).length;
+      const isMobile = document.documentElement.getAttribute('data-layout') === 'mobile';
       const audit = computeReceiptAudit(summary);
       const radarBtnHtml = audit.totalActive > 0
         ? (audit.missingCount === 0
@@ -4326,6 +4956,94 @@
           : '<button type="button" class="audit-radar-btn" onclick="jumpToFirstMissingReceipt()" title="Tap to jump directly to the first missing receipt (' + esc(audit.firstMissing.label) + ')">⚠️ ' + audit.missingCount + ' Missing Receipt' + (audit.missingCount === 1 ? '' : 's') + ' (' + audit.covered + '/' + audit.totalActive + ')</button>')
         : '';
 
+      // MOBILE VIEW 1: ⚡ Today (Aware Mode — Daily Meals + Daily Transport Open & Ready)
+      if (isMobile && currentMobileView === 'today') {
+        col.innerHTML = renderMobileTodayView(summary);
+        return;
+      }
+
+      // MOBILE VIEW 2: 🍽️ All Days (All Daily Meals + Overseas & SG Transport — Zero Fixed Clutter)
+      if (isMobile && currentMobileView === 'daily') {
+        const dailyTotal = round2(summary.meals.cappedTotal + summary.overseasTransport.total + summary.sgTransport.total);
+        const dailyBanner = '<div class="mobile-view-banner">'
+          + '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">'
+          + '<div><strong style="font-size:14.5px;">🍽️ Daily Spending (All Days)</strong>'
+          + '<div style="font-size:11.5px;color:var(--text-subtle);">All Daily Meals + Overseas &amp; SG Transport</div></div>'
+          + '<span class="cat-total-pill" style="color:var(--accent);border-color:var(--accent-border);">SGD ' + fmt2(dailyTotal) + '</span>'
+          + '</div>'
+          + '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;">'
+          + radarBtnHtml
+          + '<button type="button" class="btn btn-sm btn-soft" onclick="setMobileView(\'today\')">⚡ Back to Today</button>'
+          + '</div>'
+          + '</div>';
+        col.innerHTML = [
+          dailyBanner,
+          renderMealsCard(summary),
+          renderCategoryCard({
+            scope: 'overseasTransport', title: 'Overseas Transport', subtitle: 'Default SGD · Flip to ' + summary.fxCode + ' or type sums like 519 + 199',
+            items: state.overseasTransport.items, total: summary.overseasTransport.total, fxCode: summary.fxCode,
+            chips: [{ label: 'Airport Express', curr: 'SGD' }, { label: 'Shinkansen / Rail', curr: 'SGD' }, { label: 'Local Transit', curr: 'SGD' }, { label: 'Taxi / Grab', curr: 'SGD' }]
+          }),
+          renderCategoryCard({
+            scope: 'sgTransport', title: 'SG Transport', subtitle: 'Airport transfers & local taxis in Singapore',
+            items: state.sgTransport.items, total: summary.sgTransport.total, fxCode: summary.fxCode,
+            chips: [{ label: 'To Airport', curr: 'SGD' }, { label: 'From Airport', curr: 'SGD' }, { label: 'Grab / Taxi', curr: 'SGD' }]
+          })
+        ].join('');
+        return;
+      }
+
+      // MOBILE VIEW 3: 🗂️ Fixed (Fixed Categories, Trip Setup, FX Anchors, Overnight & TOIL)
+      if (isMobile && currentMobileView === 'fixed') {
+        const fixedTotal = round2(summary.airFare.total + summary.hotel.total + summary.data.total + summary.flights.overnightTotal + summary.otherMisc.total);
+        const fixedBanner = '<div class="mobile-view-banner">'
+          + '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">'
+          + '<div><strong style="font-size:14.5px;">🗂️ Fixed &amp; Trip Setup</strong>'
+          + '<div style="font-size:11.5px;color:var(--text-subtle);">Setup, FX, Flights, Hotel, Data, Overnight &amp; TOIL</div></div>'
+          + '<span class="cat-total-pill">SGD ' + fmt2(fixedTotal) + '</span>'
+          + '</div>'
+          + '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;">'
+          + radarBtnHtml
+          + '<div style="display:flex;gap:6px;">'
+          + '<button type="button" class="btn btn-sm" onclick="setAllWorkspaceCollapsed(false)">Expand All</button>'
+          + '<button type="button" class="btn btn-sm btn-green-soft" onclick="setAllWorkspaceCollapsed(true)">Close All</button>'
+          + '</div>'
+          + '</div>'
+          + '</div>';
+        col.innerHTML = [
+          fixedBanner,
+          renderTripSetupCard(summary),
+          renderFxAnchorsCard(summary),
+          renderCategoryCard({
+            scope: 'airFare', title: 'Air Fare', subtitle: 'Flight tickets, seat selection & baggage receipts',
+            items: state.airFare.items, total: summary.airFare.total, fxCode: summary.fxCode,
+            chips: [{ label: (state.trip.route || 'Flight') + ' Return', curr: 'SGD' }, { label: 'Seat / Baggage', curr: 'SGD' }]
+          }),
+          renderCategoryCard({
+            scope: 'hotel', title: 'Hotel / Accommodation', subtitle: 'Split multiple stays or enter combined receipts',
+            items: state.hotel.items, total: summary.hotel.total, fxCode: summary.fxCode,
+            chips: [{ label: 'Stay ' + (state.hotel.items.length + 1), curr: 'SGD' }, { label: 'City Tax', curr: 'SGD' }]
+          }),
+          renderCategoryCard({
+            scope: 'data', title: 'Data / Telco', subtitle: 'Separate reporting category (excluded from Misc rollup)',
+            items: state.data.items, total: summary.data.total, fxCode: summary.fxCode,
+            catTag: 'Data / Telco', catTone: 'pill-sky',
+            chips: [{ label: 'eSIM / Roaming', curr: 'SGD' }, { label: 'In-Flight WiFi', curr: 'SGD' }, { label: 'Pocket WiFi', curr: 'SGD' }]
+          }),
+          renderFlightsCard(summary),
+          renderCategoryCard({
+            scope: 'otherMisc', title: 'Other Miscellaneous', subtitle: 'Optional — Laundry, Visa, Lounge, Printing (rolled into Misc)',
+            items: state.otherMisc.items, total: summary.otherMisc.total, fxCode: summary.fxCode,
+            catTag: 'Misc > Other', catTone: 'pill-accent',
+            chips: [{ label: 'Laundry', curr: 'SGD' }, { label: 'Visa / Fee', curr: 'SGD' }, { label: 'Airport Lounge', curr: 'SGD' }]
+          }),
+          renderTimeOffCard(summary)
+        ].join('');
+        return;
+      }
+
+      // DESKTOP MODE: Full 2-Column Workspace (Unchanged)
+      const closedCount = WORKSPACE_SECTION_KEYS.filter(function (k) { return !!state.ui.collapsed[k]; }).length;
       const toolbarHtml = '<div class="workspace-toolbar">'
         + '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">'
         + '<span style="font-weight:700;">Entry Tabs</span>'
@@ -4414,6 +5132,8 @@
       setTxt('cat-total-timeOff', summary.timeOff.totalDays.toFixed(1) + ' Day(s)');
       setTxt('cat-total-meals', 'SGD ' + fmt2(summary.meals.cappedTotal));
       setTxt('ws-misc-group-total', 'Misc Total: SGD ' + fmt2(summary.reportingMiscTotal));
+      setTxt('aware-trip-total', 'SGD ' + fmt2(summary.grandClaimable));
+      setTxt('aware-trpt-total', 'SGD ' + fmt2(round2(summary.overseasTransport.total + summary.sgTransport.total)));
       const pOv = document.getElementById('ws-misc-pill-overnight');
       if (pOv) pOv.innerHTML = '🌙 Overnight: <span class="mono">SGD ' + fmt2(summary.flights.overnightTotal) + '</span>';
       const pMl = document.getElementById('ws-misc-pill-meals');
@@ -4493,6 +5213,24 @@
           fill.style.width = pct + '%';
           fill.style.background = d.isCapped ? 'var(--amber)' : (pct >= 80 ? 'var(--sky)' : 'var(--green)');
         }
+        const awareChipAmt = document.getElementById('aware-pill-amt-' + d.day.id);
+        if (awareChipAmt) {
+          const pCount = getReceiptsForMealDay(d.day).length;
+          awareChipAmt.textContent = '$' + fmt2(d.capped) + (pCount > 0 ? ' 📷' : '');
+        }
+        if (mobileAwareDayId === d.day.id) {
+          setTxt('aware-day-meal-val', 'SGD ' + fmt2(d.capped));
+          const aLeft = document.getElementById('aware-day-meal-left');
+          if (aLeft && capVal > 0) {
+            aLeft.textContent = d.isCapped ? 'Capped' : ('$' + fmt2(Math.max(0, round2(capVal - d.raw))) + ' left');
+          }
+          const aBar = document.getElementById('aware-day-meal-bar');
+          if (aBar && capVal > 0) {
+            const pctA = Math.min(100, Math.round((d.raw / capVal) * 100));
+            aBar.style.width = pctA + '%';
+            aBar.style.background = d.isCapped ? 'var(--amber)' : (pctA >= 80 ? 'var(--sky)' : 'var(--green)');
+          }
+        }
       });
 
       // Update Flight leg footers
@@ -4509,8 +5247,6 @@
           : '<span style="color:var(--text-subtle);">Enter local departure &amp; arrival times to auto-calculate SGT, Overnight &amp; TOIL</span>';
       });
 
-      // Update TOIL bridges & footers
-      // Update TOIL draft preview if visible
       const draftPrevEl = document.getElementById('toil-draft-preview');
       if (draftPrevEl) {
         draftPrevEl.innerHTML = renderToilPreviewHtml(getToilDraft());
@@ -4526,7 +5262,6 @@
       const summary = precomputedSummary || computeSummary();
       const claims = buildHRMSClaims(summary);
 
-      // 1. Single Read-Only Ref Pill
       const refPill = document.getElementById('console-ref-pill');
       if (refPill) {
         const ref = (state.trip.ref || '').trim();
@@ -4535,7 +5270,6 @@
           : '<span class="pill pill-neutral">No Ref #</span>';
       }
 
-      // 2. KPI Cards
       const kpiEl = document.getElementById('console-kpi');
       if (kpiEl) {
         kpiEl.innerHTML =
@@ -4544,7 +5278,6 @@
           + '<div class="kpi-box"><div class="kpi-label">TOIL Entitlement</div><div class="kpi-val">' + summary.timeOff.totalDays.toFixed(1) + ' Day' + (summary.timeOff.totalDays === 1 ? '' : 's') + '</div></div>';
       }
 
-      // 3. Reporting Category Rollup Bar (Core Categories + Illustrated Misc Group Tree)
       const rollupEl = document.getElementById('console-rollup');
       if (rollupEl) {
         const chips = [];
@@ -4565,18 +5298,10 @@
         rollupEl.innerHTML = chips.join('') + miscBoxHtml;
       }
 
-      // 4. Completion Counts & Progress Bar
       const totalCount = claims.length;
       const doneCount = claims.filter(function (c) { return !!state.console.completedMap[c.id]; }).length;
       const pendingCount = totalCount - doneCount;
       const pct = totalCount > 0 ? Math.round((doneCount / totalCount) * 100) : 0;
-
-      // Keep mobile bottom-bar HRMS pending badge synced
-      const mBadge = document.getElementById('mnav-hrms-badge');
-      if (mBadge) {
-        mBadge.textContent = pendingCount === 0 && totalCount > 0 ? '✓' : String(pendingCount);
-        mBadge.classList.toggle('done', pendingCount === 0 && totalCount > 0);
-      }
 
       const progEl = document.getElementById('console-progress');
       if (progEl) {
@@ -4593,7 +5318,6 @@
           + '<div class="progress-track"><div class="progress-fill" style="width:' + pct + '%;background:' + fillColor + ';"></div></div>';
       }
 
-      // 5. Red / Green Filter Tabs
       const tab = state.console.filterTab || 'all';
       const tabsEl = document.getElementById('console-rg-tabs');
       if (tabsEl) {
@@ -4603,7 +5327,6 @@
           + '<button type="button" class="rg-tab tab-done' + (tab === 'done' ? ' active-done' : '') + '" onclick="setFilterTab(\'done\')"><span class="dot dot-green"></span>Completed (' + doneCount + ')</button>';
       }
 
-      // 6. Red / Green Visual Completion Strip
       const stripEl = document.getElementById('console-rg-strip');
       if (stripEl) {
         stripEl.style.display = totalCount > 0 ? 'flex' : 'none';
@@ -4614,7 +5337,6 @@
         }).join('');
       }
 
-      // 7. Sync option toggles
       const fmtC = document.getElementById('btn-fmt-compact');
       const fmtD = document.getElementById('btn-fmt-detailed');
       const mealD = document.getElementById('btn-meal-daily');
@@ -4628,7 +5350,6 @@
       if (chkAuto) chkAuto.checked = !!state.console.autoCompleteOnCopy;
       if (chkRef) chkRef.checked = !!state.console.includeRefPrefix;
 
-      // 8. Filtered HRMS Cards
       const filtered = claims.filter(function (c) {
         const isDone = !!state.console.completedMap[c.id];
         if (tab === 'pending') return !isDone;
@@ -4688,14 +5409,11 @@
           + '<button type="button" class="btn btn-sm btn-ghost" onclick="toggleFoldHrmsCard(\'' + esc(c.id) + '\')" title="Close card (marks Completed)">Close ✓</button>'
           + '</div>'
           + '</div>'
-
           + '<div class="hrms-amt-row">'
           + '<div><span style="font-size:10.5px;font-weight:700;color:var(--text-subtle);margin-right:6px;">SGD</span><span class="hrms-amt-num">' + amtStr + '</span></div>'
           + '<button type="button" class="btn btn-sm ' + (copied.amt ? 'btn-green-soft' : 'btn-soft') + '" onclick="copyClaimAmt(\'' + esc(c.id) + '\',\'' + amtStr + '\')">' + (copied.amt ? '✓ Copied Amt' : 'Copy Amt') + '</button>'
           + '</div>'
-
           + '<textarea id="ta-desc-' + esc(c.id) + '" class="hrms-ta" rows="' + rows + '" oninput="handleManualDesc(\'' + esc(c.id) + '\',this.value)">' + esc(desc) + '</textarea>'
-
           + '<div class="hrms-card-foot">'
           + '<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">'
           + '<span id="cc-' + esc(c.id) + '" class="pill ' + (isLong ? 'pill-amber' : 'pill-neutral') + ' mono">' + charLen + ' chars' + (isLong ? ' · Long' : '') + '</span>'
@@ -4818,12 +5536,6 @@
       renderAll();
     }
 
-    function toggleAirFareInclude(checked) {
-      state.airFare.includeInTotal = !!checked;
-      persistStore();
-      renderAll();
-    }
-
     function addFxAnchor() {
       state.fxAnchors.push({
         id: uid('fx'),
@@ -4900,7 +5612,6 @@
       refreshCalculatedUI();
     }
 
-    /* --- Time Off Claim (TOIL) — SGT Window, TSV, CSV, Outlook & PDF --- */
     function updateToilDraft(field, val, fullRender) {
       const d = getToilDraft();
       d[field] = val;
@@ -5658,7 +6369,112 @@
       if (document.getElementById('slide-preview-backdrop').classList.contains('open')) renderSlidePreviewModal();
     }
 
-    function openSlidePreviewModal() {
+    let slidePreviewScope = { type: 'all' };
+
+    const PREVIEW_CAT_DEFS = {
+      airFare: { key: 'airFare', title: 'Air Fare', subtitle: 'Flight Tickets & Ancillaries' },
+      hotel: { key: 'hotel', title: 'Hotel / Accommodation', subtitle: 'Stays & City Taxes' },
+      sgTransport: { key: 'sgTransport', title: 'SG Transport', subtitle: 'Singapore Airport & Local Transfers' },
+      overseasTransport: { key: 'overseasTransport', title: 'Overseas Transport', subtitle: 'Rail, Local Transit & Transfers' },
+      data: { key: 'data', title: 'Data / Telco', subtitle: 'Roaming, eSIM & Connectivity' },
+      otherMisc: { key: 'otherMisc', title: 'Other Miscellaneous (Misc > Other)', subtitle: 'Laundry, Visa, Lounge & Misc' }
+    };
+
+    function buildScopedPrintDocument(scopeObj) {
+      const sc = scopeObj || { type: 'all' };
+      const summary = computeSummary();
+
+      if (sc.type === 'category' && PREVIEW_CAT_DEFS[sc.scope]) {
+        const def = PREVIEW_CAT_DEFS[sc.scope];
+        const html = buildCategoryPrintPages(def, summary, false);
+        const pageCount = (html.match(/class="meal-print-page/g) || []).length;
+        return {
+          empty: !html,
+          emptyMsg: 'No amounts or receipt photos entered in ' + def.title + ' yet.',
+          html: html,
+          hasDetailPages: true,
+          pageCount: pageCount,
+          label: def.title,
+          isScoped: true
+        };
+      }
+
+      if (sc.type === 'overnight') {
+        const html = buildOvernightPrintPages(summary, false);
+        const pageCount = (html.match(/class="meal-print-page/g) || []).length;
+        return {
+          empty: !html,
+          emptyMsg: 'No overnight flights or policy documents attached yet.',
+          html: html,
+          hasDetailPages: true,
+          pageCount: pageCount,
+          label: 'Overnight Allowance',
+          isScoped: true
+        };
+      }
+
+      if (sc.type === 'mealDay' && sc.dayId) {
+        const d = summary.meals.days.find(function (x) { return x.day.id === sc.dayId; });
+        if (!d) {
+          return { empty: true, emptyMsg: 'Meal day not found.', html: '', hasDetailPages: true, pageCount: 0, label: 'Daily Meal', isScoped: true };
+        }
+        const html = buildMealDayPrintPages(d, summary, false);
+        const pageCount = (html.match(/class="meal-print-page/g) || []).length;
+        return {
+          empty: !html,
+          emptyMsg: 'No meal items or receipts on this day yet.',
+          html: html,
+          hasDetailPages: true,
+          pageCount: pageCount,
+          label: 'Meals · ' + fmtDateNoYear(d.day.date, 'paren'),
+          isScoped: true
+        };
+      }
+
+      if (sc.type === 'meals') {
+        const targetDays = summary.meals.days.filter(function (d) {
+          return d.capped > 0 || getReceiptsForMealDay(d.day).length > 0;
+        });
+        const html = targetDays.map(function (d, idx) {
+          return buildMealDayPrintPages(d, summary, idx > 0);
+        }).join('');
+        const pageCount = (html.match(/class="meal-print-page/g) || []).length;
+        return {
+          empty: !html,
+          emptyMsg: 'No meal expenses or receipts attached yet.',
+          html: html,
+          hasDetailPages: true,
+          pageCount: pageCount,
+          label: 'All Daily Meals',
+          isScoped: true
+        };
+      }
+
+      if (sc.type === 'toil') {
+        if (!summary.timeOff.entries || summary.timeOff.entries.length === 0) {
+          return { empty: true, emptyMsg: 'No TOIL entries added yet. Add or sync flights first.', html: '', hasDetailPages: false, pageCount: 0, label: 'Time Off Claim (TOIL)', isScoped: true };
+        }
+        const html = '<div class="print-toil-bottom-wrap">' + buildToilPrintHtml(summary, true) + '</div>';
+        return {
+          empty: false,
+          html: html,
+          hasDetailPages: false,
+          pageCount: 1,
+          label: 'Time Off Claim (TOIL)',
+          isScoped: true
+        };
+      }
+
+      const fullDoc = buildFullAuditPrintDocument();
+      return Object.assign({}, fullDoc, {
+        emptyMsg: 'Select at least one section with items in Print Settings to preview slides.',
+        label: 'Full Claim',
+        isScoped: false
+      });
+    }
+
+    function openSlidePreviewModal(scopeObj) {
+      slidePreviewScope = scopeObj && scopeObj.type ? scopeObj : { type: 'all' };
       renderSlidePreviewModal();
       const bd = document.getElementById('slide-preview-backdrop');
       if (bd) bd.classList.add('open');
@@ -5669,10 +6485,31 @@
       if (bd) bd.classList.remove('open');
     }
 
+    function printCurrentSlidePreview() {
+      const doc = buildScopedPrintDocument(slidePreviewScope);
+      closeSlidePreviewModal();
+      if (doc.empty) {
+        showToast(doc.emptyMsg || 'Nothing to print in this section yet.', 'amber');
+        return;
+      }
+      applyPrintPreferencesToDOM(doc.hasDetailPages);
+      const pv = document.getElementById('print-view');
+      pv.innerHTML = doc.html;
+      window.print();
+    }
+
     function renderSlidePreviewModal() {
       const stage = document.getElementById('slide-preview-stage');
       const countPill = document.getElementById('slide-preview-count-pill');
+      const titleEl = document.getElementById('slide-preview-title');
+      const viewAllBtn = document.getElementById('btn-sp-view-all');
       if (!stage) return;
+
+      const curOrient = printPrefs.orientation === 'portrait' ? 'portrait' : 'landscape';
+      const o1 = document.getElementById('btn-sporient-landscape');
+      const o2 = document.getElementById('btn-sporient-portrait');
+      if (o1) o1.classList.toggle('active', curOrient !== 'portrait');
+      if (o2) o2.classList.toggle('active', curOrient === 'portrait');
 
       const curBg = printPrefs.slideBg || 'light';
       const curPrice = printPrefs.priceLayout || 'split';
@@ -5688,16 +6525,19 @@
       if (p1) p1.classList.toggle('active', curPrice !== 'centered');
       if (p2) p2.classList.toggle('active', curPrice === 'centered');
 
-      const doc = buildFullAuditPrintDocument();
+      const doc = buildScopedPrintDocument(slidePreviewScope);
+      if (titleEl) titleEl.textContent = doc.isScoped ? ('👁️ Preview: ' + doc.label) : '👁️ On-Screen Slide & PDF Preview';
+      if (viewAllBtn) viewAllBtn.style.display = doc.isScoped ? '' : 'none';
+
       applyPrintPreferencesToDOM(doc.hasDetailPages, stage);
       if (doc.empty) {
-        stage.innerHTML = '<div class="print-summary-page" style="text-align:center;padding:32px;color:#64748b;">Select at least one section with items in Print Settings to preview slides.</div>';
+        stage.innerHTML = '<div class="print-summary-page" style="text-align:center;padding:32px;color:#64748b;">' + esc(doc.emptyMsg || 'No items to preview.') + '</div>';
         if (countPill) countPill.textContent = '0 pages';
         return;
       }
       stage.innerHTML = doc.html;
       if (countPill) {
-        countPill.textContent = doc.pageCount + ' page' + (doc.pageCount === 1 ? '' : 's') + ' · ' + (printPrefs.orientation === 'portrait' ? 'Portrait' : 'Landscape');
+        countPill.textContent = doc.pageCount + ' page' + (doc.pageCount === 1 ? '' : 's') + ' · ' + (curOrient === 'portrait' ? 'Portrait' : 'Landscape');
       }
     }
 
@@ -5727,6 +6567,7 @@
       printPrefs.orientation = orient === 'portrait' ? 'portrait' : 'landscape';
       savePrintPrefs();
       renderPrintModal();
+      if (document.getElementById('slide-preview-backdrop').classList.contains('open')) renderSlidePreviewModal();
     }
 
     function setPrintStyle(style) {
@@ -6073,11 +6914,16 @@
     }
 
     /* ==========================================================================
-       10B. CLOUD FOLDER & MULTI-DEVICE SYNC (INDEXEDDB HANDLE + SHARE SHEET)
+       10B. CLOUD FOLDER, ZERO-FILE-PICKER PRIVATE GITHUB GIST & MULTI-DEVICE SYNC
        ========================================================================== */
     const CLOUD_PREFS_KEY = 'claimflow_v3_cloud_prefs';
+    const GIST_CFG_KEY = 'claimflow_v4_gist_cfg';
+    const DELETED_RECEIPTS_KEY = 'claimflow_v4_deleted_receipts';
     const CLOUD_DB_NAME = 'ClaimFlowCloudDB';
     const CLOUD_STORE_NAME = 'handles';
+    const GIST_API_BASE = 'https://api.github.com/gists';
+    const GIST_DATA_FILE = 'claimflow-db.json';
+    const GIST_RECEIPTS_FILE = 'claimflow-receipts.json';
 
     const cloudSync = {
       handle: null,
@@ -6088,6 +6934,502 @@
       writeTimer: null,
       prefs: { autoWrite: true, autoPull: true, embedReceipts: true }
     };
+
+    const gistSync = {
+      cfg: {
+        enabled: false,
+        token: '',
+        gistId: '',
+        autoPush: true,
+        autoPull: true,
+        syncReceipts: true,
+        lastSyncedAt: 0,
+        lastReceiptsHash: ''
+      },
+      busy: false,
+      pendingPush: false,
+      lastError: '',
+      lastPullCheckAt: 0,
+      pushTimer: null
+    };
+
+    function getDeletedReceiptIds() {
+      try {
+        const raw = localStorage.getItem(DELETED_RECEIPTS_KEY);
+        const arr = raw ? JSON.parse(raw) : [];
+        return Array.isArray(arr) ? arr : [];
+      } catch (e) { return []; }
+    }
+
+    function recordDeletedReceiptId(id) {
+      if (!id) return;
+      const list = getDeletedReceiptIds();
+      if (list.indexOf(id) < 0) {
+        list.push(id);
+        if (list.length > 300) list.splice(0, list.length - 300);
+        try { localStorage.setItem(DELETED_RECEIPTS_KEY, JSON.stringify(list)); } catch (e) {}
+      }
+    }
+
+    function mergeDeletedReceiptIds(remoteIds) {
+      const merged = getDeletedReceiptIds();
+      (remoteIds || []).forEach(function (id) {
+        if (id && merged.indexOf(id) < 0) merged.push(id);
+      });
+      if (merged.length > 300) merged.splice(0, merged.length - 300);
+      try { localStorage.setItem(DELETED_RECEIPTS_KEY, JSON.stringify(merged)); } catch (e) {}
+      return merged;
+    }
+
+    function loadGistConfig() {
+      try {
+        const raw = localStorage.getItem(GIST_CFG_KEY);
+        if (raw) {
+          gistSync.cfg = Object.assign({
+            enabled: false, token: '', gistId: '',
+            autoPush: true, autoPull: true, syncReceipts: true,
+            lastSyncedAt: 0, lastReceiptsHash: ''
+          }, JSON.parse(raw));
+        }
+      } catch (e) {}
+    }
+
+    function saveGistConfig() {
+      try { localStorage.setItem(GIST_CFG_KEY, JSON.stringify(gistSync.cfg)); } catch (e) {}
+    }
+
+    function setGistPref(key, val) {
+      gistSync.cfg[key] = !!val;
+      saveGistConfig();
+      if (key === 'syncReceipts' && val && gistSync.cfg.enabled) {
+        gistSync.cfg.lastReceiptsHash = '';
+        saveGistConfig();
+        scheduleCloudWrite(true);
+      }
+    }
+
+    function computeReceiptsHash(list) {
+      return (list || [])
+        .slice()
+        .sort(function (a, b) { return String(a.id).localeCompare(String(b.id)); })
+        .map(function (r) {
+          return [r.id, r.tripId, r.bytes || 0, r.width || 0, r.height || 0, r.scope || '', r.itemId || '', r.dayId || '', r.role || '', r.orient || '', r.note || ''].join(':');
+        })
+        .join('|');
+    }
+
+    function gistHeaders(token) {
+      return {
+        'Authorization': 'Bearer ' + String(token || '').trim(),
+        'Accept': 'application/vnd.github+json',
+        'Content-Type': 'application/json'
+      };
+    }
+
+    async function readGistFileContent(fileObj, token) {
+      if (!fileObj) return '';
+      if (!fileObj.truncated && typeof fileObj.content === 'string') return fileObj.content;
+      if (fileObj.raw_url) {
+        const res = await fetch(fileObj.raw_url, {
+          headers: token ? { 'Authorization': 'Bearer ' + token } : {}
+        });
+        if (!res.ok) throw new Error('Raw Gist fetch failed (' + res.status + ')');
+        return await res.text();
+      }
+      return fileObj.content || '';
+    }
+
+    function renderMobileGistSyncChipHtml() {
+      if (gistSync.cfg.enabled && gistSync.cfg.gistId) {
+        if (gistSync.busy) {
+          return '<button type="button" class="aware-sync-chip syncing" onclick="openCloudModal()">↻ Syncing…</button>';
+        }
+        if (gistSync.lastError) {
+          return '<button type="button" class="aware-sync-chip error" onclick="syncGistTwoWay(false)" title="' + esc(gistSync.lastError) + '">⚠️ Retry Sync</button>';
+        }
+        if (gistSync.pendingPush) {
+          return '<button type="button" class="aware-sync-chip pending" onclick="syncGistTwoWay(false)">☁️ Queued</button>';
+        }
+        const t = gistSync.cfg.lastSyncedAt ? (' · ' + fmtTimeHHMM(gistSync.cfg.lastSyncedAt)) : '';
+        return '<button type="button" class="aware-sync-chip synced" onclick="syncGistTwoWay(false)" title="Tap to sync now">☁️ Auto' + esc(t) + '</button>';
+      }
+      return '<button type="button" class="aware-sync-chip" onclick="openCloudModal()">☁️ Auto-Sync</button>';
+    }
+
+    async function connectGitHubGist(overrideToken, overrideGistId) {
+      const tokInp = document.getElementById('gist-token-input');
+      const idInp = document.getElementById('gist-id-input');
+      const token = (overrideToken != null ? String(overrideToken) : (tokInp ? tokInp.value : '')).trim();
+      let gistId = (overrideGistId != null ? String(overrideGistId) : (idInp ? idInp.value : '')).trim();
+
+      // Allow pasting a full GitHub Gist URL and extract the ID automatically
+      if (gistId.indexOf('/') >= 0) {
+        const parts = gistId.replace(/\/+$/, '').split('/');
+        gistId = parts[parts.length - 1] || '';
+      }
+
+      if (!token) {
+        showToast('Paste your GitHub Personal Access Token (gist scope).', 'amber');
+        return;
+      }
+
+      gistSync.busy = true;
+      gistSync.lastError = '';
+      renderCloudStatusUI();
+
+      try {
+        if (!gistId) {
+          // Auto-create a brand new Private GitHub Gist
+          const initialDb = {
+            activeTripId: store.activeTripId,
+            trips: store.trips,
+            deletedReceiptIds: getDeletedReceiptIds(),
+            updatedAt: Date.now()
+          };
+          const files = {};
+          files[GIST_DATA_FILE] = { content: JSON.stringify(initialDb, null, 2) };
+
+          let rHash = '';
+          if (gistSync.cfg.syncReceipts !== false) {
+            const allRecs = await idbGetAllReceipts();
+            rHash = computeReceiptsHash(allRecs);
+            const recStr = JSON.stringify({ hash: rHash, updatedAt: Date.now(), receipts: allRecs });
+            if (recStr.length <= 18 * 1024 * 1024) {
+              files[GIST_RECEIPTS_FILE] = { content: recStr };
+            }
+          }
+
+          const res = await fetch(GIST_API_BASE, {
+            method: 'POST',
+            headers: gistHeaders(token),
+            body: JSON.stringify({
+              description: 'ClaimFlow Private Travel Claims Sync Database',
+              public: false,
+              files: files
+            })
+          });
+          if (!res.ok) {
+            const errJson = await res.json().catch(function () { return {}; });
+            throw new Error(errJson.message || ('GitHub API ' + res.status));
+          }
+          const created = await res.json();
+          gistId = created.id;
+          gistSync.cfg.token = token;
+          gistSync.cfg.gistId = gistId;
+          gistSync.cfg.enabled = true;
+          gistSync.cfg.lastSyncedAt = Date.now();
+          gistSync.cfg.lastReceiptsHash = rHash;
+          gistSync.pendingPush = false;
+          saveGistConfig();
+          if (tokInp) tokInp.value = '';
+          if (idInp) idInp.value = '';
+          showToast('Private Gist created & Auto-Sync active! ✓', 'green');
+        } else {
+          // Validate & merge existing private Gist
+          const res = await fetch(GIST_API_BASE + '/' + encodeURIComponent(gistId), {
+            headers: gistHeaders(token)
+          });
+          if (!res.ok) {
+            const errJson = await res.json().catch(function () { return {}; });
+            throw new Error(errJson.message || ('Could not open Gist (' + res.status + ')'));
+          }
+          gistSync.cfg.token = token;
+          gistSync.cfg.gistId = gistId;
+          gistSync.cfg.enabled = true;
+          gistSync.cfg.lastReceiptsHash = '';
+          saveGistConfig();
+          if (tokInp) tokInp.value = '';
+          if (idInp) idInp.value = '';
+          gistSync.busy = false;
+          await syncGistTwoWay(false);
+          showToast('Connected & merged Private Gist ✓', 'green');
+          return;
+        }
+      } catch (err) {
+        gistSync.lastError = err.message || 'Connection failed';
+        showToast('Gist Sync failed: ' + gistSync.lastError, 'red');
+      } finally {
+        gistSync.busy = false;
+        renderCloudStatusUI();
+        if (document.documentElement.getAttribute('data-layout') === 'mobile') renderWorkspace();
+      }
+    }
+
+    function copyGistPairingCode() {
+      if (!gistSync.cfg.enabled || !gistSync.cfg.token || !gistSync.cfg.gistId) {
+        showToast('Connect Private Gist Sync first.', 'amber');
+        return;
+      }
+      try {
+        const json = JSON.stringify({
+          g: gistSync.cfg.gistId,
+          t: gistSync.cfg.token,
+          r: gistSync.cfg.syncReceipts !== false
+        });
+        const code = 'CLAIMFLOW_GIST1:' + btoa(unescape(encodeURIComponent(json)));
+        copyToClipboard(code);
+        showToast('Copied 1-Tap Device Pairing Code! Paste on your iPhone/Laptop.', 'green');
+      } catch (e) {
+        showToast('Could not build pairing code.', 'red');
+      }
+    }
+
+    async function pairGistFromCode() {
+      const inp = document.getElementById('gist-pair-code-input');
+      const raw = inp ? inp.value.trim() : '';
+      if (!raw || raw.indexOf('CLAIMFLOW_GIST1:') !== 0) {
+        showToast('Paste a valid CLAIMFLOW_GIST1:... pairing code.', 'amber');
+        return;
+      }
+      try {
+        const decoded = decodeURIComponent(escape(atob(raw.slice('CLAIMFLOW_GIST1:'.length))));
+        const obj = JSON.parse(decoded);
+        if (!obj || !obj.g || !obj.t) throw new Error('Incomplete pairing code');
+        gistSync.cfg.syncReceipts = obj.r !== false;
+        saveGistConfig();
+        if (inp) inp.value = '';
+        await connectGitHubGist(obj.t, obj.g);
+      } catch (err) {
+        showToast('Invalid pairing code: ' + err.message, 'red');
+      }
+    }
+
+    function disconnectGitHubGist() {
+      openModal({
+        title: 'Disconnect Private Gist Auto-Sync?',
+        message: 'Stops syncing on this device and removes the saved GitHub token from this browser. Your local trips and private Gist remain intact.',
+        confirmLabel: 'Disconnect',
+        confirmClass: 'btn-red-soft',
+        onConfirm: function () {
+          gistSync.cfg.enabled = false;
+          gistSync.cfg.token = '';
+          gistSync.cfg.gistId = '';
+          gistSync.cfg.lastReceiptsHash = '';
+          gistSync.pendingPush = false;
+          gistSync.lastError = '';
+          saveGistConfig();
+          renderCloudStatusUI();
+          if (document.documentElement.getAttribute('data-layout') === 'mobile') renderWorkspace();
+          showToast('Disconnected Private Gist Auto-Sync.', 'amber');
+        }
+      });
+    }
+
+    /**
+     * Event-driven, battery-friendly 2-way Private GitHub Gist Sync:
+     * 1. Pulls remote trips & receipts -> Smart-Merges newer timestamps & deletions.
+     * 2. Pushes back ONLY if local data or receipts differ from remote (skipping receipts upload if hash unchanged!).
+     */
+    async function syncGistTwoWay(silent, pushPreferred) {
+      if (!gistSync.cfg.enabled || !gistSync.cfg.token || !gistSync.cfg.gistId) return;
+      if (gistSync.busy) {
+        if (pushPreferred) gistSync.pendingPush = true;
+        return;
+      }
+      if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+        gistSync.pendingPush = true;
+        gistSync.lastError = '';
+        renderCloudStatusUI();
+        if (!silent) showToast('Offline — saved locally & queued for auto-sync when online.', 'amber');
+        return;
+      }
+
+      gistSync.busy = true;
+      gistSync.lastError = '';
+      renderCloudStatusUI();
+
+      try {
+        const res = await fetch(GIST_API_BASE + '/' + encodeURIComponent(gistSync.cfg.gistId), {
+          headers: gistHeaders(gistSync.cfg.token),
+          cache: 'no-store'
+        });
+        if (!res.ok) {
+          const errJson = await res.json().catch(function () { return {}; });
+          throw new Error(errJson.message || ('GitHub API ' + res.status));
+        }
+        const gistData = await res.json();
+        const remoteFiles = gistData.files || {};
+
+        let needPushDb = !!pushPreferred;
+        let pulledUpdates = 0;
+
+        // 1. Parse & Smart-Merge Remote Trips + Deleted Receipt Tombstones
+        const remoteDbText = await readGistFileContent(remoteFiles[GIST_DATA_FILE], gistSync.cfg.token);
+        let remoteDb = null;
+        if (remoteDbText && remoteDbText.trim()) {
+          try { remoteDb = JSON.parse(remoteDbText); } catch (e) { remoteDb = null; }
+        }
+
+        const localDeletedBefore = getDeletedReceiptIds();
+        const mergedDeleted = mergeDeletedReceiptIds(remoteDb && remoteDb.deletedReceiptIds);
+        if (mergedDeleted.length !== (remoteDb && remoteDb.deletedReceiptIds ? remoteDb.deletedReceiptIds.length : 0)) {
+          needPushDb = true;
+        }
+
+        if (remoteDb && Array.isArray(remoteDb.trips)) {
+          const remoteTrips = remoteDb.trips.map(function (rt) { return normalizeTrip(Object.assign({}, rt)); });
+          const remoteById = {};
+          remoteTrips.forEach(function (rt) { remoteById[rt.id] = rt; });
+
+          // Pull newer or missing remote trips
+          remoteTrips.forEach(function (rt) {
+            const idx = store.trips.findIndex(function (t) { return t.id === rt.id; });
+            if (idx < 0) {
+              store.trips.unshift(rt);
+              pulledUpdates++;
+            } else if ((rt.updatedAt || 0) > (store.trips[idx].updatedAt || 0)) {
+              store.trips[idx] = rt;
+              pulledUpdates++;
+            } else if ((store.trips[idx].updatedAt || 0) > (rt.updatedAt || 0)) {
+              needPushDb = true;
+            }
+          });
+
+          // Check if local has any brand-new trips not on remote yet
+          store.trips.forEach(function (lt) {
+            if (!remoteById[lt.id]) needPushDb = true;
+          });
+
+          if (pulledUpdates > 0) {
+            state = getActiveTrip();
+            try { localStorage.setItem(STORE_KEY, JSON.stringify(store)); } catch (e) {}
+            renderAll();
+          }
+        } else {
+          needPushDb = true;
+        }
+
+        // 2. Differential Receipt Photos Sync (only uploads claimflow-receipts.json if receipt hash actually changed)
+        let needPushReceipts = false;
+        let mergedReceipts = [];
+        let pulledReceipts = 0;
+
+        if (gistSync.cfg.syncReceipts !== false) {
+          // Delete any locally stored receipts that were deleted on another device
+          const deletedSet = {};
+          mergedDeleted.forEach(function (id) { deletedSet[id] = true; });
+
+          let localRecs = await idbGetAllReceipts();
+          for (let i = 0; i < localRecs.length; i++) {
+            if (deletedSet[localRecs[i].id]) {
+              await idbDeleteReceipt(localRecs[i].id);
+            }
+          }
+          localRecs = localRecs.filter(function (r) { return !deletedSet[r.id]; });
+
+          const localMap = {};
+          localRecs.forEach(function (r) { localMap[r.id] = r; });
+
+          let remoteRecs = [];
+          let remoteHash = '';
+          if (remoteFiles[GIST_RECEIPTS_FILE]) {
+            const recText = await readGistFileContent(remoteFiles[GIST_RECEIPTS_FILE], gistSync.cfg.token);
+            if (recText && recText.trim()) {
+              try {
+                const parsedRec = JSON.parse(recText);
+                remoteRecs = Array.isArray(parsedRec.receipts) ? parsedRec.receipts : [];
+                remoteHash = parsedRec.hash || '';
+              } catch (e) {}
+            }
+          }
+
+          const toRestore = [];
+          const remoteMap = {};
+          remoteRecs.forEach(function (rr) {
+            if (!rr || !rr.id || deletedSet[rr.id]) return;
+            remoteMap[rr.id] = rr;
+            const lr = localMap[rr.id];
+            if (!lr) {
+              toRestore.push(rr);
+            } else {
+              // If metadata or cropped/rotated bytes differ and remote wasn't overridden locally, keep latest
+              const lSig = computeReceiptsHash([lr]);
+              const rSig = computeReceiptsHash([rr]);
+              if (lSig !== rSig && !pushPreferred && (rr.createdAt || 0) >= (lr.createdAt || 0)) {
+                toRestore.push(rr);
+              }
+            }
+          });
+
+          if (toRestore.length > 0) {
+            pulledReceipts = await restoreEmbeddedReceipts(toRestore);
+            localRecs = await idbGetAllReceipts();
+            localRecs = localRecs.filter(function (r) { return !deletedSet[r.id]; });
+          }
+
+          mergedReceipts = localRecs;
+          const finalHash = computeReceiptsHash(mergedReceipts);
+          if (finalHash !== remoteHash || mergedReceipts.length !== remoteRecs.length || localDeletedBefore.length !== mergedDeleted.length) {
+            needPushReceipts = (finalHash !== remoteHash);
+          }
+
+          if (pulledReceipts > 0 || localRecs.length !== receiptVault.photos.length) {
+            await loadTripReceipts();
+          }
+        }
+
+        // 3. Patch Private Gist ONLY with files that changed
+        if (needPushDb || needPushReceipts) {
+          const patchFiles = {};
+          if (needPushDb) {
+            const dbPayload = {
+              activeTripId: store.activeTripId,
+              trips: store.trips,
+              deletedReceiptIds: mergedDeleted,
+              updatedAt: Date.now()
+            };
+            patchFiles[GIST_DATA_FILE] = { content: JSON.stringify(dbPayload, null, 2) };
+          }
+          let pushedHash = gistSync.cfg.lastReceiptsHash;
+          if (needPushReceipts && gistSync.cfg.syncReceipts !== false) {
+            const rHash = computeReceiptsHash(mergedReceipts);
+            const recStr = JSON.stringify({ hash: rHash, updatedAt: Date.now(), receipts: mergedReceipts });
+            if (recStr.length <= 18 * 1024 * 1024) {
+              patchFiles[GIST_RECEIPTS_FILE] = { content: recStr };
+              pushedHash = rHash;
+            } else if (!silent) {
+              showToast('Trips synced, but receipts exceed 18 MB Gist limit — export JSON backup for photos.', 'amber');
+            }
+          }
+
+          if (Object.keys(patchFiles).length > 0) {
+            const pRes = await fetch(GIST_API_BASE + '/' + encodeURIComponent(gistSync.cfg.gistId), {
+              method: 'PATCH',
+              headers: gistHeaders(gistSync.cfg.token),
+              body: JSON.stringify({ files: patchFiles })
+            });
+            if (!pRes.ok) {
+              const pErr = await pRes.json().catch(function () { return {}; });
+              throw new Error(pErr.message || ('Gist write failed (' + pRes.status + ')'));
+            }
+            gistSync.cfg.lastReceiptsHash = pushedHash;
+          }
+        }
+
+        gistSync.cfg.lastSyncedAt = Date.now();
+        gistSync.lastPullCheckAt = Date.now();
+        gistSync.pendingPush = false;
+        saveGistConfig();
+
+        if (!silent) {
+          if (pulledUpdates > 0 || pulledReceipts > 0) {
+            showToast('Synced ✓ Pulled ' + pulledUpdates + ' trip(s)' + (pulledReceipts > 0 ? (' & ' + pulledReceipts + ' receipt(s)') : ''), 'green');
+          } else {
+            showToast('Private Gist synced ✓', 'green');
+          }
+        } else if (pulledUpdates > 0 || pulledReceipts > 0) {
+          showToast('Auto-synced newer edits from other device ✓', 'green');
+        }
+      } catch (err) {
+        gistSync.lastError = err.message || 'Sync error';
+        if (pushPreferred) gistSync.pendingPush = true;
+        if (!silent) showToast('Sync failed: ' + gistSync.lastError, 'red');
+      } finally {
+        gistSync.busy = false;
+        renderCloudStatusUI();
+        if (document.documentElement.getAttribute('data-layout') === 'mobile') renderWorkspace();
+      }
+    }
 
     function loadCloudPrefs() {
       try {
@@ -6152,12 +7494,25 @@
 
     async function initCloudSync() {
       loadCloudPrefs();
+      loadGistConfig();
       const chkW = document.getElementById('chk-cloud-autowrite');
       const chkP = document.getElementById('chk-cloud-autopull');
       const chkE = document.getElementById('chk-cloud-embed-receipts');
       if (chkW) chkW.checked = !!cloudSync.prefs.autoWrite;
       if (chkP) chkP.checked = !!cloudSync.prefs.autoPull;
       if (chkE) chkE.checked = cloudSync.prefs.embedReceipts !== false;
+
+      const chkGPush = document.getElementById('chk-gist-autopush');
+      const chkGPull = document.getElementById('chk-gist-autopull');
+      const chkGRec = document.getElementById('chk-gist-receipts');
+      if (chkGPush) chkGPush.checked = gistSync.cfg.autoPush !== false;
+      if (chkGPull) chkGPull.checked = gistSync.cfg.autoPull !== false;
+      if (chkGRec) chkGRec.checked = gistSync.cfg.syncReceipts !== false;
+
+      if (gistSync.cfg.enabled && gistSync.cfg.token && gistSync.cfg.gistId && gistSync.cfg.autoPull !== false) {
+        syncGistTwoWay(true, false);
+      }
+
       if (!window.showOpenFilePicker || !window.showSaveFilePicker) {
         renderCloudStatusUI();
         return;
@@ -6196,19 +7551,82 @@
       const actionsEl = document.getElementById('cloud-fs-actions');
       const fsSupported = !!(window.showOpenFilePicker && window.showSaveFilePicker);
 
+      // Update Private GitHub Gist Auto-Sync UI
+      const gistConnected = !!(gistSync.cfg.enabled && gistSync.cfg.token && gistSync.cfg.gistId);
+      const gistPill = document.getElementById('gist-mode-pill');
+      const gistBox = document.getElementById('gist-status-box');
+      const gistActs = document.getElementById('gist-connected-actions');
+      const gistSetup = document.getElementById('gist-setup-panel');
+
+      if (gistPill) {
+        if (gistSync.busy) {
+          gistPill.className = 'pill pill-sky';
+          gistPill.textContent = 'Syncing…';
+        } else if (gistConnected && gistSync.lastError) {
+          gistPill.className = 'pill pill-red';
+          gistPill.textContent = 'Sync Error';
+        } else if (gistConnected && gistSync.pendingPush) {
+          gistPill.className = 'pill pill-amber';
+          gistPill.textContent = 'Offline Queued';
+        } else if (gistConnected) {
+          gistPill.className = 'pill pill-green';
+          gistPill.textContent = 'Auto-Sync Active';
+        } else {
+          gistPill.className = 'pill pill-neutral';
+          gistPill.textContent = 'Not Connected';
+        }
+      }
+
+      if (gistBox) {
+        if (gistConnected) {
+          const shortId = gistSync.cfg.gistId.slice(0, 10) + '…';
+          const lastStr = gistSync.cfg.lastSyncedAt ? fmtTimeHHMM(gistSync.cfg.lastSyncedAt) : 'Just connected';
+          gistBox.innerHTML = '<div style="font-size:12px;">'
+            + '<strong>Private Gist <span class="mono">' + esc(shortId) + '</span></strong>'
+            + '<div style="font-size:11px;color:' + (gistSync.lastError ? 'var(--red-text)' : 'var(--text-subtle)') + ';">'
+            + (gistSync.lastError ? ('Error: ' + esc(gistSync.lastError)) : ('Last synced: ' + lastStr + ' · ' + store.trips.length + ' trip(s) · ' + receiptVault.photos.length + ' photo(s)'))
+            + '</div></div>'
+            + '<span class="pill ' + (gistSync.lastError ? 'pill-red' : 'pill-green') + '">' + (gistSync.busy ? '↻ Syncing' : (gistSync.pendingPush ? 'Queued' : 'Zero-Picker ✓')) + '</span>';
+        } else {
+          gistBox.innerHTML = '<div style="font-size:12px;color:var(--text-muted);">Sync trips &amp; receipts silently between iPhone Safari and Laptop with <strong>zero file pickers</strong> and <strong>zero background battery drain</strong>.</div>';
+        }
+      }
+
+      if (gistActs) {
+        gistActs.style.display = gistConnected ? 'flex' : 'none';
+        if (gistConnected) {
+          gistActs.innerHTML =
+            '<button type="button" class="btn btn-sm btn-primary" onclick="syncGistTwoWay(false)"' + (gistSync.busy ? ' disabled' : '') + '>↻ Sync Now</button>'
+            + '<button type="button" class="btn btn-sm btn-green-soft" onclick="copyGistPairingCode()">📲 Copy 1-Tap Device Pair Code</button>'
+            + '<button type="button" class="btn btn-sm btn-red-soft" onclick="disconnectGitHubGist()">Disconnect</button>';
+        }
+      }
+
+      if (gistSetup) {
+        gistSetup.style.display = gistConnected ? 'none' : 'flex';
+      }
+
+      // Topbar Cloud Sync Button reflects Gist OR Desktop Folder Sync
       if (btn) {
-        btn.classList.toggle('linked', !!(cloudSync.handle && !cloudSync.needsReconnect));
-        btn.classList.toggle('reconnect', !!(cloudSync.handle && cloudSync.needsReconnect));
+        const isLinked = gistConnected || !!(cloudSync.handle && !cloudSync.needsReconnect);
+        const isWarn = (gistConnected && !!gistSync.lastError) || !!(cloudSync.handle && cloudSync.needsReconnect);
+        btn.classList.toggle('linked', isLinked && !isWarn);
+        btn.classList.toggle('reconnect', isWarn);
       }
       if (btnTxt) {
-        btnTxt.textContent = cloudSync.handle
-          ? (cloudSync.needsReconnect ? 'Reconnect Cloud' : 'Synced')
-          : 'Cloud Sync';
+        if (gistConnected) {
+          btnTxt.textContent = gistSync.busy ? 'Syncing…' : (gistSync.lastError ? 'Retry Sync' : 'Auto-Synced');
+        } else if (cloudSync.handle) {
+          btnTxt.textContent = cloudSync.needsReconnect ? 'Reconnect Cloud' : 'Synced';
+        } else {
+          btnTxt.textContent = 'Cloud Sync';
+        }
       }
+
       if (modePill) {
         if (!fsSupported) {
           modePill.className = 'pill pill-neutral';
-          modePill.textContent = 'Use Share / Sync Code';
+          modePill.textContent = 'Desktop Only';
         } else if (cloudSync.handle && !cloudSync.needsReconnect) {
           modePill.className = 'pill pill-green';
           modePill.textContent = 'Linked • ' + cloudSync.fileName;
@@ -6222,13 +7640,13 @@
       }
       if (statusEl) {
         if (!fsSupported) {
-          statusEl.innerHTML = '<div style="font-size:12px;color:var(--text-muted);">Direct folder linking is available on Desktop Chrome/Edge. On iPhone Safari, use <strong>Save / Share All Trips</strong> or <strong>Sync Code</strong> below.</div>';
+          statusEl.innerHTML = '<div style="font-size:12px;color:var(--text-muted);">Direct folder linking is available on Desktop Chrome/Edge. On iPhone Safari, use <strong>Private GitHub Gist Auto-Sync</strong> above!</div>';
         } else if (cloudSync.handle && !cloudSync.needsReconnect) {
           statusEl.innerHTML = '<div style="font-size:12px;"><strong>' + esc(cloudSync.fileName) + '</strong><div style="font-size:11px;color:var(--text-subtle);">Last synced: ' + (cloudSync.lastSyncedAt ? fmtTimeHHMM(cloudSync.lastSyncedAt) : 'Ready') + '</div></div><span class="pill pill-green">Auto-Sync Active</span>';
         } else if (cloudSync.handle) {
           statusEl.innerHTML = '<div style="font-size:12px;"><strong>' + esc(cloudSync.fileName) + '</strong><div style="font-size:11px;color:var(--amber-text);">Click Reconnect to grant write permission for this session.</div></div>';
         } else {
-          statusEl.innerHTML = '<div style="font-size:12px;color:var(--text-muted);">Link a <code>claimflow-db.json</code> inside your OneDrive, iCloud, or Google Drive folder for automatic syncing.</div>';
+          statusEl.innerHTML = '<div style="font-size:12px;color:var(--text-muted);">Link a <code>claimflow-db.json</code> inside your OneDrive, iCloud, or Google Drive folder for desktop auto-syncing.</div>';
         }
       }
       if (actionsEl) {
@@ -6332,6 +7750,13 @@
     }
 
     function scheduleCloudWrite(immediate) {
+      if (gistSync.cfg.enabled && gistSync.cfg.token && gistSync.cfg.gistId && gistSync.cfg.autoPush !== false) {
+        gistSync.pendingPush = true;
+        clearTimeout(gistSync.pushTimer);
+        gistSync.pushTimer = setTimeout(function () {
+          syncGistTwoWay(true, true);
+        }, immediate ? 350 : 2500);
+      }
       if (!cloudSync.handle || cloudSync.needsReconnect || !cloudSync.prefs.autoWrite) return;
       clearTimeout(cloudSync.writeTimer);
       cloudSync.writeTimer = setTimeout(function () {
@@ -6351,6 +7776,12 @@
     }
 
     async function checkCloudFileUpdates(force) {
+      if (gistSync.cfg.enabled && gistSync.cfg.token && gistSync.cfg.gistId && (force || gistSync.cfg.autoPull !== false)) {
+        const now = Date.now();
+        if (force || gistSync.pendingPush || (now - gistSync.lastPullCheckAt > 15000)) {
+          syncGistTwoWay(true, !!gistSync.pendingPush);
+        }
+      }
       if (!cloudSync.handle || cloudSync.needsReconnect) return;
       if (!force && !cloudSync.prefs.autoPull) return;
       try {
@@ -6918,7 +8349,7 @@
 
       const bankBtn = document.getElementById('vault-bank-upload-btn');
       if (bankBtn) {
-        bankBtn.textContent = f.indexOf('item:') === 0 ? '💳 +Pair Bank SGD' : '💳 +Bank SGD';
+        bankBtn.textContent = f.indexOf('item:') === 0 ? '💳 +Pair Bank / PDF' : '💳 +Bank / PDF';
       }
 
       const filterBtns = [
@@ -6947,7 +8378,7 @@
 
       if (filtered.length === 0) {
         container.innerHTML = '<div style="text-align:center;padding:28px 16px;border:1px dashed var(--border-strong);border-radius:12px;color:var(--text-subtle);font-size:12.5px;">'
-          + 'No receipt photos in this view yet.<div style="margin-top:10px;"><button type="button" class="btn btn-primary" onclick="triggerVaultUpload(\'receipt\', false)">+ Select Photos from Camera / Library</button></div></div>';
+          + 'No receipt photos or PDFs in this view yet.<div style="margin-top:10px;"><button type="button" class="btn btn-primary" onclick="triggerVaultUpload(\'receipt\', false)">+ Select Photos or PDFs</button></div></div>';
         return;
       }
 
@@ -7095,6 +8526,88 @@
       }
     }
 
+    /** Lazy-loads PDF.js on demand so users can directly upload PDF receipts, invoices & policy docs */
+    const PDFJS_CDN_URL = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+    const PDFJS_WORKER_URL = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    let pdfJsLoadPromise = null;
+
+    function ensurePdfJsLoaded() {
+      if (window.pdfjsLib) return Promise.resolve(window.pdfjsLib);
+      if (pdfJsLoadPromise) return pdfJsLoadPromise;
+      pdfJsLoadPromise = new Promise(function (resolve, reject) {
+        const s = document.createElement('script');
+        s.src = PDFJS_CDN_URL;
+        s.async = true;
+        s.onload = function () {
+          if (window.pdfjsLib) {
+            try { window.pdfjsLib.GlobalWorkerOptions.workerSrc = PDFJS_WORKER_URL; } catch (e) {}
+            resolve(window.pdfjsLib);
+          } else {
+            pdfJsLoadPromise = null;
+            reject(new Error('PDF engine did not initialize'));
+          }
+        };
+        s.onerror = function () {
+          pdfJsLoadPromise = null;
+          reject(new Error('PDF upload requires internet once to load PDF.js'));
+        };
+        document.head.appendChild(s);
+      });
+      return pdfJsLoadPromise;
+    }
+
+    async function renderPdfFileToPages(file, useBW) {
+      const pdfjsLib = await ensurePdfJsLoaded();
+      const buf = await file.arrayBuffer();
+      let pdf = null;
+      try {
+        pdf = await pdfjsLib.getDocument({ data: new Uint8Array(buf.slice(0)), isEvalSupported: false }).promise;
+      } catch (workerErr) {
+        // Fallback cleanly inside sandboxed iframes where external Web Workers are blocked
+        pdf = await pdfjsLib.getDocument({ data: new Uint8Array(buf.slice(0)), disableWorker: true, isEvalSupported: false }).promise;
+      }
+
+      const maxPages = Math.min(pdf.numPages || 1, 12);
+      const rendered = [];
+      const targetMaxDim = useBW ? 2100 : 1650;
+
+      for (let pageNum = 1; pageNum <= maxPages; pageNum++) {
+        const page = await pdf.getPage(pageNum);
+        const baseVp = page.getViewport({ scale: 1 });
+        const maxBase = Math.max(baseVp.width || 1, baseVp.height || 1);
+        const scale = Math.min(3.0, Math.max(1.2, targetMaxDim / maxBase));
+        const vp = page.getViewport({ scale: scale });
+
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.max(1, Math.round(vp.width));
+        canvas.height = Math.max(1, Math.round(vp.height));
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        await page.render({ canvasContext: ctx, viewport: vp }).promise;
+        if (useBW) applyBWFilterToCanvas(ctx, canvas.width, canvas.height);
+
+        const dataUrl = canvas.toDataURL('image/jpeg', useBW ? 0.85 : 0.84);
+        const w = canvas.width;
+        const h = canvas.height;
+        canvas.width = 0;
+        canvas.height = 0;
+        const comma = dataUrl.indexOf(',');
+        const bytes = Math.round(((dataUrl.length - comma - 1) * 3) / 4);
+        rendered.push({
+          dataUrl: dataUrl,
+          width: w,
+          height: h,
+          bytes: bytes,
+          isBW: !!useBW,
+          pageNum: pageNum,
+          totalPages: pdf.numPages || maxPages
+        });
+      }
+      return rendered;
+    }
+
     async function handleReceiptFilesSelected(evt) {
       const files = Array.from((evt.target && evt.target.files) || []);
       if (evt.target) evt.target.value = '';
@@ -7102,34 +8615,70 @@
 
       const target = receiptVault.pendingUploadTarget || { scope: 'unmatched', itemId: '', dayId: '', role: 'receipt' };
       const useBW = !!receiptVault.bwMode;
-      showToast('Processing ' + files.length + ' photo' + (files.length === 1 ? '' : 's') + (useBW ? ' (Hi-Res B&W)…' : '…'), 'indigo');
+      const hasPdf = files.some(function (f) { return f.type === 'application/pdf' || /\.pdf$/i.test(f.name || ''); });
+      showToast('Processing ' + files.length + (hasPdf ? ' file(s) (rendering PDF pages…)' : (' photo' + (files.length === 1 ? '' : 's') + (useBW ? ' (Hi-Res B&W)…' : '…'))), 'indigo');
 
       let added = 0;
+      let pdfPagesAdded = 0;
+      let truncatedPdf = false;
       for (let i = 0; i < files.length; i++) {
+        const f = files[i];
+        const isPdf = f.type === 'application/pdf' || /\.pdf$/i.test(f.name || '');
         try {
-          const processed = await compressImageFile(files[i], useBW);
-          const rec = {
-            id: uid('ph'),
-            tripId: state.id,
-            scope: target.scope || 'unmatched',
-            itemId: target.itemId || '',
-            dayId: target.dayId || '',
-            role: target.role === 'bank' ? 'bank' : (target.role === 'policy' ? 'policy' : 'receipt'),
-            orient: 'auto',
-            name: files[i].name || ('receipt-' + (i + 1) + '.jpg'),
-            note: '',
-            dataUrl: processed.dataUrl,
-            width: processed.width,
-            height: processed.height,
-            bytes: processed.bytes,
-            isBW: processed.isBW,
-            createdAt: Date.now() + i
-          };
-          receiptVault.photos.push(rec);
-          await idbPutReceipt(rec);
-          added++;
+          if (isPdf) {
+            const pages = await renderPdfFileToPages(f, useBW);
+            for (let p = 0; p < pages.length; p++) {
+              const pg = pages[p];
+              if (pg.totalPages > pages.length) truncatedPdf = true;
+              const pageSuffix = pg.totalPages > 1 ? (' (p' + pg.pageNum + '/' + pg.totalPages + ')') : '';
+              const rec = {
+                id: uid('ph'),
+                tripId: state.id,
+                scope: target.scope || 'unmatched',
+                itemId: target.itemId || '',
+                dayId: target.dayId || '',
+                role: target.role === 'bank' ? 'bank' : (target.role === 'policy' ? 'policy' : 'receipt'),
+                orient: 'auto',
+                name: (f.name || 'document.pdf') + pageSuffix,
+                note: pg.totalPages > 1 ? ('PDF p' + pg.pageNum + '/' + pg.totalPages) : 'PDF',
+                dataUrl: pg.dataUrl,
+                width: pg.width,
+                height: pg.height,
+                bytes: pg.bytes,
+                isBW: pg.isBW,
+                createdAt: Date.now() + added
+              };
+              receiptVault.photos.push(rec);
+              await idbPutReceipt(rec);
+              added++;
+              pdfPagesAdded++;
+            }
+          } else {
+            const processed = await compressImageFile(f, useBW);
+            const rec = {
+              id: uid('ph'),
+              tripId: state.id,
+              scope: target.scope || 'unmatched',
+              itemId: target.itemId || '',
+              dayId: target.dayId || '',
+              role: target.role === 'bank' ? 'bank' : (target.role === 'policy' ? 'policy' : 'receipt'),
+              orient: 'auto',
+              name: f.name || ('receipt-' + (i + 1) + '.jpg'),
+              note: '',
+              dataUrl: processed.dataUrl,
+              width: processed.width,
+              height: processed.height,
+              bytes: processed.bytes,
+              isBW: processed.isBW,
+              createdAt: Date.now() + added
+            };
+            receiptVault.photos.push(rec);
+            await idbPutReceipt(rec);
+            added++;
+          }
         } catch (err) {
-          console.warn('Skipped image:', err);
+          console.warn('Skipped file:', err);
+          if (isPdf) showToast('PDF error: ' + (err.message || 'Could not parse PDF'), 'red');
         }
       }
 
@@ -7138,9 +8687,14 @@
       if (document.getElementById('receipt-modal-backdrop').classList.contains('open')) {
         renderReceiptModal();
       }
+      if (document.getElementById('slide-preview-backdrop').classList.contains('open')) {
+        renderSlidePreviewModal();
+      }
       if (added > 0) {
-        showToast('Attached ' + added + ' receipt photo' + (added === 1 ? '' : 's') + ' ✓', 'green');
-      } else {
+        const suffix = pdfPagesAdded > 0 ? (' (' + pdfPagesAdded + ' PDF page' + (pdfPagesAdded === 1 ? '' : 's') + (truncatedPdf ? ', capped at 12' : '') + ')') : '';
+        showToast('Attached ' + added + ' item' + (added === 1 ? '' : 's') + suffix + ' ✓', 'green');
+        scheduleCloudWrite(false);
+      } else if (!hasPdf) {
         showToast('Could not process selected photo(s).', 'red');
       }
     }
@@ -7214,114 +8768,460 @@
       await toggleReceiptRole(id);
       openReceiptLightbox(id);
     }
+    /* --- Built-In Intuitive Pinch-Zoom, Pan & Drag-Handle Cropper --- */
+    const cropState = {
+      photoId: null,
+      natW: 0,
+      natH: 0,
+      stageW: 0,
+      stageH: 0,
+      baseW: 0,
+      baseH: 0,
+      zoom: 1,
+      panX: 0,
+      panY: 0,
+      boxL: 0,
+      boxT: 0,
+      boxR: 0,
+      boxB: 0,
+      gesture: null,
+      bound: false
+    };
 
-    /* --- Built-In Bank Screenshot & Receipt Cropper --- */
-    const cropState = { photoId: null, top: 0, bottom: 0, left: 0, right: 0, natW: 0, natH: 0 };
+    function getCropImageMetrics() {
+      const dispW = cropState.baseW * cropState.zoom;
+      const dispH = cropState.baseH * cropState.zoom;
+      const imgLeft = cropState.stageW / 2 - dispW / 2 + cropState.panX;
+      const imgTop = cropState.stageH / 2 - dispH / 2 + cropState.panY;
+      return { dispW: dispW, dispH: dispH, imgLeft: imgLeft, imgTop: imgTop, imgRight: imgLeft + dispW, imgBottom: imgTop + dispH };
+    }
+
+    function clampCropPan() {
+      if (!cropState.baseW || !cropState.baseH) return;
+      const dispW = cropState.baseW * cropState.zoom;
+      const dispH = cropState.baseH * cropState.zoom;
+      // Ensure the zoomed image always covers the crop box cleanly when possible
+      const minImgLeft = Math.min(cropState.boxL, cropState.boxR - dispW);
+      const maxImgLeft = Math.max(cropState.boxL, cropState.boxR - dispW);
+      const minImgTop = Math.min(cropState.boxT, cropState.boxB - dispH);
+      const maxImgTop = Math.max(cropState.boxT, cropState.boxB - dispH);
+      const curLeft = cropState.stageW / 2 - dispW / 2 + cropState.panX;
+      const curTop = cropState.stageH / 2 - dispH / 2 + cropState.panY;
+      const clampedLeft = Math.max(minImgLeft, Math.min(maxImgLeft, curLeft));
+      const clampedTop = Math.max(minImgTop, Math.min(maxImgTop, curTop));
+      cropState.panX = clampedLeft - (cropState.stageW / 2 - dispW / 2);
+      cropState.panY = clampedTop - (cropState.stageH / 2 - dispH / 2);
+    }
+
+    function clampCropBoxToImage() {
+      const m = getCropImageMetrics();
+      const minL = Math.max(4, m.imgLeft);
+      const minT = Math.max(4, m.imgTop);
+      const maxR = Math.min(cropState.stageW - 4, m.imgRight);
+      const maxB = Math.min(cropState.stageH - 4, m.imgBottom);
+      const minSz = 44;
+      cropState.boxL = Math.max(minL, Math.min(maxR - minSz, cropState.boxL));
+      cropState.boxT = Math.max(minT, Math.min(maxB - minSz, cropState.boxT));
+      cropState.boxR = Math.max(cropState.boxL + minSz, Math.min(maxR, cropState.boxR));
+      cropState.boxB = Math.max(cropState.boxT + minSz, Math.min(maxB, cropState.boxB));
+    }
+
+    function initCropGeometry() {
+      const stage = document.getElementById('crop-stage');
+      if (!stage || !cropState.natW || !cropState.natH) return;
+      const rect = stage.getBoundingClientRect();
+      cropState.stageW = Math.max(200, rect.width || 560);
+      cropState.stageH = Math.max(200, rect.height || 340);
+      const pad = 16;
+      const fitScale = Math.min((cropState.stageW - pad * 2) / cropState.natW, (cropState.stageH - pad * 2) / cropState.natH);
+      cropState.baseW = cropState.natW * fitScale;
+      cropState.baseH = cropState.natH * fitScale;
+      cropState.zoom = 1;
+      cropState.panX = 0;
+      cropState.panY = 0;
+      const m = getCropImageMetrics();
+      cropState.boxL = m.imgLeft;
+      cropState.boxT = m.imgTop;
+      cropState.boxR = m.imgRight;
+      cropState.boxB = m.imgBottom;
+      renderCropOverlay();
+    }
+
+    function computeCropPixelBox() {
+      const m = getCropImageMetrics();
+      if (!cropState.natW || !cropState.natH || m.dispW <= 0 || m.dispH <= 0) {
+        return { sx: 0, sy: 0, sw: cropState.natW || 0, sh: cropState.natH || 0 };
+      }
+      const visL = Math.max(cropState.boxL, m.imgLeft);
+      const visT = Math.max(cropState.boxT, m.imgTop);
+      const visR = Math.min(cropState.boxR, m.imgRight);
+      const visB = Math.min(cropState.boxB, m.imgBottom);
+      const sx = Math.max(0, Math.min(cropState.natW - 1, Math.round(((visL - m.imgLeft) / m.dispW) * cropState.natW)));
+      const sy = Math.max(0, Math.min(cropState.natH - 1, Math.round(((visT - m.imgTop) / m.dispH) * cropState.natH)));
+      const sw = Math.max(16, Math.min(cropState.natW - sx, Math.round(((visR - visL) / m.dispW) * cropState.natW)));
+      const sh = Math.max(16, Math.min(cropState.natH - sy, Math.round(((visB - visT) / m.dispH) * cropState.natH)));
+      return { sx: sx, sy: sy, sw: sw, sh: sh };
+    }
+
+    function renderCropOverlay() {
+      const imgEl = document.getElementById('crop-img');
+      const rectEl = document.getElementById('crop-rect');
+      const zoomRng = document.getElementById('crop-zoom-range');
+      const zoomBadge = document.getElementById('crop-zoom-badge');
+      const readout = document.getElementById('crop-dims-readout');
+
+      if (!cropState.baseW || !cropState.baseH) return;
+      const m = getCropImageMetrics();
+      if (imgEl) {
+        imgEl.style.width = m.dispW + 'px';
+        imgEl.style.height = m.dispH + 'px';
+        imgEl.style.transform = 'translate(' + m.imgLeft.toFixed(1) + 'px,' + m.imgTop.toFixed(1) + 'px)';
+      }
+      if (rectEl) {
+        rectEl.style.left = cropState.boxL.toFixed(1) + 'px';
+        rectEl.style.top = cropState.boxT.toFixed(1) + 'px';
+        rectEl.style.width = Math.max(20, cropState.boxR - cropState.boxL).toFixed(1) + 'px';
+        rectEl.style.height = Math.max(20, cropState.boxB - cropState.boxT).toFixed(1) + 'px';
+      }
+      if (zoomRng) zoomRng.value = String(Math.round(cropState.zoom * 100));
+      if (zoomBadge) zoomBadge.textContent = cropState.zoom.toFixed(2) + '×';
+      if (readout && cropState.natW > 0 && cropState.natH > 0) {
+        const px = computeCropPixelBox();
+        readout.textContent = 'Output: ' + px.sw + '×' + px.sh + 'px · Zoom ' + cropState.zoom.toFixed(2) + '× (Original ' + cropState.natW + '×' + cropState.natH + 'px)';
+      }
+    }
+
+    function setCropZoomAtPoint(newZoom, pivotRelX, pivotRelY) {
+      const clampedZoom = Math.max(1, Math.min(5, newZoom));
+      const oldZoom = cropState.zoom || 1;
+      const ratio = clampedZoom / oldZoom;
+      cropState.panX = pivotRelX - (pivotRelX - cropState.panX) * ratio;
+      cropState.panY = pivotRelY - (pivotRelY - cropState.panY) * ratio;
+      cropState.zoom = clampedZoom;
+      clampCropPan();
+      renderCropOverlay();
+    }
+
+    function setCropZoomFromSlider(val) {
+      const z = (parseFloat(val) || 100) / 100;
+      const boxCx = (cropState.boxL + cropState.boxR) / 2 - cropState.stageW / 2;
+      const boxCy = (cropState.boxT + cropState.boxB) / 2 - cropState.stageH / 2;
+      setCropZoomAtPoint(z, boxCx, boxCy);
+    }
+
+    function nudgeCropZoom(delta) {
+      const boxCx = (cropState.boxL + cropState.boxR) / 2 - cropState.stageW / 2;
+      const boxCy = (cropState.boxT + cropState.boxB) / 2 - cropState.stageH / 2;
+      setCropZoomAtPoint((cropState.zoom || 1) + delta, boxCx, boxCy);
+    }
+
+    function applyCropPreset(topPct, bottomPct, leftPct, rightPct) {
+      if (!cropState.baseW || !cropState.baseH) return;
+      cropState.zoom = 1;
+      cropState.panX = 0;
+      cropState.panY = 0;
+      const m = getCropImageMetrics();
+      cropState.boxL = m.imgLeft + (m.dispW * leftPct) / 100;
+      cropState.boxR = m.imgRight - (m.dispW * rightPct) / 100;
+      cropState.boxT = m.imgTop + (m.dispH * topPct) / 100;
+      cropState.boxB = m.imgBottom - (m.dispH * bottomPct) / 100;
+      clampCropBoxToImage();
+      renderCropOverlay();
+    }
+
+    function applyHandleResize(handle, dx, dy, startBox) {
+      const m = getCropImageMetrics();
+      const minL = Math.max(4, m.imgLeft);
+      const minT = Math.max(4, m.imgTop);
+      const maxR = Math.min(cropState.stageW - 4, m.imgRight);
+      const maxB = Math.min(cropState.stageH - 4, m.imgBottom);
+      const minSz = 48;
+
+      let l = startBox.l;
+      let t = startBox.t;
+      let r = startBox.r;
+      let b = startBox.b;
+
+      if (handle.indexOf('w') >= 0) l = Math.max(minL, Math.min(r - minSz, startBox.l + dx));
+      if (handle.indexOf('e') >= 0) r = Math.min(maxR, Math.max(l + minSz, startBox.r + dx));
+      if (handle.indexOf('n') >= 0) t = Math.max(minT, Math.min(b - minSz, startBox.t + dy));
+      if (handle.indexOf('s') >= 0) b = Math.min(maxB, Math.max(t + minSz, startBox.b + dy));
+
+      cropState.boxL = l;
+      cropState.boxT = t;
+      cropState.boxR = r;
+      cropState.boxB = b;
+      renderCropOverlay();
+    }
+
+    function bindCropStageGestures() {
+      if (cropState.bound) return;
+      const stage = document.getElementById('crop-stage');
+      if (!stage) return;
+      cropState.bound = true;
+
+      const touchDist = function (t1, t2) {
+        return Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
+      };
+
+      // 1. Touch events: 2-finger pinch-to-zoom + pan, 1-finger handle resize or image pan
+      stage.addEventListener('touchstart', function (e) {
+        if (!cropState.photoId) return;
+        e.preventDefault();
+        const sr = stage.getBoundingClientRect();
+
+        if (e.touches.length >= 2) {
+          const t1 = e.touches[0];
+          const t2 = e.touches[1];
+          const midX = ((t1.clientX + t2.clientX) / 2) - sr.left - cropState.stageW / 2;
+          const midY = ((t1.clientY + t2.clientY) / 2) - sr.top - cropState.stageH / 2;
+          cropState.gesture = {
+            mode: 'pinch',
+            startDist: Math.max(10, touchDist(t1, t2)),
+            startZoom: cropState.zoom,
+            startPanX: cropState.panX,
+            startPanY: cropState.panY,
+            startMidX: midX,
+            startMidY: midY
+          };
+          return;
+        }
+
+        const t = e.touches[0];
+        const handleEl = t.target && t.target.closest ? t.target.closest('.crop-handle') : null;
+        if (handleEl) {
+          cropState.gesture = {
+            mode: 'handle',
+            handle: handleEl.getAttribute('data-handle'),
+            startX: t.clientX,
+            startY: t.clientY,
+            startBox: { l: cropState.boxL, t: cropState.boxT, r: cropState.boxR, b: cropState.boxB }
+          };
+        } else {
+          const isBoxInset = (cropState.zoom <= 1.02) && (
+            (cropState.boxR - cropState.boxL) < cropState.baseW - 4 ||
+            (cropState.boxB - cropState.boxT) < cropState.baseH - 4
+          );
+          cropState.gesture = {
+            mode: isBoxInset ? 'moveBox' : 'pan',
+            startX: t.clientX,
+            startY: t.clientY,
+            startPanX: cropState.panX,
+            startPanY: cropState.panY,
+            startBox: { l: cropState.boxL, t: cropState.boxT, r: cropState.boxR, b: cropState.boxB }
+          };
+          stage.classList.add('dragging');
+        }
+      }, { passive: false });
+
+      stage.addEventListener('touchmove', function (e) {
+        if (!cropState.gesture || !cropState.photoId) return;
+        e.preventDefault();
+        const g = cropState.gesture;
+
+        if (e.touches.length >= 2) {
+          const sr = stage.getBoundingClientRect();
+          const t1 = e.touches[0];
+          const t2 = e.touches[1];
+          if (g.mode !== 'pinch') {
+            const midX = ((t1.clientX + t2.clientX) / 2) - sr.left - cropState.stageW / 2;
+            const midY = ((t1.clientY + t2.clientY) / 2) - sr.top - cropState.stageH / 2;
+            cropState.gesture = {
+              mode: 'pinch',
+              startDist: Math.max(10, touchDist(t1, t2)),
+              startZoom: cropState.zoom,
+              startPanX: cropState.panX,
+              startPanY: cropState.panY,
+              startMidX: midX,
+              startMidY: midY
+            };
+            return;
+          }
+          const curDist = Math.max(10, touchDist(t1, t2));
+          const curMidX = ((t1.clientX + t2.clientX) / 2) - sr.left - cropState.stageW / 2;
+          const curMidY = ((t1.clientY + t2.clientY) / 2) - sr.top - cropState.stageH / 2;
+          const newZoom = Math.max(1, Math.min(5, g.startZoom * (curDist / g.startDist)));
+          const ratio = newZoom / g.startZoom;
+          cropState.zoom = newZoom;
+          cropState.panX = curMidX - (g.startMidX - g.startPanX) * ratio;
+          cropState.panY = curMidY - (g.startMidY - g.startPanY) * ratio;
+          clampCropPan();
+          renderCropOverlay();
+          return;
+        }
+
+        if (e.touches.length === 1) {
+          const t = e.touches[0];
+          const dx = t.clientX - g.startX;
+          const dy = t.clientY - g.startY;
+          if (g.mode === 'handle') {
+            applyHandleResize(g.handle, dx, dy, g.startBox);
+          } else if (g.mode === 'moveBox') {
+            const m = getCropImageMetrics();
+            const bw = g.startBox.r - g.startBox.l;
+            const bh = g.startBox.b - g.startBox.t;
+            const nl = Math.max(Math.max(4, m.imgLeft), Math.min(Math.min(cropState.stageW - 4, m.imgRight) - bw, g.startBox.l + dx));
+            const nt = Math.max(Math.max(4, m.imgTop), Math.min(Math.min(cropState.stageH - 4, m.imgBottom) - bh, g.startBox.t + dy));
+            cropState.boxL = nl;
+            cropState.boxT = nt;
+            cropState.boxR = nl + bw;
+            cropState.boxB = nt + bh;
+            renderCropOverlay();
+          } else if (g.mode === 'pan') {
+            cropState.panX = g.startPanX + dx;
+            cropState.panY = g.startPanY + dy;
+            clampCropPan();
+            renderCropOverlay();
+          }
+        }
+      }, { passive: false });
+
+      stage.addEventListener('touchend', function (e) {
+        if (e.touches.length === 0) {
+          cropState.gesture = null;
+          stage.classList.remove('dragging');
+        } else if (e.touches.length === 1 && cropState.gesture && cropState.gesture.mode === 'pinch') {
+          const t = e.touches[0];
+          cropState.gesture = {
+            mode: 'pan',
+            startX: t.clientX,
+            startY: t.clientY,
+            startPanX: cropState.panX,
+            startPanY: cropState.panY
+          };
+        }
+      });
+
+      // 2. Desktop Mouse Events: drag corners/edges, drag to pan, wheel/trackpad pinch to zoom
+      stage.addEventListener('mousedown', function (e) {
+        if (!cropState.photoId || e.button !== 0) return;
+        e.preventDefault();
+        const handleEl = e.target && e.target.closest ? e.target.closest('.crop-handle') : null;
+        if (handleEl) {
+          cropState.gesture = {
+            mode: 'handle',
+            handle: handleEl.getAttribute('data-handle'),
+            startX: e.clientX,
+            startY: e.clientY,
+            startBox: { l: cropState.boxL, t: cropState.boxT, r: cropState.boxR, b: cropState.boxB }
+          };
+        } else {
+          const isBoxInset = (cropState.zoom <= 1.02) && (
+            (cropState.boxR - cropState.boxL) < cropState.baseW - 4 ||
+            (cropState.boxB - cropState.boxT) < cropState.baseH - 4
+          );
+          cropState.gesture = {
+            mode: isBoxInset ? 'moveBox' : 'pan',
+            startX: e.clientX,
+            startY: e.clientY,
+            startPanX: cropState.panX,
+            startPanY: cropState.panY,
+            startBox: { l: cropState.boxL, t: cropState.boxT, r: cropState.boxR, b: cropState.boxB }
+          };
+          stage.classList.add('dragging');
+        }
+      });
+
+      window.addEventListener('mousemove', function (e) {
+        if (!cropState.gesture || !cropState.photoId) return;
+        const g = cropState.gesture;
+        const dx = e.clientX - g.startX;
+        const dy = e.clientY - g.startY;
+        if (g.mode === 'handle') {
+          applyHandleResize(g.handle, dx, dy, g.startBox);
+        } else if (g.mode === 'moveBox') {
+          const m = getCropImageMetrics();
+          const bw = g.startBox.r - g.startBox.l;
+          const bh = g.startBox.b - g.startBox.t;
+          const nl = Math.max(Math.max(4, m.imgLeft), Math.min(Math.min(cropState.stageW - 4, m.imgRight) - bw, g.startBox.l + dx));
+          const nt = Math.max(Math.max(4, m.imgTop), Math.min(Math.min(cropState.stageH - 4, m.imgBottom) - bh, g.startBox.t + dy));
+          cropState.boxL = nl;
+          cropState.boxT = nt;
+          cropState.boxR = nl + bw;
+          cropState.boxB = nt + bh;
+          renderCropOverlay();
+        } else if (g.mode === 'pan') {
+          cropState.panX = g.startPanX + dx;
+          cropState.panY = g.startPanY + dy;
+          clampCropPan();
+          renderCropOverlay();
+        }
+      });
+
+      window.addEventListener('mouseup', function () {
+        if (cropState.gesture) {
+          cropState.gesture = null;
+          stage.classList.remove('dragging');
+        }
+      });
+
+      stage.addEventListener('wheel', function (e) {
+        if (!cropState.photoId) return;
+        e.preventDefault();
+        const sr = stage.getBoundingClientRect();
+        const pivotRelX = (e.clientX - sr.left) - cropState.stageW / 2;
+        const pivotRelY = (e.clientY - sr.top) - cropState.stageH / 2;
+        const factor = e.deltaY < 0 ? 1.12 : 0.89;
+        setCropZoomAtPoint(cropState.zoom * factor, pivotRelX, pivotRelY);
+      }, { passive: false });
+    }
 
     function openReceiptCropper(photoId) {
       const ph = receiptVault.photos.find(function (p) { return p.id === photoId; });
       if (!ph) return;
+      bindCropStageGestures();
       cropState.photoId = ph.id;
-      cropState.top = 0;
-      cropState.bottom = 0;
-      cropState.left = 0;
-      cropState.right = 0;
       cropState.natW = ph.width || 0;
       cropState.natH = ph.height || 0;
+      cropState.gesture = null;
+
+      const bd = document.getElementById('receipt-crop-backdrop');
+      if (bd) bd.classList.add('open');
 
       const imgEl = document.getElementById('crop-img');
       if (imgEl) {
         imgEl.onload = function () {
           cropState.natW = imgEl.naturalWidth || ph.width || 0;
           cropState.natH = imgEl.naturalHeight || ph.height || 0;
-          renderCropOverlay();
+          requestAnimationFrame(initCropGeometry);
         };
         imgEl.src = ph.dataUrl;
+        if (imgEl.complete && imgEl.naturalWidth) {
+          cropState.natW = imgEl.naturalWidth;
+          cropState.natH = imgEl.naturalHeight;
+          requestAnimationFrame(initCropGeometry);
+        }
       }
-      syncCropSlidersDOM();
-      renderCropOverlay();
-      const bd = document.getElementById('receipt-crop-backdrop');
-      if (bd) bd.classList.add('open');
     }
 
     function closeReceiptCropper() {
       cropState.photoId = null;
+      cropState.gesture = null;
       const bd = document.getElementById('receipt-crop-backdrop');
       if (bd) bd.classList.remove('open');
-    }
-
-    function syncCropSlidersDOM() {
-      ['top', 'bottom', 'left', 'right'].forEach(function (edge) {
-        const rng = document.getElementById('crop-rng-' + edge);
-        const lbl = document.getElementById('crop-val-' + edge);
-        if (rng) rng.value = String(cropState[edge]);
-        if (lbl) lbl.textContent = cropState[edge] + '%';
-      });
-    }
-
-    function applyCropPreset(top, bottom, left, right) {
-      cropState.top = top;
-      cropState.bottom = bottom;
-      cropState.left = left;
-      cropState.right = right;
-      syncCropSlidersDOM();
-      renderCropOverlay();
-    }
-
-    function updateCropSlider(edge, rawVal) {
-      let val = Math.max(0, Math.min(80, parseInt(rawVal, 10) || 0));
-      if (edge === 'top' && val + cropState.bottom > 88) val = 88 - cropState.bottom;
-      if (edge === 'bottom' && val + cropState.top > 88) val = 88 - cropState.top;
-      if (edge === 'left' && val + cropState.right > 88) val = 88 - cropState.right;
-      if (edge === 'right' && val + cropState.left > 88) val = 88 - cropState.left;
-      cropState[edge] = val;
-      syncCropSlidersDOM();
-      renderCropOverlay();
-    }
-
-    function renderCropOverlay() {
-      const rect = document.getElementById('crop-rect');
-      if (rect) {
-        rect.style.top = cropState.top + '%';
-        rect.style.bottom = cropState.bottom + '%';
-        rect.style.left = cropState.left + '%';
-        rect.style.right = cropState.right + '%';
-      }
-      const readout = document.getElementById('crop-dims-readout');
-      if (readout && cropState.natW > 0 && cropState.natH > 0) {
-        const outW = Math.max(1, Math.round(cropState.natW * (100 - cropState.left - cropState.right) / 100));
-        const outH = Math.max(1, Math.round(cropState.natH * (100 - cropState.top - cropState.bottom) / 100));
-        readout.textContent = 'Output: ' + outW + '×' + outH + 'px (from ' + cropState.natW + '×' + cropState.natH + 'px)';
-      }
     }
 
     async function commitReceiptCrop() {
       const ph = receiptVault.photos.find(function (p) { return p.id === cropState.photoId; });
       if (!ph) return;
-      if (cropState.top === 0 && cropState.bottom === 0 && cropState.left === 0 && cropState.right === 0) {
+      const px = computeCropPixelBox();
+      if (px.sx === 0 && px.sy === 0 && px.sw >= cropState.natW - 2 && px.sh >= cropState.natH - 2) {
         closeReceiptCropper();
         return;
       }
       try {
         const img = await loadImageElement(ph.dataUrl);
-        const iw = img.naturalWidth || img.width;
-        const ih = img.naturalHeight || img.height;
-        const sx = Math.round((iw * cropState.left) / 100);
-        const sy = Math.round((ih * cropState.top) / 100);
-        const sw = Math.max(16, Math.round((iw * (100 - cropState.left - cropState.right)) / 100));
-        const sh = Math.max(16, Math.round((ih * (100 - cropState.top - cropState.bottom)) / 100));
-
         const canvas = document.createElement('canvas');
-        canvas.width = sw;
-        canvas.height = sh;
+        canvas.width = px.sw;
+        canvas.height = px.sh;
         const ctx = canvas.getContext('2d');
         ctx.fillStyle = '#ffffff';
-        ctx.fillRect(0, 0, sw, sh);
-        ctx.drawImage(img, sx, sy, sw, sh, 0, 0, sw, sh);
+        ctx.fillRect(0, 0, px.sw, px.sh);
+        ctx.drawImage(img, px.sx, px.sy, px.sw, px.sh, 0, 0, px.sw, px.sh);
 
         ph.dataUrl = canvas.toDataURL('image/jpeg', ph.isBW ? 0.86 : 0.85);
-        ph.width = sw;
-        ph.height = sh;
+        ph.width = px.sw;
+        ph.height = px.sh;
         const comma = ph.dataUrl.indexOf(',');
         ph.bytes = Math.round(((ph.dataUrl.length - comma - 1) * 3) / 4);
         canvas.width = 0;
@@ -7331,9 +9231,10 @@
         closeReceiptCropper();
         renderWorkspace();
         if (document.getElementById('receipt-modal-backdrop').classList.contains('open')) renderReceiptModal();
+        if (document.getElementById('slide-preview-backdrop').classList.contains('open')) renderSlidePreviewModal();
         if (receiptVault.lightboxPhotoId === ph.id) openReceiptLightbox(ph.id);
         scheduleCloudWrite(false);
-        showToast('Cropped receipt to ' + sw + '×' + sh + 'px ✓', 'green');
+        showToast('Cropped receipt to ' + px.sw + '×' + px.sh + 'px ✓', 'green');
       } catch (e) {
         showToast('Crop failed: ' + e.message, 'red');
       }
@@ -7473,6 +9374,7 @@
 
     async function deleteReceiptPhoto(photoId) {
       receiptVault.photos = receiptVault.photos.filter(function (p) { return p.id !== photoId; });
+      recordDeletedReceiptId(photoId);
       await idbDeleteReceipt(photoId);
       updateVaultCountBadges();
       renderWorkspace();
@@ -8842,7 +10744,7 @@
     /* ==========================================================================
        11. AUTO DESKTOP/MOBILE MODE, QUICK MENU, MODAL, TOASTS & THEME
        ========================================================================== */
-    let currentMobileView = 'entry';
+    let currentMobileView = 'today';
     let layoutModePref = (function () {
       try {
         const saved = localStorage.getItem(LAYOUT_PREF_KEY);
@@ -8859,13 +10761,28 @@
     }
 
     function applyResponsiveLayoutMode() {
+      const prevLayout = document.documentElement.getAttribute('data-layout');
       const resolved = layoutModePref === 'auto' ? detectAutoLayoutMode() : layoutModePref;
       document.documentElement.setAttribute('data-layout', resolved);
       if (resolved === 'mobile') {
-        document.body.classList.toggle('mobile-view-entry', currentMobileView === 'entry');
         document.body.classList.toggle('mobile-view-hrms', currentMobileView === 'hrms');
+        updateMobileNavActive();
+      } else {
+        document.body.classList.remove('mobile-view-hrms');
       }
       updateQuickMenuLayoutLabel();
+      if (prevLayout && prevLayout !== resolved && window.__claimFlowBooted) {
+        renderWorkspace();
+      }
+    }
+
+    function updateMobileNavActive() {
+      const btnToday = document.getElementById('mnav-today');
+      const btnDaily = document.getElementById('mnav-daily');
+      const btnFixed = document.getElementById('mnav-fixed');
+      if (btnToday) btnToday.classList.toggle('active', currentMobileView === 'today');
+      if (btnDaily) btnDaily.classList.toggle('active', currentMobileView === 'daily');
+      if (btnFixed) btnFixed.classList.toggle('active', currentMobileView === 'fixed');
     }
 
     function cycleLayoutMode() {
@@ -8891,15 +10808,17 @@
     }
 
     function setMobileView(view) {
-      currentMobileView = view === 'hrms' ? 'hrms' : 'entry';
-      document.body.classList.toggle('mobile-view-entry', currentMobileView === 'entry');
+      const allowed = ['today', 'daily', 'fixed', 'hrms'];
+      currentMobileView = allowed.indexOf(view) >= 0 ? view : 'today';
       document.body.classList.toggle('mobile-view-hrms', currentMobileView === 'hrms');
-      const btnEntry = document.getElementById('mnav-entry');
-      const btnHrms = document.getElementById('mnav-hrms');
-      const btnMeals = document.getElementById('mnav-meals');
-      if (btnEntry) btnEntry.classList.toggle('active', currentMobileView === 'entry');
-      if (btnHrms) btnHrms.classList.toggle('active', currentMobileView === 'hrms');
-      if (btnMeals) btnMeals.classList.remove('active');
+      updateMobileNavActive();
+      if (currentMobileView === 'daily' && state.ui.collapsed.meals) {
+        state.ui.collapsed.meals = false;
+        persistStore(false);
+      }
+      if (currentMobileView !== 'hrms') {
+        renderWorkspace();
+      }
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
@@ -9056,6 +10975,11 @@
     });
 
     window.addEventListener('focus', function () { checkCloudFileUpdates(); });
+    window.addEventListener('online', function () {
+      if (gistSync.cfg.enabled && (gistSync.pendingPush || gistSync.cfg.autoPull !== false)) {
+        syncGistTwoWay(true, !!gistSync.pendingPush);
+      }
+    });
     window.addEventListener('resize', function () { applyResponsiveLayoutMode(); });
     window.addEventListener('orientationchange', function () { setTimeout(applyResponsiveLayoutMode, 120); });
     document.addEventListener('visibilitychange', function () {
@@ -9087,3 +11011,4 @@
   </script>
 </body>
 </html>
+<!-- End of ClaimFlow -->
