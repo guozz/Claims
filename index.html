@@ -2130,7 +2130,8 @@
           <button type="button" class="btn btn-sm btn-primary" onclick="triggerVaultUpload('receipt', true)">📸 Snap Photo</button>
           <button type="button" class="btn btn-sm btn-soft" onclick="triggerVaultUpload('receipt', false)">🖼️ +Photos / PDF</button>
           <button type="button" id="vault-bank-upload-btn" class="btn btn-sm btn-sky-soft" onclick="triggerVaultUpload('bank', false)">💳 +Bank / PDF</button>
-          <button type="button" id="vault-bw-toggle-btn" class="btn btn-sm btn-green-soft" onclick="toggleReceiptBWMode()" title="High-Resolution 2200px Black &amp; White document scan mode">🖤 Hi-Res B&amp;W: ON</button>
+          <button type="button" id="vault-bw-toggle-btn" class="btn btn-sm btn-green-soft" onclick="toggleReceiptBWMode()" title="Crisp Black &amp; White document scan mode (auto-compressed under 300 KB)">🖤 B&amp;W (&lt;300 KB): ON</button>
+          <button type="button" id="vault-optimize-btn" class="btn btn-sm btn-soft" onclick="optimizeExistingReceipts()" title="Compress existing receipts larger than 300 KB to save storage and speed up cloud sync">🗜️ Optimize (&lt;300 KB)</button>
           <button type="button" id="vault-slidebg-btn" class="btn btn-sm" onclick="cyclePrintSlideBg()" title="Cycle PDF &amp; Share Sheet background: Light Paper / Dark Box / Dark Slides">☀️ Light Paper</button>
         </div>
         <div style="display:flex;gap:6px;flex-wrap:wrap;">
@@ -7679,6 +7680,257 @@
       }
     }
 
+    function copyOneDriveSetupCode() {
+      if (!oneDriveSync.cfg.clientId) {
+        showToast('Enter your Azure Application (Client) ID first.', 'amber');
+        return;
+      }
+      try {
+        const json = JSON.stringify({
+          c: oneDriveSync.cfg.clientId,
+          t: oneDriveSync.cfg.tenant || 'consumers',
+          f: sanitizeOneDriveFolder(oneDriveSync.cfg.folder),
+          r: oneDriveSync.cfg.syncReceipts !== false
+        });
+        const code = 'CLAIMFLOW_OD1:' + btoa(unescape(encodeURIComponent(json)));
+        copyToClipboard(code);
+        showToast('Copied OneDrive Setup Code! Paste on your other device & sign in.', 'green');
+      } catch (e) {
+        showToast('Could not build OneDrive setup code.', 'red');
+      }
+    }
+
+    function applyOneDriveSetupCode() {
+      const inp = document.getElementById('od-pair-code-input');
+      const raw = inp ? inp.value.trim() : '';
+      if (!raw || raw.indexOf('CLAIMFLOW_OD1:') !== 0) {
+        showToast('Paste a valid CLAIMFLOW_OD1:... setup code.', 'amber');
+        return;
+      }
+      try {
+        const decoded = decodeURIComponent(escape(atob(raw.slice('CLAIMFLOW_OD1:'.length))));
+        const obj = JSON.parse(decoded);
+        if (!obj || !obj.c) throw new Error('Missing Client ID');
+        oneDriveSync.cfg.clientId = String(obj.c).trim();
+        oneDriveSync.cfg.tenant = obj.t || 'consumers';
+        oneDriveSync.cfg.folder = sanitizeOneDriveFolder(obj.f);
+        oneDriveSync.cfg.syncReceipts = obj.r !== false;
+        saveOneDriveConfig();
+        if (inp) inp.value = '';
+        renderCloudStatusUI();
+        showToast('Applied OneDrive setup — tap Sign in with Microsoft OneDrive!', 'green');
+      } catch (err) {
+        showToast('Invalid OneDrive code: ' + err.message, 'red');
+      }
+    }
+
+    function disconnectOneDrive() {
+      openModal({
+        title: 'Disconnect OneDrive Auto-Sync?',
+        message: 'Signs out of OneDrive on this device. Your local trips and OneDrive files remain untouched.',
+        confirmLabel: 'Disconnect',
+        confirmClass: 'btn-red-soft',
+        onConfirm: function () {
+          oneDriveSync.cfg.enabled = false;
+          oneDriveSync.cfg.accessToken = '';
+          oneDriveSync.cfg.refreshToken = '';
+          oneDriveSync.cfg.expiresAt = 0;
+          oneDriveSync.cfg.lastReceiptsHash = '';
+          oneDriveSync.pendingPush = false;
+          oneDriveSync.lastError = '';
+          saveOneDriveConfig();
+          renderCloudStatusUI();
+          if (document.documentElement.getAttribute('data-layout') === 'mobile') renderWorkspace();
+          showToast('Disconnected OneDrive Auto-Sync.', 'amber');
+        }
+      });
+    }
+
+    async function syncGistTwoWay(silent, pushPreferred) {
+      if (!gistSync.cfg.enabled || !gistSync.cfg.token || !gistSync.cfg.gistId) return;
+      if (gistSync.busy) {
+        if (pushPreferred) gistSync.pendingPush = true;
+        return;
+      }
+      if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+        gistSync.pendingPush = true;
+        gistSync.lastError = '';
+        renderCloudStatusUI();
+        if (!silent) showToast('Offline — saved locally & queued for Gist sync when online.', 'amber');
+        return;
+      }
+
+      gistSync.busy = true;
+      gistSync.lastError = '';
+      renderCloudStatusUI();
+
+      try {
+        const token = gistSync.cfg.token;
+        const res = await fetch(GIST_API_BASE + '/' + encodeURIComponent(gistSync.cfg.gistId), {
+          headers: gistHeaders(token),
+          cache: 'no-store'
+        });
+        if (!res.ok) throw new Error('Gist fetch failed (' + res.status + ')');
+        const gist = await res.json();
+        const files = gist.files || {};
+
+        let needPushDb = !!pushPreferred;
+        let pulledUpdates = 0;
+
+        let remoteDb = null;
+        if (files[GIST_DATA_FILE]) {
+          const txt = await readGistFileContent(files[GIST_DATA_FILE], token);
+          if (txt && txt.trim()) remoteDb = JSON.parse(txt);
+        }
+
+        const localDeletedBefore = getDeletedReceiptIds();
+        const mergedDeleted = mergeDeletedReceiptIds(remoteDb && remoteDb.deletedReceiptIds);
+        if (mergedDeleted.length !== (remoteDb && remoteDb.deletedReceiptIds ? remoteDb.deletedReceiptIds.length : 0)) {
+          needPushDb = true;
+        }
+
+        if (remoteDb && Array.isArray(remoteDb.trips)) {
+          const remoteTrips = remoteDb.trips.map(function (rt) { return normalizeTrip(Object.assign({}, rt)); });
+          const remoteById = {};
+          remoteTrips.forEach(function (rt) { remoteById[rt.id] = rt; });
+
+          remoteTrips.forEach(function (rt) {
+            const idx = store.trips.findIndex(function (t) { return t.id === rt.id; });
+            if (idx < 0) {
+              store.trips.unshift(rt);
+              pulledUpdates++;
+            } else if ((rt.updatedAt || 0) > (store.trips[idx].updatedAt || 0)) {
+              store.trips[idx] = rt;
+              pulledUpdates++;
+            } else if ((store.trips[idx].updatedAt || 0) > (rt.updatedAt || 0)) {
+              needPushDb = true;
+            }
+          });
+
+          store.trips.forEach(function (lt) {
+            if (!remoteById[lt.id]) needPushDb = true;
+          });
+
+          if (pulledUpdates > 0) {
+            state = getActiveTrip();
+            try { localStorage.setItem(STORE_KEY, JSON.stringify(store)); } catch (e) {}
+            renderAll();
+          }
+        } else {
+          needPushDb = true;
+        }
+
+        let needPushReceipts = false;
+        let mergedReceipts = [];
+        let pulledReceipts = 0;
+
+        if (gistSync.cfg.syncReceipts !== false) {
+          const deletedSet = {};
+          mergedDeleted.forEach(function (id) { deletedSet[id] = true; });
+
+          let localRecs = await idbGetAllReceipts();
+          for (let i = 0; i < localRecs.length; i++) {
+            if (deletedSet[localRecs[i].id]) await idbDeleteReceipt(localRecs[i].id);
+          }
+          localRecs = localRecs.filter(function (r) { return !deletedSet[r.id]; });
+
+          const localMap = {};
+          localRecs.forEach(function (r) { localMap[r.id] = r; });
+
+          let parsedRec = null;
+          if (files[GIST_RECEIPTS_FILE]) {
+            const rTxt = await readGistFileContent(files[GIST_RECEIPTS_FILE], token);
+            if (rTxt && rTxt.trim()) parsedRec = JSON.parse(rTxt);
+          }
+          const remoteRecs = (parsedRec && Array.isArray(parsedRec.receipts)) ? parsedRec.receipts : [];
+          const remoteHash = (parsedRec && parsedRec.hash) ? parsedRec.hash : '';
+
+          const toRestore = [];
+          remoteRecs.forEach(function (rr) {
+            if (!rr || !rr.id || deletedSet[rr.id]) return;
+            const lr = localMap[rr.id];
+            if (!lr) {
+              toRestore.push(rr);
+            } else {
+              const lSig = computeReceiptsHash([lr]);
+              const rSig = computeReceiptsHash([rr]);
+              if (lSig !== rSig && !pushPreferred && (rr.createdAt || 0) >= (lr.createdAt || 0)) {
+                toRestore.push(rr);
+              }
+            }
+          });
+
+          if (toRestore.length > 0) {
+            pulledReceipts = await restoreEmbeddedReceipts(toRestore);
+            localRecs = await idbGetAllReceipts();
+            localRecs = localRecs.filter(function (r) { return !deletedSet[r.id]; });
+          }
+
+          mergedReceipts = localRecs;
+          const finalHash = computeReceiptsHash(mergedReceipts);
+          if (finalHash !== remoteHash || mergedReceipts.length !== remoteRecs.length || localDeletedBefore.length !== mergedDeleted.length) {
+            needPushReceipts = (finalHash !== remoteHash);
+          }
+
+          if (pulledReceipts > 0 || localRecs.length !== receiptVault.photos.length) {
+            await loadTripReceipts();
+          }
+        }
+
+        const patchFiles = {};
+        if (needPushDb) {
+          patchFiles[GIST_DATA_FILE] = {
+            content: JSON.stringify({
+              activeTripId: store.activeTripId,
+              trips: store.trips,
+              deletedReceiptIds: mergedDeleted,
+              updatedAt: Date.now()
+            }, null, 2)
+          };
+        }
+        if (needPushReceipts && gistSync.cfg.syncReceipts !== false) {
+          const rHash = computeReceiptsHash(mergedReceipts);
+          const recStr = JSON.stringify({ hash: rHash, updatedAt: Date.now(), receipts: mergedReceipts });
+          if (recStr.length <= 18 * 1024 * 1024) {
+            patchFiles[GIST_RECEIPTS_FILE] = { content: recStr };
+            gistSync.cfg.lastReceiptsHash = rHash;
+          }
+        }
+
+        if (Object.keys(patchFiles).length > 0) {
+          const pRes = await fetch(GIST_API_BASE + '/' + encodeURIComponent(gistSync.cfg.gistId), {
+            method: 'PATCH',
+            headers: gistHeaders(token),
+            body: JSON.stringify({ files: patchFiles })
+          });
+          if (!pRes.ok) throw new Error('Gist update failed (' + pRes.status + ')');
+        }
+
+        gistSync.cfg.lastSyncedAt = Date.now();
+        gistSync.lastPullCheckAt = Date.now();
+        gistSync.pendingPush = false;
+        saveGistConfig();
+
+        if (!silent) {
+          if (pulledUpdates > 0 || pulledReceipts > 0) {
+            showToast('Gist synced ✓ Pulled ' + pulledUpdates + ' trip(s)' + (pulledReceipts > 0 ? (' & ' + pulledReceipts + ' receipt(s)') : ''), 'green');
+          } else {
+            showToast('Private Gist synced ✓', 'green');
+          }
+        } else if (pulledUpdates > 0 || pulledReceipts > 0) {
+          showToast('Auto-synced newer edits from Private Gist ✓', 'green');
+        }
+      } catch (err) {
+        gistSync.lastError = err.message || 'Gist sync error';
+        if (pushPreferred) gistSync.pendingPush = true;
+        if (!silent) showToast('Gist sync failed: ' + gistSync.lastError, 'red');
+      } finally {
+        gistSync.busy = false;
+        renderCloudStatusUI();
+        if (document.documentElement.getAttribute('data-layout') === 'mobile') renderWorkspace();
+      }
+    }
+
     async function connectGitHubGist() {
       const tokInp = document.getElementById('gist-token-input');
       const idInp = document.getElementById('gist-id-input');
@@ -8830,7 +9082,19 @@
       const bwBtn = document.getElementById('vault-bw-toggle-btn');
       if (bwBtn) {
         bwBtn.className = 'btn btn-sm ' + (receiptVault.bwMode ? 'btn-green-soft' : '');
-        bwBtn.textContent = receiptVault.bwMode ? '🖤 Hi-Res B&W: ON' : '🎨 Color Mode';
+        bwBtn.textContent = receiptVault.bwMode ? '🖤 B&W (<300 KB): ON' : '🎨 Color (<300 KB)';
+      }
+
+      const optBtn = document.getElementById('vault-optimize-btn');
+      if (optBtn) {
+        const oversizedCount = allPhotos.filter(function (p) { return getReceiptSizeMeta(p).bytes > RECEIPT_SOFT_MAX_BYTES; }).length;
+        if (oversizedCount > 0) {
+          optBtn.className = 'btn btn-sm btn-primary';
+          optBtn.textContent = '🗜️ Optimize (' + oversizedCount + ' > 300KB)';
+        } else {
+          optBtn.className = 'btn btn-sm';
+          optBtn.textContent = allPhotos.length > 0 ? '✓ All < 300KB' : '🗜️ Auto < 300KB';
+        }
       }
 
       const bgBtn = document.getElementById('vault-slidebg-btn');
@@ -8978,21 +9242,110 @@
       for (let i = 0; i < data.length; i += 4) {
         let l = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
         if (invertDarkUi) l = 255 - l;
-        // High-contrast crisp document curve
-        l = (l - 128) * 1.48 + 142;
-        if (l > 230) l = 255;
-        else if (l < 35) l = 0;
+        // High-contrast crisp document curve with clean white background clipping (cuts JPEG size dramatically)
+        l = (l - 128) * 1.52 + 148;
+        if (l > 218) l = 255;
+        else if (l < 42) l = 0;
         else l = Math.max(0, Math.min(255, Math.round(l)));
         data[i] = data[i + 1] = data[i + 2] = l;
       }
       ctx.putImageData(imgData, 0, 0);
     }
 
+    const RECEIPT_TARGET_BYTES = 260 * 1024;
+    const RECEIPT_SOFT_MAX_BYTES = 295 * 1024;
+
+    function estimateDataUrlBytes(dataUrl) {
+      if (!dataUrl) return 0;
+      const comma = dataUrl.indexOf(',');
+      const b64Len = comma >= 0 ? (dataUrl.length - comma - 1) : dataUrl.length;
+      return Math.round((b64Len * 3) / 4);
+    }
+
+    /**
+     * Adaptive Under-300 KB Receipt Encoder:
+     * Keeps phone camera photos sharp & legible on A4 while guaranteeing < 300 KB for fast storage & OneDrive/JSON sync.
+     * Step 1: Try high-quality JPEG first (single-pass fast path for normal receipts).
+     * Step 2: Step quality down smoothly until <= 295 KB.
+     * Step 3: If still oversized (e.g., 12MP–48MP iPhone camera photo on textured background), progressively downscale
+     *         up to 4 passes while staying crisp and strictly under 300 KB.
+     */
+    function encodeCanvasToTargetBytes(srcCanvas, isBW) {
+      let workCanvas = srcCanvas;
+      let ownsWork = false;
+      let w = srcCanvas.width;
+      let h = srcCanvas.height;
+
+      const tryQualities = function (cv, list) {
+        let lastUrl = '';
+        let lastBytes = Infinity;
+        for (let i = 0; i < list.length; i++) {
+          const url = cv.toDataURL('image/jpeg', list[i]);
+          const b = estimateDataUrlBytes(url);
+          lastUrl = url;
+          lastBytes = b;
+          if (b <= RECEIPT_SOFT_MAX_BYTES) {
+            return { hit: true, dataUrl: url, bytes: b };
+          }
+        }
+        return { hit: false, dataUrl: lastUrl, bytes: lastBytes };
+      };
+
+      const startQuals = isBW ? [0.80, 0.70, 0.60, 0.50, 0.42] : [0.78, 0.68, 0.58, 0.48, 0.40];
+      let attempt = tryQualities(workCanvas, startQuals);
+
+      // Progressive downscale passes (up to 4) if dense camera photo still exceeds 295 KB
+      for (let pass = 0; pass < 4 && !attempt.hit; pass++) {
+        const longEdge = Math.max(w, h);
+        const minEdge = pass < 2 ? 840 : 600;
+        if (longEdge <= minEdge) break;
+        const ratio = Math.max(0.55, Math.min(0.84, Math.sqrt(RECEIPT_TARGET_BYTES / Math.max(attempt.bytes, 1)) * 0.94));
+        const nw = Math.max(1, Math.round(w * ratio));
+        const nh = Math.max(1, Math.round(h * ratio));
+        if (Math.max(nw, nh) < minEdge) {
+          const floorRatio = minEdge / longEdge;
+          w = Math.max(1, Math.round(w * floorRatio));
+          h = Math.max(1, Math.round(h * floorRatio));
+        } else {
+          w = nw;
+          h = nh;
+        }
+        const nextCanvas = document.createElement('canvas');
+        nextCanvas.width = w;
+        nextCanvas.height = h;
+        const nctx = nextCanvas.getContext('2d');
+        nctx.fillStyle = '#ffffff';
+        nctx.fillRect(0, 0, w, h);
+        nctx.imageSmoothingEnabled = true;
+        nctx.imageSmoothingQuality = 'high';
+        nctx.drawImage(workCanvas, 0, 0, w, h);
+        if (ownsWork) {
+          workCanvas.width = 0;
+          workCanvas.height = 0;
+        }
+        workCanvas = nextCanvas;
+        ownsWork = true;
+        attempt = tryQualities(workCanvas, [0.72, 0.60, 0.48, 0.38]);
+      }
+
+      if (ownsWork) {
+        workCanvas.width = 0;
+        workCanvas.height = 0;
+      }
+      return {
+        dataUrl: attempt.dataUrl,
+        width: w,
+        height: h,
+        bytes: attempt.bytes,
+        isBW: !!isBW
+      };
+    }
+
     async function compressImageFile(file, useBW) {
       const objUrl = URL.createObjectURL(file);
       try {
         const img = await loadImageElement(objUrl);
-        const maxDim = useBW ? 2200 : 1600;
+        const maxDim = useBW ? 1800 : 1500;
         let w = img.naturalWidth || img.width;
         let h = img.naturalHeight || img.height;
         if (w > maxDim || h > maxDim) {
@@ -9008,12 +9361,10 @@
         ctx.fillRect(0, 0, w, h);
         ctx.drawImage(img, 0, 0, w, h);
         if (useBW) applyBWFilterToCanvas(ctx, w, h);
-        const dataUrl = canvas.toDataURL('image/jpeg', useBW ? 0.84 : 0.82);
+        const encoded = encodeCanvasToTargetBytes(canvas, useBW);
         canvas.width = 0;
         canvas.height = 0;
-        const comma = dataUrl.indexOf(',');
-        const bytes = Math.round(((dataUrl.length - comma - 1) * 3) / 4);
-        return { dataUrl: dataUrl, width: w, height: h, bytes: bytes, isBW: !!useBW };
+        return encoded;
       } finally {
         URL.revokeObjectURL(objUrl);
       }
@@ -9062,13 +9413,13 @@
 
       const maxPages = Math.min(pdf.numPages || 1, 12);
       const rendered = [];
-      const targetMaxDim = useBW ? 2100 : 1650;
+      const targetMaxDim = useBW ? 1800 : 1500;
 
       for (let pageNum = 1; pageNum <= maxPages; pageNum++) {
         const page = await pdf.getPage(pageNum);
         const baseVp = page.getViewport({ scale: 1 });
         const maxBase = Math.max(baseVp.width || 1, baseVp.height || 1);
-        const scale = Math.min(3.0, Math.max(1.2, targetMaxDim / maxBase));
+        const scale = Math.min(2.6, Math.max(1.2, targetMaxDim / maxBase));
         const vp = page.getViewport({ scale: scale });
 
         const canvas = document.createElement('canvas');
@@ -9081,19 +9432,15 @@
         await page.render({ canvasContext: ctx, viewport: vp }).promise;
         if (useBW) applyBWFilterToCanvas(ctx, canvas.width, canvas.height);
 
-        const dataUrl = canvas.toDataURL('image/jpeg', useBW ? 0.85 : 0.84);
-        const w = canvas.width;
-        const h = canvas.height;
+        const encoded = encodeCanvasToTargetBytes(canvas, useBW);
         canvas.width = 0;
         canvas.height = 0;
-        const comma = dataUrl.indexOf(',');
-        const bytes = Math.round(((dataUrl.length - comma - 1) * 3) / 4);
         rendered.push({
-          dataUrl: dataUrl,
-          width: w,
-          height: h,
-          bytes: bytes,
-          isBW: !!useBW,
+          dataUrl: encoded.dataUrl,
+          width: encoded.width,
+          height: encoded.height,
+          bytes: encoded.bytes,
+          isBW: encoded.isBW,
           pageNum: pageNum,
           totalPages: pdf.numPages || maxPages
         });
@@ -9109,9 +9456,10 @@
       const target = receiptVault.pendingUploadTarget || { scope: 'unmatched', itemId: '', dayId: '', role: 'receipt' };
       const useBW = !!receiptVault.bwMode;
       const hasPdf = files.some(function (f) { return f.type === 'application/pdf' || /\.pdf$/i.test(f.name || ''); });
-      showToast('Processing ' + files.length + (hasPdf ? ' file(s) (rendering PDF pages…)' : (' photo' + (files.length === 1 ? '' : 's') + (useBW ? ' (Hi-Res B&W)…' : '…'))), 'indigo');
+      showToast('Compressing ' + files.length + (hasPdf ? ' file(s) (<300 KB/pg)…' : (' photo' + (files.length === 1 ? '' : 's') + ' (<300 KB)…')), 'indigo');
 
       let added = 0;
+      let addedBytes = 0;
       let pdfPagesAdded = 0;
       let truncatedPdf = false;
       for (let i = 0; i < files.length; i++) {
@@ -9144,6 +9492,7 @@
               receiptVault.photos.push(rec);
               await idbPutReceipt(rec);
               added++;
+              addedBytes += pg.bytes || 0;
               pdfPagesAdded++;
             }
           } else {
@@ -9168,6 +9517,7 @@
             receiptVault.photos.push(rec);
             await idbPutReceipt(rec);
             added++;
+            addedBytes += processed.bytes || 0;
           }
         } catch (err) {
           console.warn('Skipped file:', err);
@@ -9184,7 +9534,10 @@
         renderSlidePreviewModal();
       }
       if (added > 0) {
-        const suffix = pdfPagesAdded > 0 ? (' (' + pdfPagesAdded + ' PDF page' + (pdfPagesAdded === 1 ? '' : 's') + (truncatedPdf ? ', capped at 12' : '') + ')') : '';
+        const sizeLabel = formatBytes(addedBytes);
+        const suffix = pdfPagesAdded > 0
+          ? (' (' + pdfPagesAdded + ' PDF pg · ' + sizeLabel + (truncatedPdf ? ', capped at 12' : '') + ')')
+          : (' (' + sizeLabel + ')');
         showToast('Attached ' + added + ' item' + (added === 1 ? '' : 's') + suffix + ' ✓', 'green');
         scheduleCloudWrite(false);
       } else if (!hasPdf) {
@@ -9192,11 +9545,80 @@
       }
     }
 
+    async function optimizeExistingReceipts() {
+      const photos = receiptVault.photos || [];
+      if (photos.length === 0) {
+        showToast('No receipts in this trip to optimize.', 'indigo');
+        return;
+      }
+      const oversized = photos.filter(function (p) { return getReceiptSizeMeta(p).bytes > RECEIPT_SOFT_MAX_BYTES; });
+      if (oversized.length === 0) {
+        showToast('All ' + photos.length + ' receipt(s) are already under 300 KB ✓', 'green');
+        return;
+      }
+
+      showToast('Optimizing ' + oversized.length + ' oversized receipt(s) under 300 KB…', 'indigo');
+      let beforeTotal = 0;
+      let afterTotal = 0;
+      let count = 0;
+
+      for (let i = 0; i < oversized.length; i++) {
+        const ph = oversized[i];
+        const prevBytes = getReceiptSizeMeta(ph).bytes;
+        try {
+          const img = await loadImageElement(ph.dataUrl);
+          const maxDim = ph.isBW ? 1800 : 1500;
+          let w = img.naturalWidth || img.width;
+          let h = img.naturalHeight || img.height;
+          if (w > maxDim || h > maxDim) {
+            const ratio = Math.min(maxDim / w, maxDim / h);
+            w = Math.max(1, Math.round(w * ratio));
+            h = Math.max(1, Math.round(h * ratio));
+          }
+          const canvas = document.createElement('canvas');
+          canvas.width = w;
+          canvas.height = h;
+          const ctx = canvas.getContext('2d');
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(0, 0, w, h);
+          ctx.drawImage(img, 0, 0, w, h);
+
+          const encoded = encodeCanvasToTargetBytes(canvas, !!ph.isBW);
+          canvas.width = 0;
+          canvas.height = 0;
+
+          if (encoded.bytes < prevBytes) {
+            ph.dataUrl = encoded.dataUrl;
+            ph.width = encoded.width;
+            ph.height = encoded.height;
+            ph.bytes = encoded.bytes;
+            await idbPutReceipt(ph);
+            beforeTotal += prevBytes;
+            afterTotal += encoded.bytes;
+            count++;
+          }
+        } catch (err) {
+          console.warn('Optimize skipped photo:', err);
+        }
+      }
+
+      renderWorkspace();
+      if (document.getElementById('receipt-modal-backdrop').classList.contains('open')) renderReceiptModal();
+      if (document.getElementById('slide-preview-backdrop').classList.contains('open')) renderSlidePreviewModal();
+      if (count > 0) {
+        const savedBytes = Math.max(0, beforeTotal - afterTotal);
+        scheduleCloudWrite(false);
+        showToast('Optimized ' + count + ' photo(s): ' + formatBytes(beforeTotal) + ' → ' + formatBytes(afterTotal) + ' (saved ' + formatBytes(savedBytes) + ') ✓', 'green');
+      } else {
+        showToast('Receipts are already tightly compressed.', 'green');
+      }
+    }
+
     function toggleReceiptBWMode() {
       receiptVault.bwMode = !receiptVault.bwMode;
       try { localStorage.setItem(BW_MODE_KEY, receiptVault.bwMode ? '1' : '0'); } catch (e) {}
       renderReceiptModal();
-      showToast(receiptVault.bwMode ? 'Hi-Res B&W Scan Mode ON (2200px)' : 'Color Photo Mode ON', 'indigo');
+      showToast(receiptVault.bwMode ? 'B&W Document Scan ON (Auto < 300 KB)' : 'Color Mode ON (Auto < 300 KB)', 'indigo');
     }
 
     function openReceiptLightbox(photoId) {
@@ -9712,11 +10134,11 @@
         ctx.fillRect(0, 0, px.sw, px.sh);
         ctx.drawImage(img, px.sx, px.sy, px.sw, px.sh, 0, 0, px.sw, px.sh);
 
-        ph.dataUrl = canvas.toDataURL('image/jpeg', ph.isBW ? 0.86 : 0.85);
-        ph.width = px.sw;
-        ph.height = px.sh;
-        const comma = ph.dataUrl.indexOf(',');
-        ph.bytes = Math.round(((ph.dataUrl.length - comma - 1) * 3) / 4);
+        const encoded = encodeCanvasToTargetBytes(canvas, !!ph.isBW);
+        ph.dataUrl = encoded.dataUrl;
+        ph.width = encoded.width;
+        ph.height = encoded.height;
+        ph.bytes = encoded.bytes;
         canvas.width = 0;
         canvas.height = 0;
 
@@ -9727,7 +10149,7 @@
         if (document.getElementById('slide-preview-backdrop').classList.contains('open')) renderSlidePreviewModal();
         if (receiptVault.lightboxPhotoId === ph.id) openReceiptLightbox(ph.id);
         scheduleCloudWrite(false);
-        showToast('Cropped receipt to ' + px.sw + '×' + px.sh + 'px ✓', 'green');
+        showToast('Cropped receipt to ' + encoded.width + '×' + encoded.height + 'px (' + formatBytes(encoded.bytes) + ') ✓', 'green');
       } catch (e) {
         showToast('Crop failed: ' + e.message, 'red');
       }
@@ -9754,17 +10176,18 @@
         ctx.translate(h / 2, w / 2);
         ctx.rotate(Math.PI / 2);
         ctx.drawImage(img, -w / 2, -h / 2);
-        ph.dataUrl = canvas.toDataURL('image/jpeg', 0.85);
-        ph.width = h;
-        ph.height = w;
-        const comma = ph.dataUrl.indexOf(',');
-        ph.bytes = Math.round(((ph.dataUrl.length - comma - 1) * 3) / 4);
+        const encoded = encodeCanvasToTargetBytes(canvas, !!ph.isBW);
+        ph.dataUrl = encoded.dataUrl;
+        ph.width = encoded.width;
+        ph.height = encoded.height;
+        ph.bytes = encoded.bytes;
         canvas.width = 0;
         canvas.height = 0;
         await idbPutReceipt(ph);
         renderWorkspace();
         if (document.getElementById('receipt-modal-backdrop').classList.contains('open')) renderReceiptModal();
         if (receiptVault.lightboxPhotoId === photoId) openReceiptLightbox(photoId);
+        scheduleCloudWrite(false);
       } catch (e) {
         showToast('Could not rotate photo.', 'red');
       }
@@ -9785,17 +10208,20 @@
         ctx.fillRect(0, 0, w, h);
         ctx.drawImage(img, 0, 0, w, h);
         applyBWFilterToCanvas(ctx, w, h);
-        ph.dataUrl = canvas.toDataURL('image/jpeg', 0.84);
+        const encoded = encodeCanvasToTargetBytes(canvas, true);
+        ph.dataUrl = encoded.dataUrl;
+        ph.width = encoded.width;
+        ph.height = encoded.height;
         ph.isBW = true;
-        const comma = ph.dataUrl.indexOf(',');
-        ph.bytes = Math.round(((ph.dataUrl.length - comma - 1) * 3) / 4);
+        ph.bytes = encoded.bytes;
         canvas.width = 0;
         canvas.height = 0;
         await idbPutReceipt(ph);
         renderWorkspace();
         if (document.getElementById('receipt-modal-backdrop').classList.contains('open')) renderReceiptModal();
         if (receiptVault.lightboxPhotoId === photoId) openReceiptLightbox(photoId);
-        showToast('Converted receipt to Hi-Res B&W ✓', 'green');
+        scheduleCloudWrite(false);
+        showToast('Converted to crisp B&W (' + formatBytes(encoded.bytes) + ') ✓', 'green');
       } catch (e) {
         showToast('B&W conversion failed.', 'red');
       }
