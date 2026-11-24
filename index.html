@@ -703,7 +703,6 @@
     .day-cap-fill { height: 100%; border-radius: 999px; transition: width 0.25s ease, background 0.25s ease; }
     .day-body { padding: 11px 12px; display: flex; flex-direction: column; gap: 9px; }
     .quick-meal-bar { display: flex; flex-wrap: wrap; gap: 7px; align-items: center; padding-top: 4px; }
-    .quick-meal-form { display: flex; flex: 1 1 210px; gap: 6px; }
 
     .rc-idx-badge {
       display: inline-flex; align-items: center; justify-content: center;
@@ -729,12 +728,91 @@
     .rc-photo-btn:hover { border-color: var(--accent-border); background: var(--accent-soft); color: var(--accent); }
     .rc-photo-btn.rc-cam-btn { background: var(--accent-soft); border-color: var(--accent-border); color: var(--accent); }
     .rc-photo-btn.rc-lib-btn { background: var(--sky-soft); border-color: var(--sky-border); color: var(--sky-text); }
+    .rc-photo-btn.rc-paste-btn { background: var(--green-soft); border-color: var(--green-border); color: var(--green-text); }
+    .rc-photo-btn.rc-paste-btn:hover { background: var(--green); border-color: var(--green); color: #ffffff; }
     .rc-photo-btn.has-photo {
       background: var(--green-soft); border-color: var(--green-border); color: var(--green-text);
       padding: 0 8px; border-radius: 999px; font-family: var(--font-mono); font-size: 11px;
     }
+    .paste-catcher-box {
+      min-height: 92px; border-radius: 12px; padding: 14px;
+      border: 2px dashed var(--accent-border); background: var(--accent-soft);
+      color: var(--accent); font-size: 13px; font-weight: 700;
+      display: flex; align-items: center; justify-content: center; text-align: center;
+      outline: none; cursor: text;
+    }
+    .paste-catcher-box:focus { border-style: solid; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
     .inline-ico { display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; }
     .inline-ico svg { display: block; }
+
+    /* Slick Locked Receipt Line (Mobile Today Mode) */
+    .rc-locked-card {
+      display: flex; align-items: center; gap: 10px;
+      padding: 9px 10px; border-radius: 14px;
+      background: color-mix(in srgb, var(--surface-2) 86%, var(--surface));
+      border: 1px solid color-mix(in srgb, var(--green-border) 58%, var(--border));
+      box-shadow: var(--shadow-xs);
+      transition: border-color 0.16s ease, background 0.16s ease, transform 0.12s ease;
+    }
+    .rc-locked-thumb {
+      position: relative; width: 42px; height: 42px; border-radius: 10px;
+      overflow: hidden; flex-shrink: 0; border: 1.5px solid var(--border-strong);
+      background: #0f172a; padding: 0; cursor: pointer; display: block;
+    }
+    .rc-locked-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .rc-locked-thumb-num {
+      position: absolute; top: 2px; left: 2px;
+      padding: 0 4px; border-radius: 4px; font-family: var(--font-mono);
+      font-size: 9px; font-weight: 900; color: #fff; line-height: 1.35;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.45);
+    }
+    .rc-locked-thumb-cnt {
+      position: absolute; bottom: 2px; right: 2px;
+      padding: 0 4px; border-radius: 4px; font-family: var(--font-mono);
+      font-size: 9px; font-weight: 800; background: rgba(15, 23, 42, 0.84); color: #fff; line-height: 1.35;
+    }
+    .rc-locked-info { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+    .rc-locked-title {
+      font-size: 13.5px; font-weight: 700; color: var(--text);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .rc-locked-meta {
+      display: flex; align-items: center; gap: 5px; flex-wrap: wrap;
+      font-size: 11px; color: var(--text-subtle); font-weight: 600;
+    }
+    .rc-locked-check {
+      display: inline-flex; align-items: center; gap: 3px;
+      color: var(--green-text); font-weight: 700;
+    }
+    .rc-locked-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+    .rc-locked-amt {
+      font-family: var(--font-mono); font-variant-numeric: tabular-nums;
+      font-size: 15px; font-weight: 800; color: var(--text); letter-spacing: -0.02em;
+      white-space: nowrap;
+    }
+    .rc-lock-toggle {
+      display: inline-flex; align-items: center; justify-content: center; gap: 4px;
+      height: 30px; padding: 0 9px; border-radius: 999px;
+      border: 1px solid var(--border-strong); background: var(--surface);
+      color: var(--text-muted); font-size: 11px; font-weight: 700; cursor: pointer;
+      transition: all 0.14s ease; flex-shrink: 0;
+    }
+    .rc-lock-toggle:active { transform: scale(0.95); }
+    .rc-lock-toggle:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
+    .rc-lock-toggle.is-locked {
+      background: var(--green-soft); border-color: var(--green-border); color: var(--green-text);
+      width: 32px; padding: 0;
+    }
+    .rc-lock-toggle.is-unlocked {
+      background: var(--amber-soft); border-color: var(--amber-border); color: var(--amber-text);
+      height: 26px; padding: 0 9px; font-size: 10.5px;
+    }
+    .rc-unlocked-bar {
+      display: flex; align-items: center; justify-content: space-between; gap: 8px;
+      margin-bottom: 7px; padding-bottom: 6px; border-bottom: 1px dashed var(--border);
+      font-size: 11px; font-weight: 700; color: var(--amber-text);
+    }
+
     .meal-upload-strip {
       display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px;
       padding: 9px 10px; border-radius: 11px;
@@ -1812,10 +1890,10 @@
     }
     html[data-layout="mobile"] .curr-seg { flex: 0 0 auto; }
     html[data-layout="mobile"] .rc-label-wrap { flex: 1 1 115px; min-width: 0; }
-    html[data-layout="mobile"] .rc-amt-wrap { flex: 1 1 44%; min-width: 96px; }
-    html[data-layout="mobile"] .rc-sgd-wrap { flex: 0 0 auto; margin-left: auto; min-width: 0; gap: 5px; }
-    html[data-layout="mobile"] .rc-photo-btn { height: 36px; min-width: 34px; padding: 0 8px; border-radius: 10px; }
-    html[data-layout="mobile"] .rc-photo-btn.has-photo { min-width: 28px; padding: 0 8px; border-radius: 999px; }
+    html[data-layout="mobile"] .rc-amt-wrap { flex: 1 1 36%; min-width: 82px; }
+    html[data-layout="mobile"] .rc-sgd-wrap { flex: 0 0 auto; margin-left: auto; min-width: 0; gap: 4px; }
+    html[data-layout="mobile"] .rc-photo-btn { height: 36px; min-width: 32px; padding: 0 7px; border-radius: 10px; }
+    html[data-layout="mobile"] .rc-photo-btn.has-photo { min-width: 26px; padding: 0 7px; border-radius: 999px; }
     html[data-layout="mobile"] .console-sticky { position: static; }
     html[data-layout="mobile"] .console-card { max-height: none; }
     html[data-layout="mobile"] .mobile-bottom-nav {
@@ -2134,6 +2212,7 @@
           <button type="button" class="btn btn-sm btn-primary" onclick="triggerVaultUpload('receipt', true)">📸 Snap Photo</button>
           <button type="button" class="btn btn-sm btn-soft" onclick="triggerVaultUpload('receipt', false)">🖼️ +Photos / PDF</button>
           <button type="button" id="vault-bank-upload-btn" class="btn btn-sm btn-sky-soft" onclick="triggerVaultUpload('bank', false)">💳 +Bank / PDF</button>
+          <button type="button" class="btn btn-sm btn-green-soft" onclick="pasteReceiptInVault()" title="Paste copied bank screenshot or receipt straight from clipboard">📋 Paste</button>
           <button type="button" id="vault-bw-toggle-btn" class="btn btn-sm btn-green-soft" onclick="toggleReceiptBWMode()" title="Crisp Black &amp; White document scan mode (auto-compressed under 300 KB)">🖤 B&amp;W (&lt;300 KB): ON</button>
           <button type="button" id="vault-optimize-btn" class="btn btn-sm btn-soft" onclick="optimizeExistingReceipts()" title="Compress existing receipts larger than 300 KB to save storage and speed up cloud sync">🗜️ Optimize (&lt;300 KB)</button>
           <button type="button" id="vault-slidebg-btn" class="btn btn-sm" onclick="cyclePrintSlideBg()" title="Cycle PDF &amp; Share Sheet background: Light Paper / Dark Box / Dark Slides">☀️ Light Paper</button>
@@ -2385,6 +2464,21 @@
       </div>
       <div class="slide-preview-viewport">
         <div id="slide-preview-stage" class="print-doc-root"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PASTE SCREENSHOT FALLBACK MODAL (USED ONLY IF BROWSER BLOCKS DIRECT CLIPBOARD READ) -->
+  <div id="paste-fallback-backdrop" class="modal-backdrop no-print" onclick="if(event.target===this) closePasteFallbackModal()">
+    <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="paste-fallback-title">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px;">
+        <h3 id="paste-fallback-title" class="modal-title" style="margin:0;">📋 Paste Screenshot</h3>
+        <button type="button" class="btn btn-icon-sm btn-ghost" onclick="closePasteFallbackModal()">✕</button>
+      </div>
+      <p id="paste-fallback-msg" class="modal-msg" style="margin-bottom:10px;">Tap inside the box below and tap <strong>Paste</strong> (or press <strong>Cmd+V / Ctrl+V</strong>) to attach your copied bank screenshot.</p>
+      <div id="paste-catcher-box" class="paste-catcher-box" contenteditable="true" role="textbox" aria-label="Paste copied screenshot here" onpaste="handleFallbackPasteEvent(event)">Tap here → Paste</div>
+      <div class="modal-actions" style="margin-top:12px;">
+        <button type="button" class="btn" onclick="closePasteFallbackModal()">Cancel</button>
       </div>
     </div>
   </div>
@@ -3982,6 +4076,9 @@
       if (name === 'doc') return '<svg ' + a + '><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>';
       if (name === 'eye') return '<svg ' + a + '><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';
       if (name === 'layers') return '<svg ' + a + '><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>';
+      if (name === 'lock') return '<svg ' + a + '><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>';
+      if (name === 'unlock') return '<svg ' + a + '><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg>';
+      if (name === 'paste') return '<svg ' + a + '><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg>';
       return '';
     }
 
@@ -3993,14 +4090,49 @@
       return '<button type="button" class="btn btn-sm btn-green-soft" onclick="toggleCollapse(\'' + esc(sectionKey) + '\')">✓ Done &amp; Close Tab</button>';
     }
 
-    function renderReceiptRow(scope, item, idx, fxCode, dayId) {
+    function renderReceiptRow(scope, item, idx, fxCode, dayId, rowOpts) {
       const calc = calcReceiptItem(item);
       const isFx = calc.isFx;
       const dayArg = dayId ? ('\'' + esc(dayId) + '\'') : 'null';
       const placeholder = getLogicalPlaceholder(scope, idx, state.trip);
-      const photoCount = getReceiptCountForItem(item.id);
+      const itemPhotos = receiptVault.photos.filter(function (p) { return p.itemId === item.id; });
+      const photoCount = itemPhotos.length;
       const badgeCol = getReceiptBadgeColors(idx);
       const idxBadgeHtml = '<span class="rc-idx-badge" style="background:' + badgeCol.bg + ';color:' + badgeCol.text + ';">#' + (idx + 1) + '</span>';
+
+      const todayLockMode = !!(rowOpts && rowOpts.todayLockMode);
+      const isReadyToLock = todayLockMode && photoCount > 0 && calc.hasValue && calc.sgd > 0 && calc.grossParsed.valid && calc.dedParsed.valid;
+      const isLocked = isReadyToLock && !mobileUnlockedLines[item.id];
+
+      if (isLocked) {
+        const firstPh = itemPhotos[0];
+        const titleTxt = (item.label || '').trim() || placeholder;
+        const metaParts = [
+          '<span class="rc-locked-check">✓ Tagged</span>',
+          '<span>' + photoCount + ' file' + (photoCount === 1 ? '' : 's') + '</span>'
+        ];
+        if (isFx) {
+          metaParts.push('<span class="mono">' + fmtForeignPretty(calc.net) + ' ' + esc(fxCode) + '</span>');
+        }
+        if (calc.deduction > 0) {
+          metaParts.push('<span class="mono">−' + (isFx ? fmtForeignPretty(calc.deduction) : fmt2(calc.deduction)) + '</span>');
+        }
+        return '<div id="rc-row-' + esc(item.id) + '" class="rc-locked-card">'
+          + '<button type="button" class="rc-locked-thumb" style="border-color:' + badgeCol.bg + ';" onclick="openLockedLinePhoto(\'' + scope + '\',\'' + esc(item.id) + '\',' + dayArg + ')" title="Tap to view attached receipt">'
+          + '<img src="' + firstPh.dataUrl + '" alt="' + esc(titleTxt) + '" loading="lazy" />'
+          + '<span class="rc-locked-thumb-num" style="background:' + badgeCol.bg + ';">#' + (idx + 1) + '</span>'
+          + (photoCount > 1 ? ('<span class="rc-locked-thumb-cnt">×' + photoCount + '</span>') : '')
+          + '</button>'
+          + '<div class="rc-locked-info">'
+          + '<div class="rc-locked-title">' + esc(titleTxt) + '</div>'
+          + '<div class="rc-locked-meta">' + metaParts.join('<span>·</span>') + '</div>'
+          + '</div>'
+          + '<div class="rc-locked-right">'
+          + '<span id="rc-locked-sgd-' + esc(item.id) + '" class="rc-locked-amt">$' + fmt2(calc.sgd) + '</span>'
+          + '<button type="button" class="rc-lock-toggle is-locked" onclick="toggleTodayLineLock(\'' + esc(item.id) + '\', false)" title="Locked — tap to unlock and edit" aria-label="Unlock line">' + slickSvg('lock', 14) + '</button>'
+          + '</div>'
+          + '</div>';
+      }
 
       const anchorOpts = state.fxAnchors.map(function (a) {
         const r = getAnchorRate(a);
@@ -4023,20 +4155,30 @@
       ) : '';
       const showSgdReadout = isFx || calc.grossParsed.isExpression || calc.deduction > 0;
       const safeDayId = dayId ? esc(dayId) : '';
+      const unlockedBarHtml = (isReadyToLock && mobileUnlockedLines[item.id])
+        ? ('<div class="rc-unlocked-bar">'
+          + '<span>Unlocked for editing</span>'
+          + '<button type="button" class="rc-lock-toggle is-unlocked" onclick="toggleTodayLineLock(\'' + esc(item.id) + '\', true)" title="Lock line back into compact view">' + slickSvg('unlock', 12) + '<span>Lock</span></button>'
+          + '</div>')
+        : '';
+      const blurAttr = todayLockMode ? (' onblur="handleTodayRowBlur(\'' + esc(item.id) + '\')" onkeydown="handleTodayRowKeydown(event,\'' + esc(item.id) + '\')"') : '';
+      const focusAttr = ' onfocus="setActiveReceiptRow(\'' + scope + '\',\'' + esc(item.id) + '\',\'' + safeDayId + '\')"';
 
       return '<div id="rc-row-' + esc(item.id) + '" class="receipt-row">'
+        + unlockedBarHtml
         + '<div class="receipt-main">'
         + idxBadgeHtml
         + '<div class="curr-seg">'
         + '<button type="button" class="' + (!isFx ? 'active-sgd' : '') + '" onclick="setReceiptCurrency(\'' + scope + '\',\'' + esc(item.id) + '\',\'SGD\',' + dayArg + ')">SGD</button>'
         + '<button type="button" class="' + (isFx ? 'active-fx' : '') + '" onclick="setReceiptCurrency(\'' + scope + '\',\'' + esc(item.id) + '\',\'FX\',' + dayArg + ')">' + esc(fxCode) + '</button>'
         + '</div>'
-        + '<div class="rc-label-wrap"><input class="input" type="text" placeholder="' + esc(placeholder) + '" value="' + esc(item.label) + '" oninput="updateReceiptField(\'' + scope + '\',\'' + esc(item.id) + '\',\'label\',this.value,' + dayArg + ',this)" /></div>'
-        + '<div class="rc-amt-wrap"><input id="rc-amt-input-' + esc(item.id) + '" class="input mono input-right' + (calc.grossParsed.valid ? '' : ' invalid') + '" type="text" inputmode="decimal" placeholder="' + (isFx ? ('0 ' + esc(fxCode)) : 'SGD 0.00') + '" value="' + esc(item.amountExpr) + '" oninput="updateReceiptField(\'' + scope + '\',\'' + esc(item.id) + '\',\'amountExpr\',this.value,' + dayArg + ',this)" /></div>'
+        + '<div class="rc-label-wrap"><input class="input" type="text" placeholder="' + esc(placeholder) + '" value="' + esc(item.label) + '" oninput="updateReceiptField(\'' + scope + '\',\'' + esc(item.id) + '\',\'label\',this.value,' + dayArg + ',this)"' + focusAttr + blurAttr + ' /></div>'
+        + '<div class="rc-amt-wrap"><input id="rc-amt-input-' + esc(item.id) + '" class="input mono input-right' + (calc.grossParsed.valid ? '' : ' invalid') + '" type="text" inputmode="decimal" placeholder="' + (isFx ? ('0 ' + esc(fxCode)) : 'SGD 0.00') + '" value="' + esc(item.amountExpr) + '" oninput="updateReceiptField(\'' + scope + '\',\'' + esc(item.id) + '\',\'amountExpr\',this.value,' + dayArg + ',this)"' + focusAttr + blurAttr + ' /></div>'
         + '<div class="rc-sgd-wrap">'
         + '<span id="rc-sgd-' + esc(item.id) + '" class="rc-sgd-val" style="' + (showSgdReadout ? '' : 'display:none') + '">SGD ' + fmt2(calc.sgd) + '</span>'
         + '<button type="button" class="rc-photo-btn rc-cam-btn" title="Snap photo with camera for this line" aria-label="Snap photo with camera" onclick="triggerReceiptUpload({ scope:\'' + scope + '\', itemId:\'' + esc(item.id) + '\', dayId:\'' + safeDayId + '\', role:\'receipt\' }, true)">' + slickSvg('camera', 14) + '</button>'
         + '<button type="button" class="rc-photo-btn rc-lib-btn" title="Attach from Photo Library or PDF Files" aria-label="Attach from Photo Library or Files" onclick="triggerReceiptUpload({ scope:\'' + scope + '\', itemId:\'' + esc(item.id) + '\', dayId:\'' + safeDayId + '\', role:\'receipt\' }, false)">' + slickSvg('image', 14) + '</button>'
+        + '<button type="button" class="rc-photo-btn rc-paste-btn" title="1-tap Paste copied bank screenshot or receipt onto this line" aria-label="Paste screenshot from clipboard" onclick="pasteReceiptToLine(\'' + scope + '\',\'' + esc(item.id) + '\',\'' + safeDayId + '\')">' + slickSvg('paste', 14) + '</button>'
         + (photoCount > 0 ? ('<button type="button" class="rc-photo-btn has-photo" title="' + photoCount + ' photo(s) attached — tap to view/manage" onclick="handleItemPhotoClick(\'' + scope + '\',\'' + esc(item.id) + '\',' + dayArg + ')"><span>' + photoCount + '</span></button>') : '')
         + '<button type="button" class="btn btn-icon-sm btn-ghost btn-danger-ghost" title="Remove row" onclick="removeReceipt(\'' + scope + '\',\'' + esc(item.id) + '\',' + dayArg + ')">✕</button>'
         + '</div>'
@@ -4383,10 +4525,12 @@
       const btnsHtml = isPolicySection
         ? ('<button type="button" class="btn btn-sm btn-primary" onclick="triggerReceiptUpload({ scope:\'overnight\', dayId:\'\', itemId:\'\', role:\'policy\' }, true)">📸 Snap</button>'
           + '<button type="button" class="btn btn-sm btn-soft" onclick="triggerReceiptUpload({ scope:\'overnight\', dayId:\'\', itemId:\'\', role:\'policy\' }, false)">📄 +Policy / PDF</button>'
-          + '<button type="button" class="btn btn-sm btn-sky-soft" onclick="triggerReceiptUpload({ scope:\'overnight\', dayId:\'\', itemId:\'\', role:\'receipt\' }, false)">🎫 +Boarding / PDF</button>')
+          + '<button type="button" class="btn btn-sm btn-sky-soft" onclick="triggerReceiptUpload({ scope:\'overnight\', dayId:\'\', itemId:\'\', role:\'receipt\' }, false)">🎫 +Boarding / PDF</button>'
+          + '<button type="button" class="btn btn-sm btn-green-soft" onclick="pasteReceiptFromClipboard({ scope:\'overnight\', dayId:\'\', itemId:\'\', role:\'policy\' })">📋 Paste</button>')
         : ('<button type="button" class="btn btn-sm btn-primary" onclick="triggerReceiptUpload({ scope:\'' + esc(scope) + '\', dayId:\'\', itemId:\'\', role:\'receipt\' }, true)">📸 Snap</button>'
           + '<button type="button" class="btn btn-sm btn-soft" onclick="triggerReceiptUpload({ scope:\'' + esc(scope) + '\', dayId:\'\', itemId:\'\', role:\'receipt\' }, false)">🖼️ +Photos / PDF</button>'
-          + '<button type="button" class="btn btn-sm btn-sky-soft" onclick="triggerReceiptUpload({ scope:\'' + esc(scope) + '\', dayId:\'\', itemId:\'\', role:\'bank\' }, false)">💳 +Bank / PDF</button>');
+          + '<button type="button" class="btn btn-sm btn-sky-soft" onclick="triggerReceiptUpload({ scope:\'' + esc(scope) + '\', dayId:\'\', itemId:\'\', role:\'bank\' }, false)">💳 +Bank / PDF</button>'
+          + '<button type="button" class="btn btn-sm btn-green-soft" onclick="pasteReceiptFromClipboard({ scope:\'' + esc(scope) + '\', dayId:\'\', itemId:\'\', role:\'bank\' })">📋 Paste</button>');
 
       return '<div style="margin-top:10px;display:flex;flex-direction:column;gap:8px;">'
         + '<div class="meal-upload-strip' + (photos.length > 0 ? ' has-photos' : '') + '">'
@@ -4585,10 +4729,6 @@
           + '<div class="receipt-list">' + rowsHtml + '</div>'
           + '<div class="quick-meal-bar">'
           + '<button type="button" class="btn btn-sm btn-soft" onclick="addReceipt(\'meal\',\'' + esc(d.day.id) + '\')">+ Meal Line</button>'
-          + '<form class="quick-meal-form" onsubmit="handleQuickMealSubmit(event,\'' + esc(d.day.id) + '\')">'
-          + '<input id="qm-' + esc(d.day.id) + '" class="input mono" type="text" placeholder="Quick add: 12.68 + 34.47 or 2280 ' + esc(summary.fxCode) + '" />'
-          + '<button type="submit" class="btn btn-sm btn-primary">Add</button>'
-          + '</form>'
           + '</div>'
           + '<div class="meal-upload-strip' + (dayPhotos.length > 0 ? ' has-photos' : '') + '">'
           + '<div style="font-size:11.5px;font-weight:700;">📷 ' + (dayPhotos.length > 0 ? (dayPhotos.length + ' Receipt Photo' + (dayPhotos.length === 1 ? '' : 's') + ' / PDF Page' + (dayPhotos.length === 1 ? '' : 's') + ' Attached') : 'Attach Receipts, PDFs or Bank SGD') + '</div>'
@@ -4741,6 +4881,61 @@
     let mobileAwareTripId = null;
     let mobileTransportTab = 'overseas';
     let mobileTransportUserPicked = false;
+    let mobileUnlockedLines = {};
+
+    function toggleTodayLineLock(itemId, lockNow) {
+      if (!itemId) return;
+      if (lockNow) {
+        delete mobileUnlockedLines[itemId];
+      } else {
+        mobileUnlockedLines[itemId] = true;
+      }
+      renderWorkspace();
+      if (!lockNow) {
+        setTimeout(function () {
+          const inp = document.getElementById('rc-amt-input-' + itemId);
+          if (inp) inp.focus();
+        }, 40);
+      }
+    }
+
+    function openLockedLinePhoto(scope, itemId, dayId) {
+      const existing = receiptVault.photos.filter(function (p) { return p.itemId === itemId; });
+      if (existing.length === 1) {
+        openReceiptLightbox(existing[0].id);
+      } else {
+        handleItemPhotoClick(scope, itemId, dayId);
+      }
+    }
+
+    function handleTodayRowBlur(itemId) {
+      if (!itemId || mobileUnlockedLines[itemId]) return;
+      setTimeout(function () {
+        const rowEl = document.getElementById('rc-row-' + itemId);
+        if (!rowEl) return;
+        const active = document.activeElement;
+        if (active && rowEl.contains(active)) return;
+        if (getReceiptCountForItem(itemId) <= 0) return;
+        const target = resolveReceiptTargetForItem(itemId);
+        const list = getItemsList(target.scope, target.dayId || null);
+        const row = list && list.find(function (r) { return r.id === itemId; });
+        if (!row) return;
+        const calc = calcReceiptItem(row);
+        if (calc.hasValue && calc.sgd > 0 && calc.grossParsed.valid && calc.dedParsed.valid) {
+          renderWorkspace();
+        }
+      }, 120);
+    }
+
+    function handleTodayRowKeydown(evt, itemId) {
+      if (evt && evt.key === 'Enter') {
+        evt.preventDefault();
+        if (evt.target && evt.target.blur) evt.target.blur();
+        if (itemId && !mobileUnlockedLines[itemId]) {
+          handleTodayRowBlur(itemId);
+        }
+      }
+    }
 
     function detectAwareMealDay(summary) {
       const todayIso = toISODate(new Date());
@@ -4749,6 +4944,7 @@
         mobileAwareTripId = state.id;
         mobileAwareDayId = null;
         mobileTransportUserPicked = false;
+        mobileUnlockedLines = {};
       }
 
       const todayIndex = days.findIndex(function (d) { return d.day.date === todayIso; });
@@ -4851,7 +5047,7 @@
     function renderSingleAwareMealDayCardHtml(d, summary) {
       const cap = summary.cap > 0 ? summary.cap : 0;
       const rowsHtml = d.day.items.map(function (it, idx) {
-        return renderReceiptRow('meal', it, idx, summary.fxCode, d.day.id);
+        return renderReceiptRow('meal', it, idx, summary.fxCode, d.day.id, { todayLockMode: true });
       }).join('');
 
       const pct = cap > 0 ? Math.min(100, Math.round((d.raw / cap) * 100)) : 0;
@@ -4906,16 +5102,13 @@
         + '<div class="receipt-list">' + rowsHtml + '</div>'
         + '<div class="quick-meal-bar">'
         + '<button type="button" class="btn btn-sm btn-soft" onclick="addReceipt(\'meal\',\'' + esc(d.day.id) + '\')">+ Meal Line</button>'
-        + '<form class="quick-meal-form" onsubmit="handleQuickMealSubmit(event,\'' + esc(d.day.id) + '\')">'
-        + '<input id="qm-' + esc(d.day.id) + '" class="input mono" type="text" placeholder="Quick add: 12.68 + 34.47 or 2280 ' + esc(summary.fxCode) + '" />'
-        + '<button type="submit" class="btn btn-sm btn-primary">Add</button>'
-        + '</form>'
         + '</div>'
         + '<div class="aware-attach-inline' + (dayPhotos.length > 0 ? ' has-photos' : '') + '">'
-        + '<span style="display:inline-flex;align-items:center;gap:6px;">' + slickSvg('image', 14) + '<span>' + (dayPhotos.length > 0 ? (dayPhotos.length + ' receipt' + (dayPhotos.length === 1 ? '' : 's') + ' attached') : 'Add from Library / Files') + '</span></span>'
-        + '<div style="display:flex;gap:6px;">'
-        + '<button type="button" class="btn btn-sm btn-soft" onclick="triggerReceiptUpload({ scope:\'mealDay\', dayId:\'' + esc(d.day.id) + '\', itemId:\'\', role:\'receipt\' }, false)">' + slickSvg('image', 13) + '<span>Library / PDF</span></button>'
+        + '<span style="display:inline-flex;align-items:center;gap:6px;">' + slickSvg('image', 14) + '<span>' + (dayPhotos.length > 0 ? (dayPhotos.length + ' receipt' + (dayPhotos.length === 1 ? '' : 's') + ' attached') : 'Library / Paste') + '</span></span>'
+        + '<div style="display:flex;gap:5px;flex-wrap:wrap;">'
+        + '<button type="button" class="btn btn-sm btn-soft" onclick="triggerReceiptUpload({ scope:\'mealDay\', dayId:\'' + esc(d.day.id) + '\', itemId:\'\', role:\'receipt\' }, false)">' + slickSvg('image', 13) + '<span>Library</span></button>'
         + '<button type="button" class="btn btn-sm btn-sky-soft" onclick="triggerReceiptUpload({ scope:\'mealDay\', dayId:\'' + esc(d.day.id) + '\', itemId:\'\', role:\'bank\' }, false)">' + slickSvg('card', 13) + '<span>Bank</span></button>'
+        + '<button type="button" class="btn btn-sm btn-green-soft" onclick="pasteReceiptFromClipboard({ scope:\'mealDay\', dayId:\'' + esc(d.day.id) + '\', itemId:\'\', role:\'bank\' })">' + slickSvg('paste', 13) + '<span>Paste</span></button>'
         + '</div>'
         + '</div>'
         + photosHtml
@@ -4995,7 +5188,7 @@
 
       // Open Card 2: Daily Transport (Overseas & SG Local — Open & Ready)
       const trptRowsHtml = activeTrptItems.map(function (it, idx) {
-        return renderReceiptRow(activeScope, it, idx, summary.fxCode, null);
+        return renderReceiptRow(activeScope, it, idx, summary.fxCode, null, { todayLockMode: true });
       }).join('');
 
       const trptChips = activeScope === 'sgTransport'
@@ -5249,6 +5442,11 @@
 
       // Update individual receipt row SGD totals, expression hints & FX meta bars
       const updateRowDOM = function (r) {
+        const lockedSgdEl = document.getElementById('rc-locked-sgd-' + r.item.id);
+        if (lockedSgdEl) {
+          lockedSgdEl.textContent = '$' + fmt2(r.sgd);
+        }
+
         const sgdEl = document.getElementById('rc-sgd-' + r.item.id);
         if (sgdEl) {
           const showSgdReadout = r.isFx || r.grossParsed.isExpression || r.deduction > 0;
@@ -6143,55 +6341,6 @@
       d.date = val;
       persistStore(true);
       renderAll();
-    }
-
-    function handleQuickMealSubmit(evt, dayId) {
-      evt.preventDefault();
-      const inp = document.getElementById('qm-' + dayId);
-      if (!inp) return;
-      const raw = inp.value.trim();
-      if (!raw) return;
-      const day = state.meals.find(function (m) { return m.id === dayId; });
-      if (!day) return;
-
-      const fxCode = (state.trip.foreignCurrency || 'JPY').trim().toUpperCase();
-      const defaultFxId = (state.fxAnchors[0] && state.fxAnchors[0].id) || '';
-      const chunks = raw.split(/\s*\+\s*|\s*,\s*/).map(function (s) { return s.trim(); }).filter(Boolean);
-      let added = 0;
-
-      // Remove a single untouched blank placeholder row before appending quick items
-      if (day.items.length === 1 && !day.items[0].amountExpr && !day.items[0].label) {
-        day.items = [];
-      }
-
-      chunks.forEach(function (chunk) {
-        const isFx = new RegExp('\\b' + fxCode + '\\b|¥|฿|₫|\\$', 'i').test(chunk);
-        const cleanChunk = chunk.replace(new RegExp('\\b' + fxCode + '\\b|¥|฿|₫', 'ig'), '').trim();
-        const numMatch = cleanChunk.match(/(\d+(?:\.\d+)?)/);
-        if (!numMatch) return;
-        const amt = numMatch[1];
-        const lbl = cleanChunk.replace(numMatch[0], '').trim();
-        day.items.push({
-          id: uid('rc'),
-          label: lbl,
-          currency: isFx ? 'FX' : 'SGD',
-          amountExpr: amt,
-          deductionExpr: '',
-          deductionReason: '',
-          fxAnchorId: defaultFxId,
-          customRate: ''
-        });
-        added++;
-      });
-
-      if (added > 0) {
-        inp.value = '';
-        persistStore(true);
-        renderAll();
-        showToast('Added ' + added + ' meal receipt(s)!', 'green');
-      } else {
-        showToast('Enter amounts like: 12.68 + 34.47 or 24.16 Lunch', 'amber');
-      }
     }
 
     /* --- HRMS Console Actions --- */
@@ -9648,18 +9797,24 @@
       const files = Array.from((evt.target && evt.target.files) || []);
       if (evt.target) evt.target.value = '';
       if (files.length === 0) return;
+      return await processReceiptFiles(files, receiptVault.pendingUploadTarget);
+    }
 
-      const target = Object.assign({ scope: 'unmatched', itemId: '', dayId: '', role: 'receipt', autoCreateLine: false }, receiptVault.pendingUploadTarget || {});
+    async function processReceiptFiles(files, rawTarget) {
+      const listFiles = Array.from(files || []).filter(Boolean);
+      if (listFiles.length === 0) return;
+
+      const target = Object.assign({ scope: 'unmatched', itemId: '', dayId: '', role: 'receipt', autoCreateLine: false }, rawTarget || {});
       const useBW = !!receiptVault.bwMode;
-      const hasPdf = files.some(function (f) { return f.type === 'application/pdf' || /\.pdf$/i.test(f.name || ''); });
-      showToast('Compressing ' + files.length + (hasPdf ? ' file(s) (<300 KB/pg)…' : (' photo' + (files.length === 1 ? '' : 's') + ' (<300 KB)…')), 'indigo');
+      const hasPdf = listFiles.some(function (f) { return f.type === 'application/pdf' || /\.pdf$/i.test(f.name || ''); });
+      showToast('Compressing ' + listFiles.length + (hasPdf ? ' file(s) (<300 KB/pg)…' : (' photo' + (listFiles.length === 1 ? '' : 's') + ' (<300 KB)…')), 'indigo');
 
       const stagedRecs = [];
       let addedBytes = 0;
       let pdfPagesAdded = 0;
       let truncatedPdf = false;
-      for (let i = 0; i < files.length; i++) {
-        const f = files[i];
+      for (let i = 0; i < listFiles.length; i++) {
+        const f = listFiles[i];
         const isPdf = f.type === 'application/pdf' || /\.pdf$/i.test(f.name || '');
         try {
           if (isPdf) {
@@ -9787,6 +9942,10 @@
         await idbPutReceipt(rec);
       }
 
+      if (target.itemId) {
+        delete mobileUnlockedLines[target.itemId];
+      }
+
       const added = stagedRecs.length;
       updateVaultCountBadges();
       if (createdItemId) {
@@ -9819,8 +9978,145 @@
           if (amtInp) amtInp.focus();
         }, 80);
       } else {
-        showToast('Attached ' + added + ' item' + (added === 1 ? '' : 's') + suffix + ' ✓', 'green');
+        const roleTag = target.role === 'bank' ? 'Bank screenshot' : (target.role === 'policy' ? 'Policy doc' : 'item');
+        showToast('Attached ' + added + ' ' + roleTag + (added === 1 ? '' : 's') + suffix + ' ✓', 'green');
         scheduleCloudWrite(false);
+      }
+    }
+
+    /* --- 1-Tap Clipboard Paste for Bank Screenshots & Receipts (iOS Safari + Desktop) --- */
+    let activeReceiptRowTarget = null;
+    let pasteFallbackTarget = null;
+
+    function setActiveReceiptRow(scope, itemId, dayId) {
+      activeReceiptRowTarget = { scope: scope || 'unmatched', itemId: itemId || '', dayId: dayId || '' };
+    }
+
+    function computeSmartPasteRoleForLine(itemId, fallbackRole) {
+      if (!itemId) return fallbackRole || 'bank';
+      const existing = receiptVault.photos.filter(function (p) { return p.itemId === itemId; });
+      const hasReceipt = existing.some(function (p) { return p.role !== 'bank'; });
+      const hasBank = existing.some(function (p) { return p.role === 'bank'; });
+      // If a receipt is already attached to this line, auto-tag the pasted screenshot as Bank SGD (instant 🔗 Pair!)
+      if (hasReceipt && !hasBank) return 'bank';
+      return fallbackRole || 'bank';
+    }
+
+    function pasteReceiptToLine(scope, itemId, dayId) {
+      const role = computeSmartPasteRoleForLine(itemId, 'bank');
+      pasteReceiptFromClipboard({
+        scope: scope || 'unmatched',
+        itemId: itemId || '',
+        dayId: dayId || '',
+        role: role
+      });
+    }
+
+    function pasteReceiptInVault() {
+      const f = receiptVault.filter || 'all';
+      const baseTarget = f.indexOf('item:') === 0
+        ? resolveReceiptTargetForItem(f.slice(5))
+        : { scope: 'unmatched', itemId: '', dayId: '' };
+      const role = computeSmartPasteRoleForLine(baseTarget.itemId, 'bank');
+      pasteReceiptFromClipboard(Object.assign({}, baseTarget, { role: role }));
+    }
+
+    function openPasteFallbackModal(target) {
+      pasteFallbackTarget = Object.assign({ scope: 'unmatched', itemId: '', dayId: '', role: 'bank' }, target || {});
+      const box = document.getElementById('paste-catcher-box');
+      if (box) box.textContent = 'Tap here → Paste';
+      const bd = document.getElementById('paste-fallback-backdrop');
+      if (bd) bd.classList.add('open');
+      setTimeout(function () {
+        if (box) {
+          box.focus();
+          try {
+            const sel = window.getSelection();
+            const range = document.createRange();
+            range.selectNodeContents(box);
+            sel.removeAllRanges();
+            sel.addRange(range);
+          } catch (e) {}
+        }
+      }, 60);
+    }
+
+    function closePasteFallbackModal() {
+      pasteFallbackTarget = null;
+      const bd = document.getElementById('paste-fallback-backdrop');
+      if (bd) bd.classList.remove('open');
+    }
+
+    function extractImagesFromClipboardEvent(evt) {
+      const cd = evt && evt.clipboardData;
+      if (!cd) return [];
+      const out = [];
+      if (cd.items && cd.items.length) {
+        for (let i = 0; i < cd.items.length; i++) {
+          const it = cd.items[i];
+          if (it && it.kind === 'file' && (/^image\//i.test(it.type) || it.type === 'application/pdf')) {
+            const f = it.getAsFile();
+            if (f) out.push(f);
+          }
+        }
+      }
+      if (out.length === 0 && cd.files && cd.files.length) {
+        for (let i = 0; i < cd.files.length; i++) {
+          const f = cd.files[i];
+          if (f && (/^image\//i.test(f.type) || f.type === 'application/pdf')) out.push(f);
+        }
+      }
+      return out;
+    }
+
+    async function handleFallbackPasteEvent(evt) {
+      const files = extractImagesFromClipboardEvent(evt);
+      if (files.length === 0) {
+        evt.preventDefault();
+        showToast('No image found in clipboard — copy a screenshot first.', 'amber');
+        return;
+      }
+      evt.preventDefault();
+      const tgt = pasteFallbackTarget || { scope: 'unmatched', itemId: '', dayId: '', role: 'bank' };
+      closePasteFallbackModal();
+      await processReceiptFiles(files, tgt);
+    }
+
+    async function pasteReceiptFromClipboard(target) {
+      const tgt = Object.assign({ scope: 'unmatched', itemId: '', dayId: '', role: 'bank' }, target || {});
+      if (!navigator.clipboard || typeof navigator.clipboard.read !== 'function') {
+        openPasteFallbackModal(tgt);
+        return;
+      }
+      try {
+        const items = await navigator.clipboard.read();
+        const files = [];
+        for (let i = 0; i < items.length; i++) {
+          const clipItem = items[i];
+          const imgType = (clipItem.types || []).find(function (t) { return /^image\//i.test(t); });
+          if (!imgType) continue;
+          const blob = await clipItem.getType(imgType);
+          const ext = (imgType.split('/')[1] || 'png').replace(/[^a-z0-9]/gi, '') || 'png';
+          const fname = 'pasted-' + (tgt.role === 'bank' ? 'bank' : 'receipt') + '-' + (files.length + 1) + '.' + ext;
+          try {
+            files.push(new File([blob], fname, { type: imgType }));
+          } catch (e) {
+            blob.name = fname;
+            files.push(blob);
+          }
+        }
+        if (files.length === 0) {
+          showToast('No image on clipboard — copy a bank screenshot first.', 'amber');
+          return;
+        }
+        await processReceiptFiles(files, tgt);
+      } catch (err) {
+        const msg = String((err && err.message) || '');
+        if (err && err.name === 'NotAllowedError' && /dismiss|cancel|user/i.test(msg)) {
+          return;
+        }
+        // Fallback smoothly if browser/iframe denies async clipboard.read()
+        openPasteFallbackModal(tgt);
       }
     }
 
@@ -12169,6 +12465,28 @@
         closeReceiptCropper();
         closeReceiptLightbox();
         closeReceiptModal();
+        closePasteFallbackModal();
+      }
+    });
+
+    // Global Desktop / iPad Cmd+V / Ctrl+V image paste straight onto the active line
+    document.addEventListener('paste', function (e) {
+      const fbModal = document.getElementById('paste-fallback-backdrop');
+      if (fbModal && fbModal.classList.contains('open')) return;
+      const files = extractImagesFromClipboardEvent(e);
+      if (files.length === 0) return;
+      e.preventDefault();
+      if (activeReceiptRowTarget && activeReceiptRowTarget.itemId) {
+        const role = computeSmartPasteRoleForLine(activeReceiptRowTarget.itemId, 'bank');
+        processReceiptFiles(files, Object.assign({}, activeReceiptRowTarget, { role: role }));
+      } else {
+        const vaultOpen = document.getElementById('receipt-modal-backdrop') && document.getElementById('receipt-modal-backdrop').classList.contains('open');
+        if (vaultOpen && receiptVault.filter && receiptVault.filter.indexOf('item:') === 0) {
+          const base = resolveReceiptTargetForItem(receiptVault.filter.slice(5));
+          processReceiptFiles(files, Object.assign({}, base, { role: computeSmartPasteRoleForLine(base.itemId, 'bank') }));
+        } else {
+          processReceiptFiles(files, { scope: 'unmatched', itemId: '', dayId: '', role: 'bank' });
+        }
       }
     });
 
@@ -12216,4 +12534,3 @@
   </script>
 </body>
 </html>
-<!-- End of ClaimFlow -->
