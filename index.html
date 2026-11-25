@@ -415,15 +415,16 @@
 
     /* Illustrated Misc Reporting Group Wrapper (Left Workspace) */
     .misc-group-wrapper {
-      border: 1.5px solid var(--accent-border);
-      border-radius: 18px;
-      background: color-mix(in srgb, var(--accent-soft) 36%, var(--bg));
-      padding: 10px;
-      display: flex; flex-direction: column; gap: 11px;
+      border: 1px solid var(--border-strong);
+      border-left: 4px solid var(--accent);
+      border-radius: 16px;
+      background: color-mix(in srgb, var(--surface-2) 65%, var(--bg));
+      padding: 11px;
+      display: flex; flex-direction: column; gap: 10px;
     }
     .misc-group-head {
       display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px;
-      padding: 6px 8px 2px;
+      padding: 2px 4px 0;
     }
     .misc-group-title-wrap {
       display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
@@ -434,17 +435,42 @@
       font-size: 10.5px; font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase;
     }
     .misc-sub-pills {
-      display: flex; flex-wrap: wrap; align-items: center; gap: 5px;
-      padding: 0 8px 2px;
+      display: flex; flex-wrap: wrap; align-items: center; gap: 6px;
+      padding: 0 4px 2px;
     }
     .misc-sub-pill {
-      display: inline-flex; align-items: center; gap: 5px; padding: 3px 8px;
-      border-radius: 7px; font-size: 11px; font-weight: 700;
+      display: inline-flex; align-items: center; gap: 5px; padding: 4px 9px;
+      border-radius: 8px; font-size: 11px; font-weight: 700;
       background: var(--surface); border: 1px solid var(--border); color: var(--text-muted);
+      cursor: pointer; transition: all 0.14s ease;
+    }
+    .misc-sub-pill:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
+    .misc-sub-pill.sub-meals {
+      border-left: 3px solid #f59e0b;
+      background: color-mix(in srgb, var(--amber-soft) 55%, var(--surface));
+      border-color: var(--amber-border);
+      color: var(--text);
     }
     .misc-sub-pill.sub-overnight { border-left: 3px solid #6366f1; }
-    .misc-sub-pill.sub-meals { border-left: 3px solid #f59e0b; }
     .misc-sub-pill.sub-other { border-left: 3px solid #14b8a6; }
+    .misc-sub-att {
+      font-family: var(--font-mono); font-size: 10px; font-weight: 800;
+      padding: 1px 5px; border-radius: 999px;
+      background: var(--surface-3); color: var(--text-subtle);
+    }
+    .misc-sub-att.has-att { background: var(--green-soft); color: var(--green-text); }
+    .misc-secondary-label {
+      display: flex; align-items: center; justify-content: space-between; gap: 8px;
+      font-size: 10.5px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em;
+      color: var(--text-subtle); padding: 4px 4px 0; margin-top: 2px;
+      border-top: 1px dashed var(--border-strong);
+    }
+    .att-count-pill { gap: 3px; font-size: 10.5px; padding: 2px 7px; }
+    .trpt-tab-att {
+      font-family: var(--font-mono); font-size: 10px; font-weight: 800;
+      padding: 1px 5px; border-radius: 999px;
+      background: var(--green-soft); color: var(--green-text); border: 1px solid var(--green-border);
+    }
 
     .card-head-toggle {
       display: flex; align-items: center; gap: 9px; background: none; border: none;
@@ -1916,6 +1942,7 @@
     html[data-layout="mobile"] .card.collapsed .card-closed-pill { display: none; }
     html[data-layout="mobile"] .card-head-right { gap: 5px; }
     html[data-layout="mobile"] .card-head-right .pill { display: none; }
+    html[data-layout="mobile"] .card-head-right .pill.att-count-pill { display: inline-flex !important; }
     html[data-layout="mobile"] .card-head-right .btn-preview-cat { padding: 0 7px; font-size: 11px; }
     html[data-layout="mobile"] .cat-total-pill { font-size: 12px; padding: 4px 8px; }
     html[data-layout="mobile"] .card-body,
@@ -4386,6 +4413,44 @@
       return '<button type="button" class="btn btn-sm btn-green-soft" onclick="toggleCollapse(\'' + esc(sectionKey) + '\')">✓ Done &amp; Close Tab</button>';
     }
 
+    function getTotalMealReceiptsCount() {
+      const seen = {};
+      (state.meals || []).forEach(function (d) {
+        getReceiptsForMealDay(d).forEach(function (ph) {
+          if (ph && ph.id) seen[ph.id] = true;
+        });
+      });
+      return Object.keys(seen).length;
+    }
+
+    function renderAttachmentCountPill(count, hasAmount) {
+      const n = Number(count) || 0;
+      if (n > 0) {
+        return '<span class="pill pill-green mono att-count-pill" title="' + n + ' attachment' + (n === 1 ? '' : 's') + '">📎 ' + n + '</span>';
+      }
+      if (hasAmount) {
+        return '<span class="pill pill-amber mono att-count-pill" title="Expense entered — 0 attachments">📎 0</span>';
+      }
+      return '<span class="pill pill-neutral mono att-count-pill" style="opacity:0.62;" title="0 attachments">📎 0</span>';
+    }
+
+    function jumpToMiscSub(key) {
+      if (state.ui.collapsed[key]) {
+        state.ui.collapsed[key] = false;
+        persistUiOnly();
+        renderWorkspace();
+      }
+      const elId = key === 'meals' ? 'section-meals-card' : (key === 'flights' ? 'cat-card-overnight' : 'cat-card-otherMisc');
+      setTimeout(function () {
+        const el = document.getElementById(elId);
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          el.classList.add('radar-flash');
+          setTimeout(function () { el.classList.remove('radar-flash'); }, 1100);
+        }
+      }, 45);
+    }
+
     let mobileAwareDayId = null;
     let mobileAwareTripId = null;
     let mobileTransportTab = 'overseas';
@@ -4910,8 +4975,9 @@
       const rowsHtml = opts.items.map(function (it, idx) {
         return renderReceiptRow(opts.scope, it, idx, opts.fxCode, null);
       }).join('');
+      const attCount = getReceiptsForCategory(opts.scope).length;
 
-      const extraHeader = opts.catTag
+      const extraHeader = (opts.catTag && !opts.hideCatTag)
         ? '<span class="pill ' + (opts.catTone || 'pill-accent') + '">' + esc(opts.catTag) + '</span>'
         : '';
 
@@ -4926,6 +4992,7 @@
         + '<div><div class="card-title">' + esc(opts.title) + '</div><div class="card-sub">' + esc(opts.subtitle) + '</div></div>'
         + '</button>'
         + '<div class="card-head-right">' + closedBadgeHtml(collapsed) + extraHeader
+        + renderAttachmentCountPill(attCount, opts.total > 0)
         + '<button type="button" class="btn btn-sm btn-soft btn-preview-cat" onclick="openSlidePreviewModal({ type: \'category\', scope: \'' + esc(opts.scope) + '\' })" title="Print Preview for ' + esc(opts.title) + '">👁️ Preview</button>'
         + '<span id="cat-total-' + opts.scope + '" class="cat-total-pill">SGD ' + fmt2(opts.total) + '</span></div>'
         + '</div>'
@@ -4945,8 +5012,10 @@
         + '</div>';
     }
 
-    function renderFlightsCard(summary) {
+    function renderFlightsCard(summary, opts) {
+      const cfg = opts || {};
       const collapsed = !!state.ui.collapsed.flights;
+      const ovAttCount = getReceiptsForCategory('overnight').length;
       const airportOpts = function (selected) {
         const list = AIRPORT_ZONES.map(function (z) {
           return '<option value="' + z.code + '"' + (z.code === selected ? ' selected' : '') + '>' + z.code + '</option>';
@@ -4992,9 +5061,11 @@
         + '<button type="button" class="card-head-toggle" onclick="toggleCollapse(\'flights\')">'
         + chevronSvg()
         + '<div><div class="card-title">Flight Log &amp; Overnight Allowance</div>'
-        + '<div class="card-sub">Misc &gt; Overnight · Auto timezone → SGT · Detects 22:00–06:00 SGT legs (Fixed SGD ' + fmt2(FIXED_OVERNIGHT_RATE) + '/leg)</div></div>'
+        + '<div class="card-sub">Auto timezone → SGT · Detects 22:00–06:00 SGT legs (Fixed SGD ' + fmt2(FIXED_OVERNIGHT_RATE) + '/leg)</div></div>'
         + '</button>'
-        + '<div class="card-head-right">' + closedBadgeHtml(collapsed) + '<span class="pill pill-accent">Misc &gt; Overnight</span>'
+        + '<div class="card-head-right">' + closedBadgeHtml(collapsed)
+        + (!cfg.inMiscGroup ? '<span class="pill pill-accent">Misc &gt; Overnight</span>' : '')
+        + renderAttachmentCountPill(ovAttCount, summary.flights.overnightTotal > 0)
         + '<button type="button" class="btn btn-sm btn-soft btn-preview-cat" onclick="openSlidePreviewModal({ type: \'overnight\' })" title="Print Preview for Overnight Allowance">👁️ Preview</button>'
         + '<span id="cat-total-flights" class="cat-total-pill">SGD ' + fmt2(summary.flights.overnightTotal) + '</span></div>'
         + '</div>'
@@ -5075,9 +5146,12 @@
 
         return '<div id="day-card-' + esc(d.day.id) + '" class="day-card' + (d.isCapped ? ' cap-hit' : '') + '">'
           + '<div class="day-head">'
+          + '<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">'
           + '<div class="day-date-trigger">'
           + '<span class="day-badge-pill"><span>' + esc(fmtDateNoYear(d.day.date, 'paren')) + '</span><span>📅</span></span>'
           + '<input class="date-pill-native" type="date" value="' + esc(d.day.date) + '" onchange="updateMealDayDate(\'' + esc(d.day.id) + '\',this.value)" />'
+          + '</div>'
+          + renderAttachmentCountPill(dayPhotos.length, d.capped > 0)
           + '</div>'
           + '<div class="day-actions">'
           + '<button type="button" class="btn btn-sm btn-soft" onclick="openSlidePreviewModal({ type: \'mealDay\', dayId: \'' + esc(d.day.id) + '\' })" title="Print Preview for this day">👁️ Preview</button>'
@@ -5109,15 +5183,17 @@
           + '</div>';
       }).join('');
 
+      const totalMealPhotos = getTotalMealReceiptsCount();
       return '<div id="section-meals-card" class="card' + (collapsed ? ' collapsed' : '') + '">'
         + '<div class="card-head">'
         + '<button type="button" class="card-head-toggle" onclick="toggleCollapse(\'meals\')">'
         + chevronSvg()
-        + '<div><div class="card-title">Daily Meals</div>'
-        + '<div class="card-sub">Misc &gt; Meals · Day-by-day cap enforcement, inline photo strip &amp; 1-Page Landscape PDF/Share</div></div>'
+        + '<div><div class="card-title">🍽️ Daily Meals</div>'
+        + '<div class="card-sub">Priority Misc subsection · Day-by-day cap enforcement, inline photo strip &amp; 1-Page Landscape PDF/Share</div></div>'
         + '</button>'
         + '<div class="card-head-right">' + closedBadgeHtml(collapsed)
         + '<span id="meals-cap-badge" class="pill pill-amber mono">Cap $' + esc(fmtForeign(summary.cap)) + '/d</span>'
+        + renderAttachmentCountPill(totalMealPhotos, summary.meals.cappedTotal > 0)
         + '<button type="button" class="btn btn-sm btn-soft btn-preview-cat" onclick="openSlidePreviewModal({ type: \'meals\' })" title="Print Preview for All Daily Meals">👁️ Preview</button>'
         + '<span id="cat-total-meals" class="cat-total-pill">SGD ' + fmt2(summary.meals.cappedTotal) + '</span></div>'
         + '</div>'
@@ -5501,15 +5577,20 @@
         return '<button type="button" class="chip-btn" onclick="addReceipt(\'' + activeScope + '\',null,\'' + esc(ch.label) + '\',\'' + ch.curr + '\')">+ ' + esc(ch.label) + '</button>';
       }).join('');
 
+      const osTrptAtt = getReceiptsForCategory('overseasTransport').length;
+      const sgTrptAtt = getReceiptsForCategory('sgTransport').length;
+      const activeTrptAtt = activeScope === 'sgTransport' ? sgTrptAtt : osTrptAtt;
+
       const transportSectionHtml = '<div class="aware-section-head"><span class="aware-section-title">Daily Transport</span>'
         + '<div style="display:flex;align-items:center;gap:6px;">'
+        + renderAttachmentCountPill(activeTrptAtt, activeTrptTotal > 0)
         + '<button type="button" class="btn btn-sm btn-soft" onclick="openSlidePreviewModal({ type: \'category\', scope: \'' + activeScope + '\' })" title="Slide &amp; Print Preview for ' + (activeScope === 'sgTransport' ? 'SG Local' : 'Overseas') + ' Transport">' + slickSvg('eye', 13) + '<span>Preview</span></button>'
         + '<span id="cat-total-' + activeScope + '" class="pill pill-accent mono">SGD ' + fmt2(activeTrptTotal) + '</span>'
         + '</div></div>'
         + '<div id="mobile-aware-transport-card" class="mobile-trpt-card">'
         + '<div class="mobile-trpt-tabs">'
-        + '<button type="button" class="mobile-trpt-tab' + (activeScope === 'overseasTransport' ? ' active' : '') + '" onclick="setMobileTransportTab(\'overseas\')"><span>Overseas</span><span class="mono">$' + fmt2(summary.overseasTransport.total) + '</span></button>'
-        + '<button type="button" class="mobile-trpt-tab' + (activeScope === 'sgTransport' ? ' active' : '') + '" onclick="setMobileTransportTab(\'sg\')"><span>SG Local</span><span class="mono">$' + fmt2(summary.sgTransport.total) + '</span></button>'
+        + '<button type="button" class="mobile-trpt-tab' + (activeScope === 'overseasTransport' ? ' active' : '') + '" onclick="setMobileTransportTab(\'overseas\')"><span>Overseas' + (osTrptAtt > 0 ? (' <span class="trpt-tab-att">📎' + osTrptAtt + '</span>') : '') + '</span><span class="mono">$' + fmt2(summary.overseasTransport.total) + '</span></button>'
+        + '<button type="button" class="mobile-trpt-tab' + (activeScope === 'sgTransport' ? ' active' : '') + '" onclick="setMobileTransportTab(\'sg\')"><span>SG Local' + (sgTrptAtt > 0 ? (' <span class="trpt-tab-att">📎' + sgTrptAtt + '</span>') : '') + '</span><span class="mono">$' + fmt2(summary.sgTransport.total) + '</span></button>'
         + '</div>'
         + '<div class="card-body">'
         + (trptRowsHtml ? '<div class="receipt-list">' + trptRowsHtml + '</div>' : '<div style="font-size:12px;color:var(--text-subtle);padding:4px 0;">No transport items yet — tap a quick chip below.</div>')
@@ -5647,6 +5728,10 @@
         + '</div>'
         + '</div>';
 
+      const miscMealsAtt = getTotalMealReceiptsCount();
+      const miscOvAtt = getReceiptsForCategory('overnight').length;
+      const miscOtherAtt = getReceiptsForCategory('otherMisc').length;
+
       col.innerHTML = [
         toolbarHtml,
         renderTripSetupCard(summary),
@@ -5681,24 +5766,25 @@
           + '<div class="misc-group-head">'
           + '<div class="misc-group-title-wrap">'
           + '<span class="misc-group-badge">Misc Group</span>'
-          + '<span style="font-size:12.5px;font-weight:800;">Miscellaneous Subsections</span>'
-          + '<span style="font-size:11px;color:var(--text-subtle);">(Excludes Data / Telco)</span>'
+          + '<span style="font-size:12.5px;font-weight:800;">Meals First · Overnight &amp; Other</span>'
+          + '<span style="font-size:11px;color:var(--text-subtle);">(Excl. Data / Telco)</span>'
           + '</div>'
           + '<span id="ws-misc-group-total" class="cat-total-pill" style="background:var(--surface);border-color:var(--accent-border);color:var(--accent);">Misc Total: SGD ' + fmt2(summary.reportingMiscTotal) + '</span>'
           + '</div>'
           + '<div class="misc-sub-pills">'
-          + '<span id="ws-misc-pill-overnight" class="misc-sub-pill sub-overnight">🌙 Overnight: <span class="mono">SGD ' + fmt2(summary.flights.overnightTotal) + '</span></span>'
-          + '<span id="ws-misc-pill-meals" class="misc-sub-pill sub-meals">🍽️ Daily Meals: <span class="mono">SGD ' + fmt2(summary.meals.cappedTotal) + '</span></span>'
-          + '<span id="ws-misc-pill-other" class="misc-sub-pill sub-other">📎 Other Misc: <span class="mono">SGD ' + fmt2(summary.otherMisc.total) + '</span></span>'
+          + '<button type="button" id="ws-misc-pill-meals" class="misc-sub-pill sub-meals" onclick="jumpToMiscSub(\'meals\')">🍽️ Daily Meals: <span class="mono">SGD ' + fmt2(summary.meals.cappedTotal) + '</span> <span class="misc-sub-att' + (miscMealsAtt > 0 ? ' has-att' : '') + '">📎' + miscMealsAtt + '</span></button>'
+          + '<button type="button" id="ws-misc-pill-overnight" class="misc-sub-pill sub-overnight" onclick="jumpToMiscSub(\'flights\')">🌙 Overnight: <span class="mono">SGD ' + fmt2(summary.flights.overnightTotal) + '</span> <span class="misc-sub-att' + (miscOvAtt > 0 ? ' has-att' : '') + '">📎' + miscOvAtt + '</span></button>'
+          + '<button type="button" id="ws-misc-pill-other" class="misc-sub-pill sub-other" onclick="jumpToMiscSub(\'otherMisc\')">📎 Other Misc: <span class="mono">SGD ' + fmt2(summary.otherMisc.total) + '</span> <span class="misc-sub-att' + (miscOtherAtt > 0 ? ' has-att' : '') + '">📎' + miscOtherAtt + '</span></button>'
           + '</div>'
-          + renderFlightsCard(summary)
+          + renderMealsCard(summary)
+          + '<div class="misc-secondary-label"><span>Secondary Misc Subsections</span><span>Overnight &amp; Optional Sundries</span></div>'
+          + renderFlightsCard(summary, { inMiscGroup: true })
           + renderCategoryCard({
               scope: 'otherMisc', title: 'Other Miscellaneous', subtitle: 'Optional — Laundry, Visa, Lounge, Printing (rolled into Misc)',
               items: state.otherMisc.items, total: summary.otherMisc.total, fxCode: summary.fxCode,
-              catTag: 'Misc > Other', catTone: 'pill-accent',
+              hideCatTag: true,
               chips: [{ label: 'Laundry', curr: 'SGD' }, { label: 'Visa / Fee', curr: 'SGD' }, { label: 'Airport Lounge', curr: 'SGD' }]
             })
-          + renderMealsCard(summary)
         + '</div>',
         renderTimeOffCard(summary)
       ].join('');
@@ -5733,12 +5819,21 @@
       setTxt('ws-misc-group-total', 'Misc Total: SGD ' + fmt2(summary.reportingMiscTotal));
       setTxt('aware-trip-total', 'SGD ' + fmt2(summary.grandClaimable));
       setTxt('aware-trpt-total', 'SGD ' + fmt2(round2(summary.overseasTransport.total + summary.sgTransport.total)));
-      const pOv = document.getElementById('ws-misc-pill-overnight');
-      if (pOv) pOv.innerHTML = '🌙 Overnight: <span class="mono">SGD ' + fmt2(summary.flights.overnightTotal) + '</span>';
       const pMl = document.getElementById('ws-misc-pill-meals');
-      if (pMl) pMl.innerHTML = '🍽️ Daily Meals: <span class="mono">SGD ' + fmt2(summary.meals.cappedTotal) + '</span>';
+      if (pMl) {
+        const mAtt = getTotalMealReceiptsCount();
+        pMl.innerHTML = '🍽️ Daily Meals: <span class="mono">SGD ' + fmt2(summary.meals.cappedTotal) + '</span> <span class="misc-sub-att' + (mAtt > 0 ? ' has-att' : '') + '">📎' + mAtt + '</span>';
+      }
+      const pOv = document.getElementById('ws-misc-pill-overnight');
+      if (pOv) {
+        const oAtt = getReceiptsForCategory('overnight').length;
+        pOv.innerHTML = '🌙 Overnight: <span class="mono">SGD ' + fmt2(summary.flights.overnightTotal) + '</span> <span class="misc-sub-att' + (oAtt > 0 ? ' has-att' : '') + '">📎' + oAtt + '</span>';
+      }
       const pOt = document.getElementById('ws-misc-pill-other');
-      if (pOt) pOt.innerHTML = '📎 Other Misc: <span class="mono">SGD ' + fmt2(summary.otherMisc.total) + '</span>';
+      if (pOt) {
+        const otAtt = getReceiptsForCategory('otherMisc').length;
+        pOt.innerHTML = '📎 Other Misc: <span class="mono">SGD ' + fmt2(summary.otherMisc.total) + '</span> <span class="misc-sub-att' + (otAtt > 0 ? ' has-att' : '') + '">📎' + otAtt + '</span>';
+      }
 
       // Update FX Anchor rates
       state.fxAnchors.forEach(function (a) {
@@ -5891,11 +5986,11 @@
         chips.push('<span class="rollup-chip">OS Trpt: <span class="mono">' + fmt2(summary.overseasTransport.total) + '</span></span>');
         chips.push('<span class="rollup-chip" style="border-color:var(--sky-border);color:var(--sky-text);">Data (Sep): <span class="mono">' + fmt2(summary.data.total) + '</span></span>');
 
-        const miscBoxHtml = '<div class="console-misc-box" title="Misc combines Overnight Allowance, Daily Meals, and Other Misc (excludes Data/Telco)">'
+        const miscBoxHtml = '<div class="console-misc-box" title="Misc combines Daily Meals, Overnight Allowance, and Other Misc (excludes Data/Telco)">'
           + '<div class="console-misc-top"><span>MISC GROUP (Excl. Data)</span><span class="mono">SGD ' + fmt2(summary.reportingMiscTotal) + '</span></div>'
           + '<div class="console-misc-tree">'
-          + '<span class="console-misc-node"><span class="node-dot" style="background:#4f46e5;"></span>Overnight <strong class="mono">' + fmt2(summary.flights.overnightTotal) + '</strong></span>'
           + '<span class="console-misc-node"><span class="node-dot" style="background:#d97706;"></span>Meals <strong class="mono">' + fmt2(summary.meals.cappedTotal) + '</strong></span>'
+          + '<span class="console-misc-node"><span class="node-dot" style="background:#4f46e5;"></span>Overnight <strong class="mono">' + fmt2(summary.flights.overnightTotal) + '</strong></span>'
           + (summary.otherMisc.total > 0 ? ('<span class="console-misc-node"><span class="node-dot" style="background:#0d9488;"></span>Other <strong class="mono">' + fmt2(summary.otherMisc.total) + '</strong></span>') : '')
           + '</div>'
           + '</div>';
@@ -6051,6 +6146,10 @@
           + '</div>'
         );
         const railItems = [];
+        if (miscMeals.length > 0) {
+          railItems.push('<div class="hrms-sub-divider"><span>🍽️ Daily Meals (' + miscMeals.length + ')</span><span class="mono">SGD ' + fmt2(miscMealsSum) + '</span></div>');
+          miscMeals.forEach(function (c) { railItems.push(renderSingleHrmsCard(c)); });
+        }
         if (miscOvernight.length > 0) {
           railItems.push('<div class="hrms-sub-divider"><span>🌙 Overnight Allowance</span><span class="mono">SGD ' + fmt2(miscOvernight[0].amount) + '</span></div>');
           miscOvernight.forEach(function (c) { railItems.push(renderSingleHrmsCard(c)); });
@@ -6058,10 +6157,6 @@
         if (miscOther.length > 0) {
           railItems.push('<div class="hrms-sub-divider"><span>📎 Other Misc</span><span class="mono">SGD ' + fmt2(miscOther[0].amount) + '</span></div>');
           miscOther.forEach(function (c) { railItems.push(renderSingleHrmsCard(c)); });
-        }
-        if (miscMeals.length > 0) {
-          railItems.push('<div class="hrms-sub-divider"><span>🍽️ Daily Meals (' + miscMeals.length + ')</span><span class="mono">SGD ' + fmt2(miscMealsSum) + '</span></div>');
-          miscMeals.forEach(function (c) { railItems.push(renderSingleHrmsCard(c)); });
         }
         outHtml.push('<div class="hrms-misc-rail">' + railItems.join('') + '</div>');
       }
@@ -7539,6 +7634,8 @@
     const GIT_API_BASE = 'https://api.github.com';
     const GIT_PUSH_IDLE_MS = 45000;      // Batch edits for 45s idle before pushing (battery-friendly)
     const GIT_PULL_COOLDOWN_MS = 600000; // Minimum 10 min between automatic Git pulls
+    const LOCAL_DB_DAILY_MS = 24 * 60 * 60 * 1000; // Once-a-day local JSON auto-sync when Git Sync is enabled
+    const LOCAL_DB_LAST_SYNC_KEY = 'claimflow_v5_local_db_sync_at';
     const GIST_API_BASE = 'https://api.github.com/gists';
     const GIST_DATA_FILE = 'claimflow-db.json';
     const GIST_RECEIPTS_FILE = 'claimflow-receipts.json';
@@ -7630,6 +7727,26 @@
       oneDriveSync.localEpoch = (oneDriveSync.localEpoch || 0) + 1;
       gistSync.localEpoch = (gistSync.localEpoch || 0) + 1;
       gitSync.localEpoch = (gitSync.localEpoch || 0) + 1;
+    }
+
+    function getLastLocalDbSyncAt() {
+      try {
+        const stored = Number(localStorage.getItem(LOCAL_DB_LAST_SYNC_KEY)) || 0;
+        return Math.max(stored, cloudSync.lastSyncedAt || 0);
+      } catch (e) {
+        return cloudSync.lastSyncedAt || 0;
+      }
+    }
+
+    function markLocalDbSyncedNow() {
+      const now = Date.now();
+      cloudSync.lastSyncedAt = now;
+      try { localStorage.setItem(LOCAL_DB_LAST_SYNC_KEY, String(now)); } catch (e) {}
+    }
+
+    function isLocalDbDailySyncDue() {
+      if (!isGitSyncConfigured()) return true;
+      return (Date.now() - getLastLocalDbSyncAt()) >= LOCAL_DB_DAILY_MS;
     }
 
     /* --- Method 4: Robust Private Git Repository Sync (GitHub Contents API · 1 File Per Receipt) --- */
@@ -8489,8 +8606,8 @@
           if (committedSha) latestRemoteSha = committedSha;
         }
 
-        // Mirror pulled updates to Desktop local folder DB if linked
-        if ((addedTrips > 0 || updatedTrips > 0 || removedLocalTrips > 0 || pulledReceipts > 0) && cloudSync.handle && !cloudSync.needsReconnect && cloudSync.prefs.autoWrite) {
+        // Mirror pulled updates to Desktop local folder DB if linked (throttled to once a day when Git Sync is active)
+        if ((addedTrips > 0 || updatedTrips > 0 || removedLocalTrips > 0 || pulledReceipts > 0) && cloudSync.handle && !cloudSync.needsReconnect && cloudSync.prefs.autoWrite && isLocalDbDailySyncDue()) {
           writeCloudFile();
         }
 
@@ -10270,10 +10387,11 @@
           if (saved) {
             cloudSync.handle = saved;
             cloudSync.fileName = saved.name || 'claimflow-db.json';
+            cloudSync.lastSyncedAt = getLastLocalDbSyncAt();
             const perm = saved.queryPermission ? await saved.queryPermission({ mode: 'readwrite' }) : 'prompt';
             cloudSync.needsReconnect = (perm !== 'granted');
             if (!cloudSync.needsReconnect) {
-              await checkCloudFileUpdates();
+              await checkLocalCloudFileOnly(false);
             }
           }
         } catch (e) {}
@@ -10461,7 +10579,7 @@
           modePill.textContent = 'Desktop Only';
         } else if (cloudSync.handle && !cloudSync.needsReconnect) {
           modePill.className = 'pill pill-green';
-          modePill.textContent = 'Linked • ' + cloudSync.fileName;
+          modePill.textContent = gitConnected ? ('Daily Backup • ' + cloudSync.fileName) : ('Linked • ' + cloudSync.fileName);
         } else if (cloudSync.handle) {
           modePill.className = 'pill pill-amber';
           modePill.textContent = 'Reconnect Needed';
@@ -10472,9 +10590,12 @@
       }
       if (statusEl) {
         if (!fsSupported) {
-          statusEl.innerHTML = '<div style="font-size:12px;color:var(--text-muted);">Direct folder linking is available on Desktop Chrome/Edge. On iPhone Safari, use <strong>Save / Share All Trips</strong> &amp; <strong>Open &amp; Smart-Merge File</strong> above.</div>';
+          statusEl.innerHTML = '<div style="font-size:12px;color:var(--text-muted);">Direct folder linking is available on Desktop Chrome/Edge. On iPhone Safari, use <strong>Save / Download DB</strong> &amp; <strong>Open &amp; Smart-Merge File</strong> above.</div>';
         } else if (cloudSync.handle && !cloudSync.needsReconnect) {
-          statusEl.innerHTML = '<div style="font-size:12px;"><strong>' + esc(cloudSync.fileName) + '</strong><div style="font-size:11px;color:var(--text-subtle);">Last synced: ' + (cloudSync.lastSyncedAt ? fmtTimeHHMM(cloudSync.lastSyncedAt) : 'Ready') + '</div></div><span class="pill pill-green">Auto-Sync Active</span>';
+          const lastLocTs = getLastLocalDbSyncAt();
+          const lastLocStr = lastLocTs ? (fmtDateNoYear(toISODate(new Date(lastLocTs)), 'short') + ' ' + fmtTimeHHMM(lastLocTs)) : 'Ready';
+          const dailyNote = gitConnected ? ' · Auto-sync reduced to 1×/day (Git primary)' : '';
+          statusEl.innerHTML = '<div style="font-size:12px;"><strong>' + esc(cloudSync.fileName) + '</strong><div style="font-size:11px;color:var(--text-subtle);">Last local sync: ' + esc(lastLocStr) + esc(dailyNote) + '</div></div><span class="pill pill-green">' + (gitConnected ? '1×/Day Backup' : 'Auto-Sync Active') + '</span>';
         } else if (cloudSync.handle) {
           statusEl.innerHTML = '<div style="font-size:12px;"><strong>' + esc(cloudSync.fileName) + '</strong><div style="font-size:11px;color:var(--amber-text);">Click Reconnect to grant write permission for this session.</div></div>';
         } else {
@@ -10580,7 +10701,7 @@
         await writable.close();
         const file = await cloudSync.handle.getFile();
         cloudSync.lastModifiedSeen = file.lastModified || Date.now();
-        cloudSync.lastSyncedAt = Date.now();
+        markLocalDbSyncedNow();
         renderCloudStatusUI();
       } catch (e) {
         console.warn('Cloud write skipped:', e);
@@ -10615,6 +10736,8 @@
         }, immediate ? 350 : 2500);
       }
       if (!cloudSync.handle || cloudSync.needsReconnect || !cloudSync.prefs.autoWrite) return;
+      // When Git Sync is active, throttle automatic local JSON folder writes to once per day
+      if (isGitSyncConfigured() && !isLocalDbDailySyncDue()) return;
       clearTimeout(cloudSync.writeTimer);
       cloudSync.writeTimer = setTimeout(function () {
         writeCloudFile();
@@ -10635,6 +10758,8 @@
     async function checkLocalCloudFileOnly(force) {
       if (!cloudSync.handle || cloudSync.needsReconnect) return;
       if (!force && !cloudSync.prefs.autoPull) return;
+      // When Git Sync is enabled, reduce automatic local DB file checks to once per day
+      if (!force && isGitSyncConfigured() && !isLocalDbDailySyncDue()) return;
       try {
         const file = await cloudSync.handle.getFile();
         if (!force && file.lastModified && file.lastModified <= cloudSync.lastModifiedSeen) return;
@@ -10646,7 +10771,7 @@
           }
         }
         cloudSync.lastModifiedSeen = file.lastModified || Date.now();
-        cloudSync.lastSyncedAt = Date.now();
+        markLocalDbSyncedNow();
         renderCloudStatusUI();
       } catch (e) {}
     }
