@@ -2206,9 +2206,16 @@
             <button type="button" class="btn btn-green-soft" onclick="pairGitFromCode()">📲 Pair Device</button>
           </div>
         </div>
+        <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px;padding-top:4px;border-top:1px solid var(--border);">
+          <span style="font-size:11.5px;font-weight:700;color:var(--text-muted);">🔋 Battery / Sync Mode</span>
+          <div class="seg-control" role="group" aria-label="Git Sync Power Mode">
+            <button type="button" id="btn-git-pm-manual" onclick="setGitPowerMode('manual')">🔋 Manual 1-Click</button>
+            <button type="button" id="btn-git-pm-eco" onclick="setGitPowerMode('eco')">⚡ Eco Auto (45s / 10m)</button>
+          </div>
+        </div>
         <div style="display:flex;flex-wrap:wrap;gap:12px;">
-          <label class="check-opt"><input id="chk-git-autopush" type="checkbox" checked onchange="setGitPref('autoPush',this.checked)" /><span>Auto-push edits (3s debounce)</span></label>
-          <label class="check-opt"><input id="chk-git-autopull" type="checkbox" checked onchange="setGitPref('autoPull',this.checked)" /><span>Auto-pull on open / return</span></label>
+          <label class="check-opt"><input id="chk-git-autopush" type="checkbox" onchange="setGitPref('autoPush',this.checked)" /><span>Eco auto-push (45s idle batch)</span></label>
+          <label class="check-opt"><input id="chk-git-autopull" type="checkbox" onchange="setGitPref('autoPull',this.checked)" /><span>Eco auto-pull (10 min cooldown)</span></label>
           <label class="check-opt"><input id="chk-git-receipts" type="checkbox" checked onchange="setGitPref('syncReceipts',this.checked)" /><span>Sync receipts incrementally (1 JPEG per file)</span></label>
         </div>
       </div>
@@ -3760,33 +3767,41 @@
       if (store.trips.length <= 1) {
         openModal({
           title: 'Reset Only Saved Trip?',
-          message: 'This is your only saved trip. Deleting it will create a fresh blank trip.',
+          message: 'This is your only saved trip. Deleting it will permanently remove this sheet across synced devices and create a fresh blank trip.',
           confirmLabel: 'Reset to Blank',
           confirmClass: 'btn-red-soft',
-          onConfirm: function () {
+          onConfirm: async function () {
+            const deletedId = state.id;
+            recordDeletedTripId(deletedId);
+            await purgeReceiptsForTrip(deletedId);
             const fresh = createBlankTripSkeleton(state);
             store.trips = [fresh];
             store.activeTripId = fresh.id;
             state = fresh;
-            persistStore(true);
+            persistStore(true, true);
             renderAll();
-            showToast('Reset to a blank trip.', 'amber');
+            await loadTripReceipts();
+            showToast('Deleted trip & reset to blank.' + (isGitSyncConfigured() ? ' Tap ↑ Sync to remove from Git.' : ''), 'amber');
           }
         });
         return;
       }
       openModal({
         title: 'Delete "' + formatTripOptionLabel(state) + '"?',
-        message: 'This removes the trip from local storage on this browser. Export a JSON backup first if needed.',
+        message: 'This permanently deletes this trip (and removes it from Git/backups on next sync so it will not sync back).',
         confirmLabel: 'Delete Trip',
         confirmClass: 'btn-red-soft',
-        onConfirm: function () {
-          store.trips = store.trips.filter(function (t) { return t.id !== state.id; });
+        onConfirm: async function () {
+          const deletedId = state.id;
+          recordDeletedTripId(deletedId);
+          await purgeReceiptsForTrip(deletedId);
+          store.trips = store.trips.filter(function (t) { return t.id !== deletedId; });
           store.activeTripId = store.trips[0].id;
           state = store.trips[0];
-          persistStore(true);
+          persistStore(true, true);
           renderAll();
-          showToast('Deleted trip.', 'amber');
+          await loadTripReceipts();
+          showToast('Deleted trip permanently.' + (isGitSyncConfigured() ? ' Queued for Git sync.' : ''), 'amber');
         }
       });
     }
@@ -3797,6 +3812,7 @@
         message: 'Adds or switches to the Ref 2300 (SG–TYO, 4–10 Oct) sample dataset without deleting your other trips.',
         confirmLabel: 'Load Sample',
         onConfirm: function () {
+          unrecordDeletedTripId('trip_sample_2300');
           const existingIdx = store.trips.findIndex(function (t) { return t.id === 'trip_sample_2300'; });
           const sample = createSampleTrip('trip_sample_2300');
           if (existingIdx >= 0) store.trips[existingIdx] = sample;
@@ -6643,6 +6659,7 @@
         recordDeletedItemId(victim.id);
         (victim.items || []).forEach(function (it) { recordDeletedItemId(it.id); });
       }
+      if (mobileAwareDayId === dayId) mobileAwareDayId = null;
       state.meals = state.meals.filter(function (d) { return d.id !== dayId; });
       persistStore(true);
       renderAll();
@@ -7516,9 +7533,12 @@
     const GIST_CFG_KEY = 'claimflow_v4_gist_cfg';
     const GIT_CFG_KEY = 'claimflow_v5_git_cfg';
     const DELETED_RECEIPTS_KEY = 'claimflow_v4_deleted_receipts';
+    const DELETED_TRIPS_KEY = 'claimflow_v5_deleted_trips';
     const CLOUD_DB_NAME = 'ClaimFlowCloudDB';
     const CLOUD_STORE_NAME = 'handles';
     const GIT_API_BASE = 'https://api.github.com';
+    const GIT_PUSH_IDLE_MS = 45000;      // Batch edits for 45s idle before pushing (battery-friendly)
+    const GIT_PULL_COOLDOWN_MS = 600000; // Minimum 10 min between automatic Git pulls
     const GIST_API_BASE = 'https://api.github.com/gists';
     const GIST_DATA_FILE = 'claimflow-db.json';
     const GIST_RECEIPTS_FILE = 'claimflow-receipts.json';
@@ -7542,10 +7562,12 @@
         token: '',
         repo: '',
         branch: 'main',
+        powerMode: 'eco',
         autoPush: true,
         autoPull: true,
         syncReceipts: true,
-        lastSyncedAt: 0
+        lastSyncedAt: 0,
+        lastRemoteDbSha: ''
       },
       busy: false,
       pendingPush: false,
@@ -7619,10 +7641,15 @@
       try {
         const raw = localStorage.getItem(GIT_CFG_KEY);
         if (raw) {
+          const parsed = JSON.parse(raw);
           gitSync.cfg = Object.assign({
             enabled: false, token: '', repo: '', branch: 'main',
-            autoPush: true, autoPull: true, syncReceipts: true, lastSyncedAt: 0
-          }, JSON.parse(raw));
+            powerMode: 'eco', autoPush: true, autoPull: true, syncReceipts: true,
+            lastSyncedAt: 0, lastRemoteDbSha: ''
+          }, parsed);
+          if (!parsed.powerMode) {
+            gitSync.cfg.powerMode = (gitSync.cfg.autoPush || gitSync.cfg.autoPull) ? 'eco' : 'manual';
+          }
         }
       } catch (e) {}
     }
@@ -7631,11 +7658,39 @@
       try { localStorage.setItem(GIT_CFG_KEY, JSON.stringify(gitSync.cfg)); } catch (e) {}
     }
 
+    function setGitPowerMode(mode) {
+      const m = mode === 'manual' ? 'manual' : 'eco';
+      gitSync.cfg.powerMode = m;
+      gitSync.cfg.autoPush = (m === 'eco');
+      gitSync.cfg.autoPull = (m === 'eco');
+      if (m === 'manual') {
+        clearTimeout(gitSync.pushTimer);
+        gitSync.pushTimer = null;
+      }
+      saveGitConfig();
+      renderCloudStatusUI();
+      showToast(
+        m === 'manual'
+          ? 'Git Sync: 🔋 Manual 1-Click Mode (zero background battery use)'
+          : 'Git Sync: ⚡ Eco Auto Mode (45s idle batch · 10 min pull)',
+        'indigo'
+      );
+    }
+
     function setGitPref(key, val) {
       gitSync.cfg[key] = !!val;
+      if (key === 'autoPush' || key === 'autoPull') {
+        gitSync.cfg.powerMode = (gitSync.cfg.autoPush || gitSync.cfg.autoPull) ? 'eco' : 'manual';
+      }
+      if (key === 'autoPush' && !val) {
+        clearTimeout(gitSync.pushTimer);
+        gitSync.pushTimer = null;
+      }
       saveGitConfig();
+      renderCloudStatusUI();
       if (key === 'syncReceipts' && val && isGitSyncConfigured()) {
-        scheduleCloudWrite(true);
+        gitSync.pendingPush = true;
+        renderCloudStatusUI();
       }
     }
 
@@ -8128,28 +8183,71 @@
       try {
         flushLocalSave(false, false);
 
-        // 1. Read remote claimflow-db.json (if present)
+        // 1. Read remote claimflow-db.json (single lightweight GET)
         const remoteFile = await gitGetFile(owner, repo, GIST_DATA_FILE, branch, token);
         let remoteDb = null;
         let remoteDbSha = remoteFile ? remoteFile.sha : '';
+
+        // Battery & Data Fast-Path: If remote DB SHA is unchanged and we have no local edits queued, skip everything!
+        if (
+          remoteFile && remoteDbSha && remoteDbSha === gitSync.cfg.lastRemoteDbSha
+          && !pushPreferred && !gitSync.pendingPush && gitSync.localEpoch === runEpoch
+        ) {
+          gitSync.cfg.lastSyncedAt = Date.now();
+          gitSync.lastPullCheckAt = Date.now();
+          saveGitConfig();
+          if (!silent) {
+            showToast('Git already up to date ✓ (' + gitSync.cfg.repo + ')', 'green');
+          }
+          return;
+        }
+
         if (remoteFile && remoteFile.content) {
           const parsedText = base64ToUtf8(remoteFile.content);
           if (parsedText && parsedText.trim()) remoteDb = JSON.parse(parsedText);
         }
 
-        // 2. Merge tombstones & custom destination presets
+        // 2. Merge deleted trip & receipt tombstones + custom destination presets
+        const mergedDeletedTrips = mergeDeletedTripIds(remoteDb && remoteDb.deletedTripIds);
+        const deletedTripSet = {};
+        mergedDeletedTrips.forEach(function (id) { deletedTripSet[id] = true; });
+
         const mergedDeleted = mergeDeletedReceiptIds(remoteDb && remoteDb.deletedReceiptIds);
         const deletedSet = {};
         mergedDeleted.forEach(function (id) { deletedSet[id] = true; });
+
         let needPushDb = !remoteDb || !!pushPreferred;
         if (mergedDeleted.length !== (remoteDb && Array.isArray(remoteDb.deletedReceiptIds) ? remoteDb.deletedReceiptIds.length : 0)) {
+          needPushDb = true;
+        }
+        if (mergedDeletedTrips.length !== (remoteDb && Array.isArray(remoteDb.deletedTripIds) ? remoteDb.deletedTripIds.length : 0)) {
           needPushDb = true;
         }
         if (remoteDb && Array.isArray(remoteDb._customPresets)) {
           mergeCustomRoutePresets(remoteDb._customPresets);
         }
 
-        // 3. Capture-safe Item-Level Smart-Merge of all Trips
+        // Apply remote trip deletions locally so deleted sheets disappear on every device
+        let removedLocalTrips = 0;
+        const localBeforeDel = store.trips.length;
+        const tripsToPurgeLocally = store.trips.filter(function (lt) { return !!deletedTripSet[lt.id]; });
+        if (tripsToPurgeLocally.length > 0) {
+          for (let ti = 0; ti < tripsToPurgeLocally.length; ti++) {
+            await purgeReceiptsForTrip(tripsToPurgeLocally[ti].id);
+          }
+          store.trips = store.trips.filter(function (lt) { return !deletedTripSet[lt.id]; });
+          removedLocalTrips = localBeforeDel - store.trips.length;
+          if (store.trips.length === 0) {
+            const fresh = createBlankTripSkeleton(null);
+            store.trips = [fresh];
+            store.activeTripId = fresh.id;
+            needPushDb = true;
+          } else if (!store.trips.some(function (t) { return t.id === store.activeTripId; })) {
+            store.activeTripId = store.trips[0].id;
+          }
+        }
+
+        // 3. Capture-safe Item-Level Smart-Merge of all non-deleted Trips
         let addedTrips = 0;
         let updatedTrips = 0;
         let totalAddedLines = 0;
@@ -8159,7 +8257,14 @@
         const allDayIdRemaps = {};
 
         if (remoteDb && Array.isArray(remoteDb.trips)) {
-          const remoteTrips = remoteDb.trips.map(function (rt) { return normalizeTrip(Object.assign({}, rt)); });
+          const allRemoteRaw = remoteDb.trips.map(function (rt) { return normalizeTrip(Object.assign({}, rt)); });
+          const remoteTrips = allRemoteRaw.filter(function (rt) {
+            if (deletedTripSet[rt.id]) {
+              needPushDb = true; // Strip deleted sheet from remote Git repo permanently
+              return false;
+            }
+            return true;
+          });
           const matchedLocalIds = {};
 
           remoteTrips.forEach(function (rt) {
@@ -8195,12 +8300,21 @@
             await remapStoredReceiptsDayIds(remapTripIds[rti], allDayIdRemaps[remapTripIds[rti]]);
           }
 
-          if (addedTrips > 0 || updatedTrips > 0) {
+          if (addedTrips > 0 || updatedTrips > 0 || removedLocalTrips > 0) {
             state = getActiveTrip();
             try { localStorage.setItem(STORE_KEY, JSON.stringify(store)); } catch (e) {}
             renderAll();
           }
+        } else if (removedLocalTrips > 0) {
+          state = getActiveTrip();
+          try { localStorage.setItem(STORE_KEY, JSON.stringify(store)); } catch (e) {}
+          renderAll();
         }
+
+        // Refresh deleted receipt set in case purging deleted trips added tombstones
+        const latestDeletedRecs = getDeletedReceiptIds();
+        latestDeletedRecs.forEach(function (id) { deletedSet[id] = true; });
+        if (latestDeletedRecs.length !== mergedDeleted.length) needPushDb = true;
 
         // 4. Incremental Per-File Receipt Photo Sync (1 JPEG file per photo in receipts/)
         let pulledReceipts = 0;
@@ -8212,9 +8326,13 @@
         if (gitSync.cfg.syncReceipts !== false) {
           let localRecs = await idbGetAllReceipts();
           for (let i = 0; i < localRecs.length; i++) {
-            if (deletedSet[localRecs[i].id]) await idbDeleteReceipt(localRecs[i].id);
+            if (deletedSet[localRecs[i].id] || deletedTripSet[localRecs[i].tripId]) {
+              recordDeletedReceiptId(localRecs[i].id);
+              deletedSet[localRecs[i].id] = true;
+              await idbDeleteReceipt(localRecs[i].id);
+            }
           }
-          localRecs = localRecs.filter(function (r) { return r && r.id && !deletedSet[r.id]; });
+          localRecs = localRecs.filter(function (r) { return r && r.id && !deletedSet[r.id] && !deletedTripSet[r.tripId]; });
           const localMap = {};
           localRecs.forEach(function (r) { localMap[r.id] = r; });
 
@@ -8225,8 +8343,11 @@
           const toDownload = [];
           for (let i = 0; i < remoteIds.length; i++) {
             const rid = remoteIds[i];
-            if (deletedSet[rid]) continue;
             const rMeta = remoteMetaMap[rid] || null;
+            if (deletedSet[rid] || (rMeta && deletedTripSet[rMeta.tripId])) {
+              deletedSet[rid] = true;
+              continue;
+            }
             const localRec = localMap[rid] || null;
             if (!localRec) {
               toDownload.push({ id: rid, file: remoteFilesMap[rid], meta: rMeta });
@@ -8321,7 +8442,7 @@
             needPushDb = true;
           }
 
-          // 4C. Clean up remote receipt files that were explicitly deleted
+          // 4C. Clean up remote receipt files that were explicitly deleted (or belonged to deleted trips)
           const remoteDelIds = Object.keys(remoteFilesMap).filter(function (id) { return !!deletedSet[id]; });
           for (let delIdx = 0; delIdx < remoteDelIds.length; delIdx++) {
             const delId = remoteDelIds[delIdx];
@@ -8335,26 +8456,29 @@
           });
 
           gitSync.lastSyncedReceiptsCount = allLocalList.length;
-          if (pulledReceipts > 0 || updatedReceiptMeta > 0) {
+          if (pulledReceipts > 0 || updatedReceiptMeta > 0 || removedLocalTrips > 0) {
             await loadTripReceipts();
           }
         }
 
         // 5. Commit updated claimflow-db.json to Git (tiny ~20-60 KB JSON — instant!)
+        let latestRemoteSha = remoteDbSha;
         if (needPushDb) {
           gitSync.progressText = 'Saving trips to Git…';
           renderCloudStatusUI();
+          const finalDeletedRecs = getDeletedReceiptIds();
           const dbPayload = {
             version: 5,
             activeTripId: store.activeTripId,
             trips: store.trips,
             _customPresets: loadCustomRoutePresets(),
-            deletedReceiptIds: mergedDeleted,
+            deletedTripIds: mergedDeletedTrips,
+            deletedReceiptIds: finalDeletedRecs,
             receiptMeta: finalMetaMap,
             updatedAt: Date.now()
           };
           const jsonStr = JSON.stringify(dbPayload, null, 2);
-          await gitPutFile(
+          const committedSha = await gitPutFile(
             owner, repo, GIST_DATA_FILE,
             utf8ToBase64(jsonStr),
             'ClaimFlow sync (' + store.trips.length + ' trips, ' + Object.keys(finalMetaMap).length + ' receipts)',
@@ -8362,14 +8486,16 @@
             branch,
             token
           );
+          if (committedSha) latestRemoteSha = committedSha;
         }
 
         // Mirror pulled updates to Desktop local folder DB if linked
-        if ((addedTrips > 0 || updatedTrips > 0 || pulledReceipts > 0) && cloudSync.handle && !cloudSync.needsReconnect && cloudSync.prefs.autoWrite) {
+        if ((addedTrips > 0 || updatedTrips > 0 || removedLocalTrips > 0 || pulledReceipts > 0) && cloudSync.handle && !cloudSync.needsReconnect && cloudSync.prefs.autoWrite) {
           writeCloudFile();
         }
 
         gitSync.cfg.lastSyncedAt = Date.now();
+        gitSync.cfg.lastRemoteDbSha = latestRemoteSha || gitSync.cfg.lastRemoteDbSha || '';
         gitSync.lastPullCheckAt = Date.now();
         if (gitSync.localEpoch === runEpoch) {
           gitSync.pendingPush = false;
@@ -8385,7 +8511,7 @@
           addedReceipts: pulledReceipts,
           updatedReceipts: updatedReceiptMeta
         });
-        if (addedTrips > 0 || updatedTrips > 0 || pulledReceipts > 0 || pushedReceipts > 0) {
+        if (addedTrips > 0 || updatedTrips > 0 || removedLocalTrips > 0 || pulledReceipts > 0 || pushedReceipts > 0) {
           recordLastMergeSummary(
             pushedReceipts > 0 ? ('Pushed ' + pushedReceipts + ' photo(s) · ' + summaryTxt) : summaryTxt,
             'Git: ' + gitSync.cfg.repo
@@ -8394,17 +8520,18 @@
 
         const totalRecs = gitSync.lastSyncedReceiptsCount != null ? gitSync.lastSyncedReceiptsCount : receiptVault.photos.length;
         if (!silent) {
-          if (pushedReceipts > 0 || pulledReceipts > 0 || addedTrips > 0 || updatedTrips > 0) {
+          if (pushedReceipts > 0 || pulledReceipts > 0 || addedTrips > 0 || updatedTrips > 0 || removedLocalTrips > 0) {
             const pParts = [];
             if (pushedReceipts > 0) pParts.push('↑' + pushedReceipts + ' photo' + (pushedReceipts === 1 ? '' : 's'));
             if (pulledReceipts > 0) pParts.push('↓' + pulledReceipts + ' photo' + (pulledReceipts === 1 ? '' : 's'));
+            if (removedLocalTrips > 0) pParts.push('−' + removedLocalTrips + ' deleted');
             if (totalAddedLines > 0 || addedTrips > 0 || totalAddedDays > 0) pParts.push(summaryTxt);
             showToast('Git Synced ✓ ' + (pParts.length ? pParts.join(' · ') : (totalRecs + ' receipts')), 'green');
           } else {
             showToast('Git Synced ✓ (' + gitSync.cfg.repo + ' · ' + totalRecs + ' receipt' + (totalRecs === 1 ? '' : 's') + ')', 'green');
           }
-        } else if (pulledReceipts > 0 || addedTrips > 0 || updatedTrips > 0) {
-          showToast('Git Auto-Sync: ' + summaryTxt, 'green');
+        } else if (pulledReceipts > 0 || addedTrips > 0 || updatedTrips > 0 || removedLocalTrips > 0) {
+          showToast('Git Eco-Sync: ' + summaryTxt, 'green');
         }
       } catch (err) {
         if (err && err.isConflict && attemptNum < 2) {
@@ -8420,12 +8547,14 @@
         gitSync.progressText = '';
         renderCloudStatusUI();
         if (document.documentElement.getAttribute('data-layout') === 'mobile') renderWorkspace();
-        if (gitSync.localEpoch !== runEpoch && !gitSync.lastError && isGitSyncConfigured() && gitSync.cfg.autoPush !== false) {
+        if (gitSync.localEpoch !== runEpoch && !gitSync.lastError && isGitSyncConfigured()) {
           gitSync.pendingPush = true;
-          clearTimeout(gitSync.pushTimer);
-          gitSync.pushTimer = setTimeout(function () {
-            syncGitRepoTwoWay(true, true);
-          }, 500);
+          if (gitSync.cfg.autoPush === true) {
+            clearTimeout(gitSync.pushTimer);
+            gitSync.pushTimer = setTimeout(function () {
+              syncGitRepoTwoWay(true, true);
+            }, GIT_PUSH_IDLE_MS);
+          }
         }
       }
     }
@@ -8826,6 +8955,56 @@
       if (merged.length > 300) merged.splice(0, merged.length - 300);
       try { localStorage.setItem(DELETED_RECEIPTS_KEY, JSON.stringify(merged)); } catch (e) {}
       return merged;
+    }
+
+    function getDeletedTripIds() {
+      try {
+        const raw = localStorage.getItem(DELETED_TRIPS_KEY);
+        const arr = raw ? JSON.parse(raw) : [];
+        return Array.isArray(arr) ? arr : [];
+      } catch (e) { return []; }
+    }
+
+    function recordDeletedTripId(id) {
+      if (!id) return;
+      const list = getDeletedTripIds();
+      if (list.indexOf(id) < 0) {
+        list.push(id);
+        if (list.length > 200) list.splice(0, list.length - 200);
+        try { localStorage.setItem(DELETED_TRIPS_KEY, JSON.stringify(list)); } catch (e) {}
+      }
+    }
+
+    function unrecordDeletedTripId(id) {
+      if (!id) return;
+      const list = getDeletedTripIds().filter(function (x) { return x !== id; });
+      try { localStorage.setItem(DELETED_TRIPS_KEY, JSON.stringify(list)); } catch (e) {}
+    }
+
+    function mergeDeletedTripIds(remoteIds) {
+      const merged = getDeletedTripIds();
+      (remoteIds || []).forEach(function (id) {
+        if (id && merged.indexOf(id) < 0) merged.push(id);
+      });
+      if (merged.length > 200) merged.splice(0, merged.length - 200);
+      try { localStorage.setItem(DELETED_TRIPS_KEY, JSON.stringify(merged)); } catch (e) {}
+      return merged;
+    }
+
+    async function purgeReceiptsForTrip(tripId) {
+      if (!tripId) return 0;
+      const recs = await idbGetReceiptsForTrip(tripId);
+      for (let i = 0; i < recs.length; i++) {
+        if (recs[i] && recs[i].id) {
+          recordDeletedReceiptId(recs[i].id);
+          await idbDeleteReceipt(recs[i].id);
+        }
+      }
+      if (tripId === state.id) {
+        receiptVault.photos = [];
+        updateVaultCountBadges();
+      }
+      return recs.length;
     }
 
     function loadGistConfig() {
@@ -10074,23 +10253,14 @@
       const chkGPush = document.getElementById('chk-git-autopush');
       const chkGPull = document.getElementById('chk-git-autopull');
       const chkGRec = document.getElementById('chk-git-receipts');
-      if (chkGPush) chkGPush.checked = gitSync.cfg.autoPush !== false;
-      if (chkGPull) chkGPull.checked = gitSync.cfg.autoPull !== false;
+      if (chkGPush) chkGPush.checked = gitSync.cfg.autoPush === true;
+      if (chkGPull) chkGPull.checked = gitSync.cfg.autoPull === true;
       if (chkGRec) chkGRec.checked = gitSync.cfg.syncReceipts !== false;
 
-      if (isGitSyncConfigured() && gitSync.cfg.autoPull !== false) {
-        syncGitRepoTwoWay(true, false);
-      }
-
-      if (CLOUD_APIS_ENABLED) {
-        loadOneDriveConfig();
-        loadGistConfig();
-        const handledOdCallback = await handleOneDriveOAuthCallback();
-        if (!handledOdCallback && oneDriveSync.cfg.enabled && oneDriveSync.cfg.clientId && (oneDriveSync.cfg.accessToken || oneDriveSync.cfg.refreshToken) && oneDriveSync.cfg.autoPull !== false) {
-          syncOneDriveTwoWay(true, false);
-        }
-        if (gistSync.cfg.enabled && gistSync.cfg.token && gistSync.cfg.gistId && gistSync.cfg.autoPull !== false) {
-          syncGistTwoWay(true, false);
+      if (isGitSyncConfigured() && gitSync.cfg.autoPull === true) {
+        const sinceLast = Date.now() - (gitSync.cfg.lastSyncedAt || 0);
+        if (sinceLast > GIT_PULL_COOLDOWN_MS) {
+          syncGitRepoTwoWay(true, false);
         }
       }
 
@@ -10144,6 +10314,19 @@
       const gitRepoInp = document.getElementById('git-repo-input');
       const gitBrInp = document.getElementById('git-branch-input');
 
+      const pmManBtn = document.getElementById('btn-git-pm-manual');
+      const pmEcoBtn = document.getElementById('btn-git-pm-eco');
+      const isManualMode = gitSync.cfg.powerMode === 'manual' || (!gitSync.cfg.autoPush && !gitSync.cfg.autoPull);
+      if (pmManBtn) pmManBtn.classList.toggle('active', isManualMode);
+      if (pmEcoBtn) pmEcoBtn.classList.toggle('active', !isManualMode);
+
+      const chkGPush = document.getElementById('chk-git-autopush');
+      const chkGPull = document.getElementById('chk-git-autopull');
+      const chkGRec = document.getElementById('chk-git-receipts');
+      if (chkGPush) chkGPush.checked = gitSync.cfg.autoPush === true;
+      if (chkGPull) chkGPull.checked = gitSync.cfg.autoPull === true;
+      if (chkGRec) chkGRec.checked = gitSync.cfg.syncReceipts !== false;
+
       if (gitRepoInp && !gitRepoInp.value && gitSync.cfg.repo) gitRepoInp.value = gitSync.cfg.repo;
       if (gitBrInp && !gitBrInp.value && gitSync.cfg.branch) gitBrInp.value = gitSync.cfg.branch;
 
@@ -10173,12 +10356,13 @@
         if (gitConnected) {
           const lastGStr = gitSync.cfg.lastSyncedAt ? fmtTimeHHMM(gitSync.cfg.lastSyncedAt) : 'Just connected';
           const recCnt = gitSync.lastSyncedReceiptsCount != null ? gitSync.lastSyncedReceiptsCount : receiptVault.photos.length;
+          const modeLabel = isManualMode ? '🔋 Manual 1-Click' : '⚡ Eco (45s/10m)';
           gitBox.innerHTML = '<div style="font-size:12px;">'
             + '<strong>🐙 <span class="mono">' + esc(gitSync.cfg.repo) + '</span></strong> <span class="mono" style="font-size:11px;color:var(--text-subtle);">(' + esc(gitSync.cfg.branch || 'main') + ')</span>'
             + '<div style="font-size:11px;color:' + (gitSync.lastError ? 'var(--red-text)' : 'var(--text-subtle)') + ';">'
             + (gitSync.lastError ? ('Error: ' + esc(gitSync.lastError)) : (gitSync.busy ? esc(gitSync.progressText || 'Syncing…') : ('Last synced: ' + lastGStr + ' · ' + store.trips.length + ' trip(s) · ' + recCnt + ' receipt(s)')))
             + '</div></div>'
-            + '<span class="pill ' + (gitSync.lastError ? 'pill-red' : (gitSync.busy ? 'pill-sky' : 'pill-green')) + '">' + (gitSync.busy ? '↻ Syncing' : (gitSync.pendingPush ? 'Queued' : 'Auto ✓')) + '</span>';
+            + '<span class="pill ' + (gitSync.lastError ? 'pill-red' : (gitSync.busy ? 'pill-sky' : (gitSync.pendingPush ? 'pill-amber' : 'pill-green'))) + '">' + (gitSync.busy ? '↻ Syncing' : (gitSync.pendingPush ? '↑ Queued' : modeLabel)) + '</span>';
         } else if (gitSync.lastError) {
           gitBox.innerHTML = '<div style="font-size:12px;color:var(--red-text);line-height:1.45;"><strong>⚠️ Could not connect:</strong> ' + esc(gitSync.lastError) + '</div>';
         } else if (gitSync.lastTestOk) {
@@ -10381,7 +10565,8 @@
       if (!cloudSync.handle || cloudSync.needsReconnect) return;
       try {
         const deletedIds = getDeletedReceiptIds();
-        const payload = { activeTripId: store.activeTripId, trips: store.trips, deletedReceiptIds: deletedIds };
+        const deletedTripIds = getDeletedTripIds();
+        const payload = { activeTripId: store.activeTripId, trips: store.trips, deletedTripIds: deletedTripIds, deletedReceiptIds: deletedIds };
         const customPresets = loadCustomRoutePresets();
         if (customPresets.length > 0) payload._customPresets = customPresets;
         if (cloudSync.prefs.embedReceipts !== false) {
@@ -10404,13 +10589,16 @@
 
     function scheduleCloudWrite(immediate) {
       bumpSyncEpochs();
-      if (isGitSyncConfigured() && gitSync.cfg.autoPush !== false) {
+      if (isGitSyncConfigured()) {
         gitSync.pendingPush = true;
         renderCloudStatusUI();
-        clearTimeout(gitSync.pushTimer);
-        gitSync.pushTimer = setTimeout(function () {
-          syncGitRepoTwoWay(true, true);
-        }, immediate ? 450 : 3000);
+        if (gitSync.cfg.autoPush === true) {
+          clearTimeout(gitSync.pushTimer);
+          // Always batch edits over 45s idle window so rapid edits/photo tags produce 1 single low-power Git sync
+          gitSync.pushTimer = setTimeout(function () {
+            syncGitRepoTwoWay(true, true);
+          }, GIT_PUSH_IDLE_MS);
+        }
       }
       if (CLOUD_APIS_ENABLED && oneDriveSync.cfg.enabled && oneDriveSync.cfg.clientId && (oneDriveSync.cfg.accessToken || oneDriveSync.cfg.refreshToken) && oneDriveSync.cfg.autoPush !== false) {
         oneDriveSync.pendingPush = true;
@@ -10444,25 +10632,7 @@
       showToast('Local JSON DB merged & saved ✓', 'green');
     }
 
-    async function checkCloudFileUpdates(force) {
-      if (isGitSyncConfigured() && (force || gitSync.cfg.autoPull !== false)) {
-        const nowGit = Date.now();
-        if (force || gitSync.pendingPush || (nowGit - gitSync.lastPullCheckAt > 15000)) {
-          syncGitRepoTwoWay(true, !!gitSync.pendingPush);
-        }
-      }
-      if (CLOUD_APIS_ENABLED && oneDriveSync.cfg.enabled && oneDriveSync.cfg.clientId && (oneDriveSync.cfg.accessToken || oneDriveSync.cfg.refreshToken) && (force || oneDriveSync.cfg.autoPull !== false)) {
-        const nowOd = Date.now();
-        if (force || oneDriveSync.pendingPush || (nowOd - oneDriveSync.lastPullCheckAt > 15000)) {
-          syncOneDriveTwoWay(true, !!oneDriveSync.pendingPush);
-        }
-      }
-      if (CLOUD_APIS_ENABLED && gistSync.cfg.enabled && gistSync.cfg.token && gistSync.cfg.gistId && (force || gistSync.cfg.autoPull !== false)) {
-        const now = Date.now();
-        if (force || gistSync.pendingPush || (now - gistSync.lastPullCheckAt > 15000)) {
-          syncGistTwoWay(true, !!gistSync.pendingPush);
-        }
-      }
+    async function checkLocalCloudFileOnly(force) {
       if (!cloudSync.handle || cloudSync.needsReconnect) return;
       if (!force && !cloudSync.prefs.autoPull) return;
       try {
@@ -10481,13 +10651,55 @@
       } catch (e) {}
     }
 
+    async function checkCloudFileUpdates(force) {
+      if (isGitSyncConfigured() && (force || gitSync.cfg.autoPull === true)) {
+        const nowGit = Date.now();
+        if (force || (nowGit - gitSync.lastPullCheckAt > GIT_PULL_COOLDOWN_MS)) {
+          syncGitRepoTwoWay(true, false);
+        }
+      }
+      if (CLOUD_APIS_ENABLED && oneDriveSync.cfg.enabled && oneDriveSync.cfg.clientId && (oneDriveSync.cfg.accessToken || oneDriveSync.cfg.refreshToken) && (force || oneDriveSync.cfg.autoPull !== false)) {
+        const nowOd = Date.now();
+        if (force || oneDriveSync.pendingPush || (nowOd - oneDriveSync.lastPullCheckAt > 15000)) {
+          syncOneDriveTwoWay(true, !!oneDriveSync.pendingPush);
+        }
+      }
+      if (CLOUD_APIS_ENABLED && gistSync.cfg.enabled && gistSync.cfg.token && gistSync.cfg.gistId && (force || gistSync.cfg.autoPull !== false)) {
+        const now = Date.now();
+        if (force || gistSync.pendingPush || (now - gistSync.lastPullCheckAt > 15000)) {
+          syncGistTwoWay(true, !!gistSync.pendingPush);
+        }
+      }
+      await checkLocalCloudFileOnly(force);
+    }
+
     async function mergeWorkspacePayload(payload, silent, sourceName) {
       if (payload && Array.isArray(payload._customPresets)) {
         mergeCustomRoutePresets(payload._customPresets);
       }
+      const mergedDeletedTrips = mergeDeletedTripIds(payload && payload.deletedTripIds);
+      const deletedTripSet = {};
+      mergedDeletedTrips.forEach(function (id) { deletedTripSet[id] = true; });
+
       const mergedDeleted = mergeDeletedReceiptIds(payload && payload.deletedReceiptIds);
       const deletedSet = {};
       mergedDeleted.forEach(function (id) { deletedSet[id] = true; });
+
+      // Remove any locally stored trips that were deleted in the incoming backup
+      const localTripsToRemove = store.trips.filter(function (lt) { return !!deletedTripSet[lt.id]; });
+      if (localTripsToRemove.length > 0) {
+        for (let lti = 0; lti < localTripsToRemove.length; lti++) {
+          await purgeReceiptsForTrip(localTripsToRemove[lti].id);
+        }
+        store.trips = store.trips.filter(function (lt) { return !deletedTripSet[lt.id]; });
+        if (store.trips.length === 0) {
+          const fresh = createBlankTripSkeleton(null);
+          store.trips = [fresh];
+          store.activeTripId = fresh.id;
+        } else if (!store.trips.some(function (t) { return t.id === store.activeTripId; })) {
+          store.activeTripId = store.trips[0].id;
+        }
+      }
 
       const rawTrips = (payload && Array.isArray(payload.trips)) ? payload.trips : [];
       const collectedReceipts = Array.isArray(payload && payload._receipts) ? payload._receipts.slice() : [];
@@ -10500,15 +10712,15 @@
           delete clone._receipts;
         }
         return normalizeTrip(clone);
-      });
-      if (incomingTrips.length === 0 && collectedReceipts.length === 0) return;
+      }).filter(function (inc) { return !deletedTripSet[inc.id]; });
+      if (incomingTrips.length === 0 && collectedReceipts.length === 0 && localTripsToRemove.length === 0) return;
 
       let addedTrips = 0;
       let updatedTrips = 0;
       let totalAddedLines = 0;
       let totalUpdatedLines = 0;
       let totalAddedDays = 0;
-      let needsWriteBack = false;
+      let needsWriteBack = localTripsToRemove.length > 0;
       const tripIdRemap = {};
       const allDayIdRemaps = {};
 
@@ -10520,9 +10732,7 @@
           needsWriteBack = true;
         } else {
           const canonicalId = store.trips[idx].id;
-          if (inc.id !== canonicalId) {
-            tripIdRemap[inc.id] = canonicalId;
-          }
+          if (inc.id !== canonicalId) tripIdRemap[inc.id] = canonicalId;
           const resM = smartMergeTrips(store.trips[idx], inc);
           store.trips[idx] = resM.trip;
           totalAddedLines += resM.addedLines || 0;
@@ -10663,9 +10873,10 @@
       }
 
       const deletedIds = getDeletedReceiptIds();
+      const deletedTripIds = getDeletedTripIds();
       const deletedSet = {};
       deletedIds.forEach(function (id) { deletedSet[id] = true; });
-      const payload = { activeTripId: store.activeTripId, trips: store.trips, deletedReceiptIds: deletedIds };
+      const payload = { activeTripId: store.activeTripId, trips: store.trips, deletedTripIds: deletedTripIds, deletedReceiptIds: deletedIds };
       const customPresets = loadCustomRoutePresets();
       if (customPresets.length > 0) payload._customPresets = customPresets;
       let photoCount = 0;
@@ -14391,10 +14602,10 @@
       flushLocalSave(false, false);
     });
 
-    window.addEventListener('focus', function () { checkCloudFileUpdates(); });
+    window.addEventListener('focus', function () { checkLocalCloudFileOnly(false); });
     window.addEventListener('online', function () {
-      if (isGitSyncConfigured() && (gitSync.pendingPush || gitSync.cfg.autoPull !== false)) {
-        syncGitRepoTwoWay(true, !!gitSync.pendingPush);
+      if (isGitSyncConfigured() && gitSync.cfg.autoPush === true && gitSync.pendingPush) {
+        syncGitRepoTwoWay(true, true);
       }
       if (!CLOUD_APIS_ENABLED) return;
       if (oneDriveSync.cfg.enabled && (oneDriveSync.pendingPush || oneDriveSync.cfg.autoPull !== false)) {
@@ -14408,7 +14619,7 @@
     window.addEventListener('orientationchange', function () { setTimeout(applyResponsiveLayoutMode, 120); });
     document.addEventListener('visibilitychange', function () {
       if (document.visibilityState === 'hidden') flushLocalSave(false, false);
-      if (document.visibilityState === 'visible') checkCloudFileUpdates();
+      if (document.visibilityState === 'visible') checkCloudFileUpdates(false);
     });
 
     function bootClaimFlow() {
