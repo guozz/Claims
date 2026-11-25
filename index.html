@@ -1990,8 +1990,11 @@
         <button type="button" id="receipt-vault-btn" class="btn btn-sm btn-soft" onclick="openReceiptModal()" title="Open Receipt Photo Vault">
           📷 <span class="lbl-txt">Receipts</span> (<span id="receipt-vault-count">0</span>)
         </button>
+        <button type="button" id="quick-sync-now-btn" class="btn btn-sm btn-green-soft" style="display:none;" onclick="triggerOneClickSync()" title="1-Click Bidirectional Sync">
+          <span id="quick-sync-now-text">🔄 Sync</span>
+        </button>
         <button type="button" id="cloud-sync-btn" class="btn btn-sm cloud-btn desktop-only" onclick="openCloudModal()">
-          📦 <span id="cloud-sync-btn-text">Backup / Merge</span>
+          📦 <span id="cloud-sync-btn-text">Backup / Sync</span>
         </button>
         <button type="button" class="btn btn-sm desktop-only" onclick="openPrintModal()">🖨️ Print</button>
         <button type="button" id="theme-btn" class="btn btn-icon btn-sm desktop-only" onclick="toggleTheme()" title="Toggle Light / Dark Theme"></button>
@@ -2115,19 +2118,23 @@
     <div class="cloud-modal-box">
       <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
         <div>
-          <strong style="font-size:15px;">📦 Backup &amp; Smart-Merge (iPhone ↔ Desktop)</strong>
-          <div style="font-size:11.5px;color:var(--text-subtle);">Merge JSON backups with embedded receipt photos — 100% offline, zero cloud errors</div>
+          <strong style="font-size:15px;">📦 Sync, Backup &amp; Smart-Merge (iPhone ↔ Desktop)</strong>
+          <div style="font-size:11.5px;color:var(--text-subtle);">4 sync methods: JSON File Merge, Local Folder, Sync Code, or 1-Click Git Repo Sync</div>
         </div>
         <button type="button" class="btn btn-icon-sm btn-ghost" onclick="closeCloudModal()">✕</button>
       </div>
 
-      <div class="cloud-section" style="border-color:var(--accent-border);background:color-mix(in srgb, var(--accent-soft) 28%, var(--surface-2));">
+      <div class="cloud-section">
         <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;">
           <strong style="font-size:13px;">1. 📲 iPhone ↔ Desktop JSON Backup &amp; Smart-Merge</strong>
           <span id="merge-status-pill" class="pill pill-green">Smart-Merge Ready</span>
         </div>
         <div id="last-merge-status-box" class="cloud-status-box"></div>
-        <div style="font-size:11.5px;color:var(--text-subtle);">Export <code>claimflow-db.json</code> from your iPhone (via AirDrop / iCloud / OneDrive Files) and tap <strong>Open &amp; Smart-Merge File</strong> on Desktop — new phone meals, transport rides &amp; receipts merge directly into matching trips without duplicates.</div>
+        <div id="iphone-writeback-banner" style="display:none;padding:9px 11px;border-radius:10px;background:var(--amber-soft);border:1px solid var(--amber-border);color:var(--amber-text);font-size:11.5px;gap:8px;flex-direction:column;">
+          <div><strong>Merged on this device!</strong> iOS Safari cannot overwrite files in-place after opening them. Tap below to write the combined trips &amp; new entries back to <code>claimflow-db.json</code>:</div>
+          <div><button type="button" class="btn btn-sm btn-primary" onclick="exportFullWorkspaceJSON(true)">📲 Save Merged File Back (claimflow-db.json)</button></div>
+        </div>
+        <div style="font-size:11.5px;color:var(--text-subtle);">On iPhone, <strong>Open &amp; Smart-Merge</strong> reads updates into your phone. Tap <strong>Save / Share All Trips</strong> to write your new phone entries out — or set up <strong>Method 4 (Git Sync)</strong> below for true 1-click two-way sync.</div>
         <div style="display:flex;flex-wrap:wrap;gap:7px;">
           <button type="button" class="btn btn-primary" onclick="exportFullWorkspaceJSON()">📲 Save / Share All Trips (claimflow-db.json)</button>
           <button type="button" class="btn btn-green-soft" onclick="document.getElementById('import-workspace-input').click()">📥 Open &amp; Smart-Merge File</button>
@@ -2162,10 +2169,48 @@
         </div>
       </div>
 
-      <!-- Cloud API panels hidden while CLOUD_APIS_ENABLED = false -->
-      <div id="hidden-cloud-api-panels" style="display:none;" aria-hidden="true">
-        <span id="od-mode-pill"></span><div id="od-status-box"></div><div id="od-connected-actions"></div><div id="od-setup-panel"></div>
-        <span id="gist-mode-pill"></span><div id="gist-status-box"></div><div id="gist-connected-actions"></div><div id="gist-setup-panel"></div>
+      <div class="cloud-section" style="border-color:var(--accent-border);background:color-mix(in srgb, var(--accent-soft) 28%, var(--surface-2));">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;">
+          <strong style="font-size:13px;">4. 🐙 Git Repository Sync (Recommended · 1-Click iPhone ↔ Desktop)</strong>
+          <span id="git-mode-pill" class="pill pill-neutral">Not Connected</span>
+        </div>
+        <div id="git-status-box" class="cloud-status-box"></div>
+        <div id="git-connected-actions" style="display:none;flex-wrap:wrap;gap:7px;"></div>
+        <div id="git-setup-panel" style="display:flex;flex-direction:column;gap:8px;">
+          <div class="gist-setup-steps">
+            <strong>Built for iPhone ↔ Desktop reliability (1 file per receipt · zero truncation · zero CORS errors):</strong><br/>
+            1. Create a free <strong>Private</strong> repo on GitHub (e.g. <code>claimflow-sync</code>), or let ClaimFlow auto-create it.<br/>
+            2. Create a GitHub token at <strong>github.com/settings/personal-access-tokens</strong> (Fine-Grained: select that repo with <code>Contents: Read &amp; write</code> — <em>or</em> Classic token with <code>repo</code>).<br/>
+            3. Connect below, then tap <strong>Copy 1-Tap Git Pair Code</strong> to pair your iPhone in 2 seconds!
+          </div>
+          <div class="grid-3">
+            <div style="grid-column:span 2;">
+              <label class="field-label">GitHub Repository (owner/repo or repo name)</label>
+              <input id="git-repo-input" class="input mono" type="text" autocomplete="off" placeholder="e.g. yourname/claimflow-sync" />
+            </div>
+            <div>
+              <label class="field-label">Branch</label>
+              <input id="git-branch-input" class="input mono" type="text" autocomplete="off" value="main" placeholder="main" />
+            </div>
+          </div>
+          <div>
+            <label class="field-label">GitHub Personal Access Token (Fine-Grained github_pat_ or Classic ghp_)</label>
+            <input id="git-token-input" class="input mono" type="password" autocomplete="off" placeholder="github_pat_... or ghp_..." />
+          </div>
+          <div style="display:flex;flex-wrap:wrap;gap:7px;">
+            <button type="button" class="btn btn-primary" onclick="connectGitRepo()">🐙 Connect &amp; 1-Click Sync</button>
+            <button type="button" class="btn btn-soft" onclick="testGitRepoConnection()">🩺 Test Connection</button>
+          </div>
+          <div style="display:flex;gap:7px;padding-top:6px;border-top:1px solid var(--border);">
+            <input id="git-pair-code-input" class="input mono" type="text" autocomplete="off" placeholder="Or paste CLAIMFLOW_GIT1:... pair code from your other device" />
+            <button type="button" class="btn btn-green-soft" onclick="pairGitFromCode()">📲 Pair Device</button>
+          </div>
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:12px;">
+          <label class="check-opt"><input id="chk-git-autopush" type="checkbox" checked onchange="setGitPref('autoPush',this.checked)" /><span>Auto-push edits (3s debounce)</span></label>
+          <label class="check-opt"><input id="chk-git-autopull" type="checkbox" checked onchange="setGitPref('autoPull',this.checked)" /><span>Auto-pull on open / return</span></label>
+          <label class="check-opt"><input id="chk-git-receipts" type="checkbox" checked onchange="setGitPref('syncReceipts',this.checked)" /><span>Sync receipts incrementally (1 JPEG per file)</span></label>
+        </div>
       </div>
     </div>
   </div>
@@ -2186,9 +2231,9 @@
           <button type="button" class="btn btn-sm btn-primary" onclick="triggerVaultUpload('receipt', true)">📸 Snap Photo</button>
           <button type="button" class="btn btn-sm btn-soft" onclick="triggerVaultUpload('receipt', false)">🖼️ +Photos / PDF</button>
           <button type="button" id="vault-bank-upload-btn" class="btn btn-sm btn-sky-soft" onclick="triggerVaultUpload('bank', false)">💳 +Bank / PDF</button>
-          <button type="button" class="btn btn-sm btn-green-soft" onclick="pasteReceiptInVault()" title="Paste copied bank screenshot or receipt straight from clipboard">📋 Paste</button>
-          <button type="button" id="vault-bw-toggle-btn" class="btn btn-sm" onclick="toggleReceiptBWMode()" title="Default Full Color (<300 KB). Tap to toggle optional crisp B&amp;W Scan mode">🎨 Full Color (&lt;300 KB)</button>
-          <button type="button" id="vault-optimize-btn" class="btn btn-sm btn-soft" onclick="optimizeExistingReceipts()" title="Compress existing receipts larger than 300 KB to save storage and speed up JSON backups">🗜️ Optimize (&lt;300 KB)</button>
+          <button type="button" class="btn btn-sm btn-green-soft" onclick="pasteReceiptInVault()">📋 Paste</button>
+          <button type="button" id="vault-bw-toggle-btn" class="btn btn-sm" onclick="toggleReceiptBWMode()" title="Toggle Full Color or Crisp B&amp;W Scan (auto-compressed under 300 KB)">🎨 Full Color (&lt;300 KB)</button>
+          <button type="button" id="vault-optimize-btn" class="btn btn-sm btn-soft" onclick="optimizeExistingReceipts()" title="Compress existing receipts larger than 300 KB to save storage and speed up sync">🗜️ Optimize (&lt;300 KB)</button>
           <button type="button" id="vault-slidebg-btn" class="btn btn-sm" onclick="cyclePrintSlideBg()" title="Cycle PDF &amp; Share Sheet background: Light Paper / Dark Box / Dark Slides">☀️ Light Paper</button>
         </div>
         <div style="display:flex;gap:6px;flex-wrap:wrap;">
@@ -3625,7 +3670,10 @@
 
     function manualSaveNow() {
       persistStore(true, true);
-      if (CLOUD_APIS_ENABLED && oneDriveSync.cfg.enabled && oneDriveSync.cfg.clientId && (oneDriveSync.cfg.accessToken || oneDriveSync.cfg.refreshToken)) {
+      if (isGitSyncConfigured()) {
+        syncGitRepoTwoWay(false, true);
+        showToast('Saved locally & syncing with Git…', 'green');
+      } else if (CLOUD_APIS_ENABLED && oneDriveSync.cfg.enabled && oneDriveSync.cfg.clientId && (oneDriveSync.cfg.accessToken || oneDriveSync.cfg.refreshToken)) {
         syncOneDriveTwoWay(false, true);
         showToast('Saved locally & auto-syncing to OneDrive…', 'green');
       } else if (CLOUD_APIS_ENABLED && gistSync.cfg.enabled && gistSync.cfg.token && gistSync.cfg.gistId) {
@@ -6024,7 +6072,8 @@
         deductionExpr: '',
         deductionReason: '',
         fxAnchorId: defaultFxId,
-        customRate: ''
+        customRate: '',
+        updatedAt: Date.now()
       });
       persistStore(true);
       renderAll();
@@ -7454,9 +7503,11 @@
     const ONEDRIVE_CFG_KEY = 'claimflow_v4_onedrive_cfg';
     const ONEDRIVE_PKCE_KEY = 'claimflow_v4_onedrive_pkce';
     const GIST_CFG_KEY = 'claimflow_v4_gist_cfg';
+    const GIT_CFG_KEY = 'claimflow_v5_git_cfg';
     const DELETED_RECEIPTS_KEY = 'claimflow_v4_deleted_receipts';
     const CLOUD_DB_NAME = 'ClaimFlowCloudDB';
     const CLOUD_STORE_NAME = 'handles';
+    const GIT_API_BASE = 'https://api.github.com';
     const GIST_API_BASE = 'https://api.github.com/gists';
     const GIST_DATA_FILE = 'claimflow-db.json';
     const GIST_RECEIPTS_FILE = 'claimflow-receipts.json';
@@ -7470,7 +7521,29 @@
       lastSyncedAt: 0,
       lastModifiedSeen: 0,
       writeTimer: null,
+      needsManualWriteback: false,
       prefs: { autoWrite: true, autoPull: true, embedReceipts: true }
+    };
+
+    const gitSync = {
+      cfg: {
+        enabled: false,
+        token: '',
+        repo: '',
+        branch: 'main',
+        autoPush: true,
+        autoPull: true,
+        syncReceipts: true,
+        lastSyncedAt: 0
+      },
+      busy: false,
+      pendingPush: false,
+      localEpoch: 0,
+      progressText: '',
+      lastSyncedReceiptsCount: null,
+      lastError: '',
+      lastPullCheckAt: 0,
+      pushTimer: null
     };
 
     const oneDriveSync = {
@@ -7522,6 +7595,770 @@
     function bumpSyncEpochs() {
       oneDriveSync.localEpoch = (oneDriveSync.localEpoch || 0) + 1;
       gistSync.localEpoch = (gistSync.localEpoch || 0) + 1;
+      gitSync.localEpoch = (gitSync.localEpoch || 0) + 1;
+    }
+
+    /* --- Method 4: Robust Private Git Repository Sync (GitHub Contents API · 1 File Per Receipt) --- */
+    function isGitSyncConfigured() {
+      return !!(gitSync.cfg.enabled && sanitizeGistCredential(gitSync.cfg.token) && String(gitSync.cfg.repo || '').trim());
+    }
+
+    function loadGitConfig() {
+      try {
+        const raw = localStorage.getItem(GIT_CFG_KEY);
+        if (raw) {
+          gitSync.cfg = Object.assign({
+            enabled: false, token: '', repo: '', branch: 'main',
+            autoPush: true, autoPull: true, syncReceipts: true, lastSyncedAt: 0
+          }, JSON.parse(raw));
+        }
+      } catch (e) {}
+    }
+
+    function saveGitConfig() {
+      try { localStorage.setItem(GIT_CFG_KEY, JSON.stringify(gitSync.cfg)); } catch (e) {}
+    }
+
+    function setGitPref(key, val) {
+      gitSync.cfg[key] = !!val;
+      saveGitConfig();
+      if (key === 'syncReceipts' && val && isGitSyncConfigured()) {
+        scheduleCloudWrite(true);
+      }
+    }
+
+    function utf8ToBase64(str) {
+      const bytes = new TextEncoder().encode(String(str || ''));
+      let bin = '';
+      const chunk = 0x8000;
+      for (let i = 0; i < bytes.length; i += chunk) {
+        bin += String.fromCharCode.apply(null, bytes.subarray(i, i + chunk));
+      }
+      return btoa(bin);
+    }
+
+    function base64ToUtf8(b64) {
+      const clean = String(b64 || '').replace(/\s+/g, '');
+      const bin = atob(clean);
+      const bytes = new Uint8Array(bin.length);
+      for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+      return new TextDecoder().decode(bytes);
+    }
+
+    function computeReceiptImageHash(r) {
+      if (!r) return '';
+      const b = Number(r.bytes) || estimateDataUrlBytes(r.dataUrl);
+      return [Number(r.width) || 0, Number(r.height) || 0, b, r.isBW ? 1 : 0, String(r.dataUrl || '').slice(-28)].join(':');
+    }
+
+    function extractReceiptMeta(r) {
+      return {
+        id: String(r.id),
+        tripId: String(r.tripId || state.id),
+        scope: r.scope || 'unmatched',
+        itemId: r.itemId || '',
+        dayId: r.dayId || '',
+        role: r.role === 'bank' ? 'bank' : (r.role === 'policy' ? 'policy' : 'receipt'),
+        orient: (r.orient === 'landscape' || r.orient === 'portrait') ? r.orient : 'auto',
+        name: r.name || 'receipt.jpg',
+        note: r.note || '',
+        width: Number(r.width) || 0,
+        height: Number(r.height) || 0,
+        bytes: Number(r.bytes) || estimateDataUrlBytes(r.dataUrl),
+        isBW: !!r.isBW,
+        mime: /^data:(image\/[a-z0-9.+-]+);base64,/i.test(r.dataUrl || '') ? r.dataUrl.match(/^data:(image\/[a-z0-9.+-]+);base64,/i)[1] : 'image/jpeg',
+        imgHash: computeReceiptImageHash(r),
+        createdAt: Number(r.createdAt) || Date.now(),
+        updatedAt: Number(r.updatedAt) || Number(r.createdAt) || Date.now()
+      };
+    }
+
+    function receiptMetaEqual(a, b) {
+      if (!a || !b) return false;
+      return a.tripId === b.tripId && a.scope === b.scope && a.itemId === b.itemId
+        && a.dayId === b.dayId && a.role === b.role && a.orient === b.orient
+        && a.note === b.note && a.imgHash === b.imgHash;
+    }
+
+    function gitHeaders(token, includeContentType) {
+      const h = {
+        'Authorization': 'Bearer ' + sanitizeGistCredential(token),
+        'Accept': 'application/vnd.github+json',
+        'X-GitHub-Api-Version': '2022-11-28'
+      };
+      if (includeContentType) h['Content-Type'] = 'application/json';
+      return h;
+    }
+
+    async function gitFetch(url, opts, phaseLabel) {
+      try {
+        return await fetch(url, opts);
+      } catch (err) {
+        if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+          throw new Error('Offline — changes queued for Git sync');
+        }
+        throw new Error((phaseLabel || 'Git request') + ' failed (network/CORS — check internet or token)');
+      }
+    }
+
+    function formatGitHttpError(res, phaseLabel, apiMsg) {
+      const detail = apiMsg ? (' (' + apiMsg + ')') : '';
+      if (res.status === 401) return 'Invalid or expired GitHub token (401)';
+      if (res.status === 403) return 'GitHub permission denied — grant Contents: Read & Write (403)' + detail;
+      if (res.status === 404) return 'Repo or branch not found — check owner/repo & token access (404)';
+      if (res.status === 409) return 'Concurrent Git update conflict (409) — retrying merge';
+      if (res.status === 422) return phaseLabel + ' rejected (422)' + detail;
+      return phaseLabel + ' failed (HTTP ' + res.status + ')' + detail;
+    }
+
+    async function resolveGitOwnerRepo(rawRepo, token) {
+      let cleaned = String(rawRepo || '').trim()
+        .replace(/^https?:\/\/github\.com\//i, '')
+        .replace(/\.git$/i, '')
+        .replace(/^\/+|\/+$/g, '');
+      if (!cleaned) throw new Error('Enter a GitHub repository (e.g. username/claimflow-sync)');
+      if (cleaned.indexOf('/') >= 0) {
+        const parts = cleaned.split('/').filter(Boolean);
+        if (parts.length < 2) throw new Error('Use owner/repo format (e.g. username/claimflow-sync)');
+        return { owner: parts[0], repo: parts[1], full: parts[0] + '/' + parts[1] };
+      }
+      // Single repo name supplied -> look up authenticated GitHub username
+      const res = await gitFetch(GIT_API_BASE + '/user?_cb=' + Date.now(), {
+        method: 'GET', mode: 'cors', headers: gitHeaders(token, false)
+      }, 'Lookup GitHub username');
+      if (!res.ok) throw new Error('Include owner/repo (e.g. yourname/' + cleaned + ') — fine-grained tokens cannot auto-lookup /user');
+      const user = await res.json();
+      if (!user || !user.login) throw new Error('Use owner/repo format (e.g. yourname/' + cleaned + ')');
+      return { owner: user.login, repo: cleaned, full: user.login + '/' + cleaned };
+    }
+
+    function encodeGitPath(path) {
+      return String(path || '').split('/').filter(Boolean).map(encodeURIComponent).join('/');
+    }
+
+    async function gitGetFile(owner, repo, path, branch, token) {
+      const url = GIT_API_BASE + '/repos/' + encodeURIComponent(owner) + '/' + encodeURIComponent(repo)
+        + '/contents/' + encodeGitPath(path) + '?ref=' + encodeURIComponent(branch) + '&_cb=' + Date.now();
+      const res = await gitFetch(url, {
+        method: 'GET', mode: 'cors', headers: gitHeaders(token, false)
+      }, 'Read ' + path);
+      if (res.status === 404) return null;
+      if (!res.ok) {
+        const errObj = await res.json().catch(function () { return {}; });
+        throw new Error(formatGitHttpError(res, 'Read ' + path, errObj.message));
+      }
+      const obj = await res.json();
+      if (obj && typeof obj.content === 'string' && obj.content.length > 0) {
+        return { sha: obj.sha, content: obj.content.replace(/\s+/g, ''), size: obj.size || 0 };
+      }
+      // Files > 1 MB: read via same-origin Git Blobs API (up to 100 MB, zero CORS redirect!)
+      if (obj && obj.sha) {
+        const blobUrl = GIT_API_BASE + '/repos/' + encodeURIComponent(owner) + '/' + encodeURIComponent(repo)
+          + '/git/blobs/' + encodeURIComponent(obj.sha) + '?_cb=' + Date.now();
+        const bRes = await gitFetch(blobUrl, {
+          method: 'GET', mode: 'cors', headers: gitHeaders(token, false)
+        }, 'Read blob ' + path);
+        if (!bRes.ok) throw new Error(formatGitHttpError(bRes, 'Read blob ' + path));
+        const blobObj = await bRes.json();
+        return { sha: obj.sha, content: String(blobObj.content || '').replace(/\s+/g, ''), size: blobObj.size || obj.size || 0 };
+      }
+      return null;
+    }
+
+    async function gitListReceiptFiles(owner, repo, branch, token) {
+      const url = GIT_API_BASE + '/repos/' + encodeURIComponent(owner) + '/' + encodeURIComponent(repo)
+        + '/contents/receipts?ref=' + encodeURIComponent(branch) + '&_cb=' + Date.now();
+      const res = await gitFetch(url, {
+        method: 'GET', mode: 'cors', headers: gitHeaders(token, false)
+      }, 'List receipts/');
+      if (res.status === 404) return {};
+      if (!res.ok) {
+        const errObj = await res.json().catch(function () { return {}; });
+        throw new Error(formatGitHttpError(res, 'List receipts', errObj.message));
+      }
+      const arr = await res.json();
+      const map = {};
+      if (Array.isArray(arr)) {
+        arr.forEach(function (entry) {
+          if (!entry || entry.type !== 'file' || !entry.name) return;
+          const id = entry.name.replace(/\.(jpg|jpeg|png|webp)$/i, '');
+          map[id] = { sha: entry.sha, name: entry.name, path: entry.path || ('receipts/' + entry.name), size: entry.size || 0 };
+        });
+      }
+      return map;
+    }
+
+    async function gitPutFile(owner, repo, path, base64Content, message, sha, branch, token) {
+      const url = GIT_API_BASE + '/repos/' + encodeURIComponent(owner) + '/' + encodeURIComponent(repo)
+        + '/contents/' + encodeGitPath(path);
+      const body = {
+        message: message || ('ClaimFlow sync ' + path),
+        content: String(base64Content || '').replace(/\s+/g, ''),
+        branch: branch
+      };
+      if (sha) body.sha = sha;
+      const res = await gitFetch(url, {
+        method: 'PUT',
+        mode: 'cors',
+        headers: gitHeaders(token, true),
+        body: JSON.stringify(body)
+      }, 'Save ' + path);
+      if (res.status === 409) {
+        const err = new Error('CONFLICT_409');
+        err.isConflict = true;
+        throw err;
+      }
+      if (!res.ok) {
+        const errObj = await res.json().catch(function () { return {}; });
+        throw new Error(formatGitHttpError(res, 'Save ' + path, errObj.message));
+      }
+      const out = await res.json().catch(function () { return {}; });
+      return (out && out.content && out.content.sha) ? out.content.sha : '';
+    }
+
+    async function gitDeleteFile(owner, repo, path, message, sha, branch, token) {
+      if (!sha) return;
+      const url = GIT_API_BASE + '/repos/' + encodeURIComponent(owner) + '/' + encodeURIComponent(repo)
+        + '/contents/' + encodeGitPath(path);
+      const res = await gitFetch(url, {
+        method: 'DELETE',
+        mode: 'cors',
+        headers: gitHeaders(token, true),
+        body: JSON.stringify({
+          message: message || ('Remove deleted receipt ' + path),
+          sha: sha,
+          branch: branch
+        })
+      }, 'Delete ' + path);
+      if (!res.ok && res.status !== 404 && res.status !== 409) {
+        const errObj = await res.json().catch(function () { return {}; });
+        console.warn('Git delete receipt skipped:', res.status, errObj.message);
+      }
+    }
+
+    async function testGitRepoConnection() {
+      const repoInp = document.getElementById('git-repo-input');
+      const brInp = document.getElementById('git-branch-input');
+      const tokInp = document.getElementById('git-token-input');
+      const token = sanitizeGistCredential((tokInp && tokInp.value) ? tokInp.value : gitSync.cfg.token);
+      const rawRepo = ((repoInp && repoInp.value) ? repoInp.value : gitSync.cfg.repo || '').trim();
+      const branch = ((brInp && brInp.value) ? brInp.value : gitSync.cfg.branch || 'main').trim() || 'main';
+      if (!token || !rawRepo) {
+        showToast('Enter both GitHub Repository and Token first.', 'amber');
+        return;
+      }
+      showToast('Testing Git repository access…', 'indigo');
+      try {
+        const target = await resolveGitOwnerRepo(rawRepo, token);
+        const res = await gitFetch(GIT_API_BASE + '/repos/' + encodeURIComponent(target.owner) + '/' + encodeURIComponent(target.repo) + '?_cb=' + Date.now(), {
+          method: 'GET', mode: 'cors', headers: gitHeaders(token, false)
+        }, 'Verify Git repository');
+        if (res.status === 404) {
+          throw new Error('Repo "' + target.full + '" not found — create a Private repo with that name on GitHub, or tap Connect with a Classic repo token to auto-create it.');
+        }
+        if (!res.ok) {
+          const errObj = await res.json().catch(function () { return {}; });
+          throw new Error(formatGitHttpError(res, 'Repo check', errObj.message));
+        }
+        const info = await res.json();
+        const canPush = !info.permissions || info.permissions.push !== false;
+        if (!canPush) throw new Error('Token only has Read access — enable Contents: Read & write.');
+        gitSync.lastError = '';
+        renderCloudStatusUI();
+        showToast('Connected ✓ ' + target.full + ' (' + (info.private ? 'Private' : 'Public') + ' · branch ' + (info.default_branch || branch) + ')', 'green');
+      } catch (err) {
+        gitSync.lastError = err.message || 'Test failed';
+        renderCloudStatusUI();
+        showToast('Git test failed: ' + gitSync.lastError, 'red');
+      }
+    }
+
+    async function connectGitRepo() {
+      const repoInp = document.getElementById('git-repo-input');
+      const brInp = document.getElementById('git-branch-input');
+      const tokInp = document.getElementById('git-token-input');
+      const token = sanitizeGistCredential((tokInp && tokInp.value) ? tokInp.value : gitSync.cfg.token);
+      const rawRepo = ((repoInp && repoInp.value) ? repoInp.value : gitSync.cfg.repo || '').trim();
+      let branch = ((brInp && brInp.value) ? brInp.value : gitSync.cfg.branch || 'main').trim() || 'main';
+      if (!token) {
+        showToast('Paste your GitHub Personal Access Token first.', 'amber');
+        return;
+      }
+      if (!rawRepo) {
+        showToast('Enter your GitHub Repository (e.g. username/claimflow-sync).', 'amber');
+        return;
+      }
+
+      gitSync.busy = true;
+      gitSync.lastError = '';
+      gitSync.progressText = 'Checking repo…';
+      renderCloudStatusUI();
+
+      try {
+        const target = await resolveGitOwnerRepo(rawRepo, token);
+        const checkRes = await gitFetch(GIT_API_BASE + '/repos/' + encodeURIComponent(target.owner) + '/' + encodeURIComponent(target.repo) + '?_cb=' + Date.now(), {
+          method: 'GET', mode: 'cors', headers: gitHeaders(token, false)
+        }, 'Check repository');
+
+        if (checkRes.status === 404) {
+          // Attempt to auto-create private repo (succeeds for classic repo tokens or fine-grained with Administration: Write)
+          gitSync.progressText = 'Creating private repo…';
+          renderCloudStatusUI();
+          const createRes = await gitFetch(GIT_API_BASE + '/user/repos', {
+            method: 'POST',
+            mode: 'cors',
+            headers: gitHeaders(token, true),
+            body: JSON.stringify({
+              name: target.repo,
+              description: 'ClaimFlow Private Travel Claims Sync Repository',
+              private: true,
+              auto_init: true
+            })
+          }, 'Auto-create private repo');
+          if (!createRes.ok) {
+            throw new Error('Repo "' + target.full + '" not found. Create an empty Private repo named "' + target.repo + '" on GitHub first, then tap Connect again.');
+          }
+          const created = await createRes.json();
+          if (created && created.default_branch) branch = created.default_branch;
+        } else if (!checkRes.ok) {
+          const errObj = await checkRes.json().catch(function () { return {}; });
+          throw new Error(formatGitHttpError(checkRes, 'Repo check', errObj.message));
+        } else {
+          const info = await checkRes.json();
+          if (info && info.default_branch && (!brInp || !brInp.value.trim() || brInp.value.trim() === 'main')) {
+            branch = info.default_branch;
+          }
+        }
+
+        gitSync.cfg.enabled = true;
+        gitSync.cfg.token = token;
+        gitSync.cfg.repo = target.full;
+        gitSync.cfg.branch = branch;
+        saveGitConfig();
+        if (tokInp) tokInp.value = '';
+        gitSync.busy = false;
+        gitSync.progressText = '';
+        await syncGitRepoTwoWay(false, false);
+      } catch (err) {
+        gitSync.busy = false;
+        gitSync.progressText = '';
+        gitSync.lastError = err.message || 'Git connect failed';
+        renderCloudStatusUI();
+        showToast('Git connect failed: ' + gitSync.lastError, 'red');
+      }
+    }
+
+    async function syncGitRepoTwoWay(silent, pushPreferred, retryDepth) {
+      if (!isGitSyncConfigured()) return;
+      const attemptNum = retryDepth || 0;
+      if (gitSync.busy && attemptNum === 0) {
+        if (pushPreferred) gitSync.pendingPush = true;
+        return;
+      }
+      if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+        gitSync.pendingPush = true;
+        gitSync.lastError = '';
+        renderCloudStatusUI();
+        if (!silent) showToast('Offline — saved locally & queued for Git sync when back online.', 'amber');
+        return;
+      }
+
+      const token = sanitizeGistCredential(gitSync.cfg.token);
+      const repoParts = String(gitSync.cfg.repo || '').split('/').filter(Boolean);
+      if (repoParts.length < 2) {
+        gitSync.lastError = 'Invalid repo name — use owner/repo';
+        renderCloudStatusUI();
+        return;
+      }
+      const owner = repoParts[0];
+      const repo = repoParts[1];
+      const branch = (gitSync.cfg.branch || 'main').trim() || 'main';
+
+      gitSync.busy = true;
+      gitSync.lastError = '';
+      gitSync.progressText = 'Checking Git…';
+      const runEpoch = gitSync.localEpoch;
+      renderCloudStatusUI();
+
+      try {
+        flushLocalSave(false, false);
+
+        // 1. Read remote claimflow-db.json (if present)
+        const remoteFile = await gitGetFile(owner, repo, GIST_DATA_FILE, branch, token);
+        let remoteDb = null;
+        let remoteDbSha = remoteFile ? remoteFile.sha : '';
+        if (remoteFile && remoteFile.content) {
+          const parsedText = base64ToUtf8(remoteFile.content);
+          if (parsedText && parsedText.trim()) remoteDb = JSON.parse(parsedText);
+        }
+
+        // 2. Merge tombstones & custom destination presets
+        const mergedDeleted = mergeDeletedReceiptIds(remoteDb && remoteDb.deletedReceiptIds);
+        const deletedSet = {};
+        mergedDeleted.forEach(function (id) { deletedSet[id] = true; });
+        let needPushDb = !remoteDb || !!pushPreferred;
+        if (mergedDeleted.length !== (remoteDb && Array.isArray(remoteDb.deletedReceiptIds) ? remoteDb.deletedReceiptIds.length : 0)) {
+          needPushDb = true;
+        }
+        if (remoteDb && Array.isArray(remoteDb._customPresets)) {
+          mergeCustomRoutePresets(remoteDb._customPresets);
+        }
+
+        // 3. Capture-safe Item-Level Smart-Merge of all Trips
+        let addedTrips = 0;
+        let updatedTrips = 0;
+        let totalAddedLines = 0;
+        let totalUpdatedLines = 0;
+        let totalAddedDays = 0;
+        const tripIdRemap = {};
+        const allDayIdRemaps = {};
+
+        if (remoteDb && Array.isArray(remoteDb.trips)) {
+          const remoteTrips = remoteDb.trips.map(function (rt) { return normalizeTrip(Object.assign({}, rt)); });
+          const matchedLocalIds = {};
+
+          remoteTrips.forEach(function (rt) {
+            const idx = findMatchingLocalTripIndex(rt);
+            if (idx < 0) {
+              store.trips.unshift(rt);
+              matchedLocalIds[rt.id] = true;
+              addedTrips++;
+            } else {
+              const canonicalId = store.trips[idx].id;
+              matchedLocalIds[canonicalId] = true;
+              if (rt.id !== canonicalId) tripIdRemap[rt.id] = canonicalId;
+              const resM = smartMergeTrips(store.trips[idx], rt);
+              store.trips[idx] = resM.trip;
+              totalAddedLines += resM.addedLines || 0;
+              totalUpdatedLines += resM.updatedLines || 0;
+              totalAddedDays += resM.addedDays || 0;
+              if (resM.changedLocal) updatedTrips++;
+              if (resM.changedRemote) needPushDb = true;
+              if (resM.dayIdRemap && Object.keys(resM.dayIdRemap).length > 0) {
+                allDayIdRemaps[canonicalId] = Object.assign(allDayIdRemaps[canonicalId] || {}, resM.dayIdRemap);
+              }
+            }
+          });
+
+          // If local has trips not present remotely, push them
+          store.trips.forEach(function (lt) {
+            if (!matchedLocalIds[lt.id]) needPushDb = true;
+          });
+
+          const remapTripIds = Object.keys(allDayIdRemaps);
+          for (let rti = 0; rti < remapTripIds.length; rti++) {
+            await remapStoredReceiptsDayIds(remapTripIds[rti], allDayIdRemaps[remapTripIds[rti]]);
+          }
+
+          if (addedTrips > 0 || updatedTrips > 0) {
+            state = getActiveTrip();
+            try { localStorage.setItem(STORE_KEY, JSON.stringify(store)); } catch (e) {}
+            renderAll();
+          }
+        }
+
+        // 4. Incremental Per-File Receipt Photo Sync (1 JPEG file per photo in receipts/)
+        let pulledReceipts = 0;
+        let pushedReceipts = 0;
+        let updatedReceiptMeta = 0;
+        const remoteMetaMap = (remoteDb && remoteDb.receiptMeta && typeof remoteDb.receiptMeta === 'object') ? remoteDb.receiptMeta : {};
+        const finalMetaMap = {};
+
+        if (gitSync.cfg.syncReceipts !== false) {
+          let localRecs = await idbGetAllReceipts();
+          for (let i = 0; i < localRecs.length; i++) {
+            if (deletedSet[localRecs[i].id]) await idbDeleteReceipt(localRecs[i].id);
+          }
+          localRecs = localRecs.filter(function (r) { return r && r.id && !deletedSet[r.id]; });
+          const localMap = {};
+          localRecs.forEach(function (r) { localMap[r.id] = r; });
+
+          const remoteFilesMap = await gitListReceiptFiles(owner, repo, branch, token);
+
+          // 4A. Pull any remote receipts missing locally (or with newer cropped/rotated imgHash)
+          const remoteIds = Object.keys(remoteFilesMap);
+          const toDownload = [];
+          for (let i = 0; i < remoteIds.length; i++) {
+            const rid = remoteIds[i];
+            if (deletedSet[rid]) continue;
+            const rMeta = remoteMetaMap[rid] || null;
+            const localRec = localMap[rid] || null;
+            if (!localRec) {
+              toDownload.push({ id: rid, file: remoteFilesMap[rid], meta: rMeta });
+            } else if (rMeta) {
+              const localHash = computeReceiptImageHash(localRec);
+              const lUpd = Number(localRec.updatedAt) || Number(localRec.createdAt) || 0;
+              const rUpd = Number(rMeta.updatedAt) || Number(rMeta.createdAt) || 0;
+              if (rMeta.imgHash && rMeta.imgHash !== localHash && rUpd > lUpd) {
+                toDownload.push({ id: rid, file: remoteFilesMap[rid], meta: rMeta });
+              } else if (rUpd > lUpd && !receiptMetaEqual(extractReceiptMeta(localRec), rMeta)) {
+                // Metadata-only update (reassigned line/note/role/orient) — zero image download needed!
+                const mappedTrip = (rMeta.tripId && tripIdRemap[rMeta.tripId]) ? tripIdRemap[rMeta.tripId] : (rMeta.tripId || localRec.tripId);
+                const dRemap = allDayIdRemaps[mappedTrip];
+                const mappedDay = (dRemap && rMeta.dayId && dRemap[rMeta.dayId]) ? dRemap[rMeta.dayId] : (rMeta.dayId || '');
+                localRec.tripId = mappedTrip;
+                localRec.scope = rMeta.scope || localRec.scope;
+                localRec.itemId = rMeta.itemId || '';
+                localRec.dayId = mappedDay;
+                localRec.role = rMeta.role || localRec.role;
+                localRec.orient = rMeta.orient || localRec.orient;
+                localRec.note = rMeta.note != null ? rMeta.note : localRec.note;
+                localRec.updatedAt = rUpd;
+                await idbPutReceipt(localRec);
+                updatedReceiptMeta++;
+              }
+            }
+          }
+
+          for (let dIdx = 0; dIdx < toDownload.length; dIdx++) {
+            const job = toDownload[dIdx];
+            gitSync.progressText = 'Pulling photo ' + (dIdx + 1) + '/' + toDownload.length + '…';
+            renderCloudStatusUI();
+            const fObj = await gitGetFile(owner, repo, job.file.path, branch, token);
+            if (!fObj || !fObj.content) continue;
+            const meta = job.meta || {};
+            const mime = meta.mime || (/\.png$/i.test(job.file.name) ? 'image/png' : 'image/jpeg');
+            const dataUrl = 'data:' + mime + ';base64,' + fObj.content;
+            const mappedTrip = (meta.tripId && tripIdRemap[meta.tripId]) ? tripIdRemap[meta.tripId] : (meta.tripId || state.id);
+            const dRemap = allDayIdRemaps[mappedTrip];
+            const mappedDay = (dRemap && meta.dayId && dRemap[meta.dayId]) ? dRemap[meta.dayId] : (meta.dayId || '');
+            const rec = {
+              id: job.id,
+              tripId: mappedTrip,
+              scope: meta.scope || 'unmatched',
+              itemId: meta.itemId || '',
+              dayId: mappedDay,
+              role: meta.role === 'bank' ? 'bank' : (meta.role === 'policy' ? 'policy' : 'receipt'),
+              orient: (meta.orient === 'landscape' || meta.orient === 'portrait') ? meta.orient : 'auto',
+              name: meta.name || job.file.name || (job.id + '.jpg'),
+              note: meta.note || '',
+              dataUrl: dataUrl,
+              width: Number(meta.width) || 0,
+              height: Number(meta.height) || 0,
+              bytes: Number(meta.bytes) || estimateDataUrlBytes(dataUrl),
+              isBW: !!meta.isBW,
+              createdAt: Number(meta.createdAt) || Date.now(),
+              updatedAt: Number(meta.updatedAt) || Number(meta.createdAt) || Date.now()
+            };
+            await idbPutReceipt(rec);
+            localMap[rec.id] = rec;
+            pulledReceipts++;
+          }
+
+          // 4B. Upload ONLY local receipts missing remotely or modified (cropped/rotated)
+          const allLocalList = Object.keys(localMap).map(function (k) { return localMap[k]; });
+          const toUpload = [];
+          allLocalList.forEach(function (lr) {
+            const meta = extractReceiptMeta(lr);
+            finalMetaMap[lr.id] = meta;
+            const remFile = remoteFilesMap[lr.id];
+            const remMeta = remoteMetaMap[lr.id];
+            if (!remFile) {
+              toUpload.push({ rec: lr, existingSha: '' });
+            } else if (!remMeta || (remMeta.imgHash && remMeta.imgHash !== meta.imgHash && meta.updatedAt >= (Number(remMeta.updatedAt) || 0))) {
+              toUpload.push({ rec: lr, existingSha: remFile.sha });
+            }
+            if (!remMeta || !receiptMetaEqual(meta, remMeta)) {
+              needPushDb = true;
+            }
+          });
+
+          for (let uIdx = 0; uIdx < toUpload.length; uIdx++) {
+            const uJob = toUpload[uIdx];
+            gitSync.progressText = 'Uploading photo ' + (uIdx + 1) + '/' + toUpload.length + '…';
+            renderCloudStatusUI();
+            const commaIdx = String(uJob.rec.dataUrl || '').indexOf(',');
+            const rawB64 = commaIdx >= 0 ? uJob.rec.dataUrl.slice(commaIdx + 1) : '';
+            if (!rawB64) continue;
+            const path = 'receipts/' + uJob.rec.id + '.jpg';
+            await gitPutFile(owner, repo, path, rawB64, 'ClaimFlow receipt ' + uJob.rec.id, uJob.existingSha || '', branch, token);
+            pushedReceipts++;
+            needPushDb = true;
+          }
+
+          // 4C. Clean up remote receipt files that were explicitly deleted
+          const remoteDelIds = Object.keys(remoteFilesMap).filter(function (id) { return !!deletedSet[id]; });
+          for (let delIdx = 0; delIdx < remoteDelIds.length; delIdx++) {
+            const delId = remoteDelIds[delIdx];
+            await gitDeleteFile(owner, repo, remoteFilesMap[delId].path, 'Remove deleted receipt ' + delId, remoteFilesMap[delId].sha, branch, token);
+            needPushDb = true;
+          }
+
+          // Check if any remoteMetaMap key was removed
+          Object.keys(remoteMetaMap).forEach(function (rk) {
+            if (!finalMetaMap[rk]) needPushDb = true;
+          });
+
+          gitSync.lastSyncedReceiptsCount = allLocalList.length;
+          if (pulledReceipts > 0 || updatedReceiptMeta > 0) {
+            await loadTripReceipts();
+          }
+        }
+
+        // 5. Commit updated claimflow-db.json to Git (tiny ~20-60 KB JSON — instant!)
+        if (needPushDb) {
+          gitSync.progressText = 'Saving trips to Git…';
+          renderCloudStatusUI();
+          const dbPayload = {
+            version: 5,
+            activeTripId: store.activeTripId,
+            trips: store.trips,
+            _customPresets: loadCustomRoutePresets(),
+            deletedReceiptIds: mergedDeleted,
+            receiptMeta: finalMetaMap,
+            updatedAt: Date.now()
+          };
+          const jsonStr = JSON.stringify(dbPayload, null, 2);
+          await gitPutFile(
+            owner, repo, GIST_DATA_FILE,
+            utf8ToBase64(jsonStr),
+            'ClaimFlow sync (' + store.trips.length + ' trips, ' + Object.keys(finalMetaMap).length + ' receipts)',
+            remoteDbSha,
+            branch,
+            token
+          );
+        }
+
+        // Mirror pulled updates to Desktop local folder DB if linked
+        if ((addedTrips > 0 || updatedTrips > 0 || pulledReceipts > 0) && cloudSync.handle && !cloudSync.needsReconnect && cloudSync.prefs.autoWrite) {
+          writeCloudFile();
+        }
+
+        gitSync.cfg.lastSyncedAt = Date.now();
+        gitSync.lastPullCheckAt = Date.now();
+        if (gitSync.localEpoch === runEpoch) {
+          gitSync.pendingPush = false;
+        }
+        saveGitConfig();
+
+        const summaryTxt = buildMergeSummaryText({
+          addedTrips: addedTrips,
+          updatedTrips: updatedTrips,
+          addedLines: totalAddedLines,
+          updatedLines: totalUpdatedLines,
+          addedDays: totalAddedDays,
+          addedReceipts: pulledReceipts,
+          updatedReceipts: updatedReceiptMeta
+        });
+        if (addedTrips > 0 || updatedTrips > 0 || pulledReceipts > 0 || pushedReceipts > 0) {
+          recordLastMergeSummary(
+            pushedReceipts > 0 ? ('Pushed ' + pushedReceipts + ' photo(s) · ' + summaryTxt) : summaryTxt,
+            'Git: ' + gitSync.cfg.repo
+          );
+        }
+
+        const totalRecs = gitSync.lastSyncedReceiptsCount != null ? gitSync.lastSyncedReceiptsCount : receiptVault.photos.length;
+        if (!silent) {
+          if (pushedReceipts > 0 || pulledReceipts > 0 || addedTrips > 0 || updatedTrips > 0) {
+            const pParts = [];
+            if (pushedReceipts > 0) pParts.push('↑' + pushedReceipts + ' photo' + (pushedReceipts === 1 ? '' : 's'));
+            if (pulledReceipts > 0) pParts.push('↓' + pulledReceipts + ' photo' + (pulledReceipts === 1 ? '' : 's'));
+            if (totalAddedLines > 0 || addedTrips > 0 || totalAddedDays > 0) pParts.push(summaryTxt);
+            showToast('Git Synced ✓ ' + (pParts.length ? pParts.join(' · ') : (totalRecs + ' receipts')), 'green');
+          } else {
+            showToast('Git Synced ✓ (' + gitSync.cfg.repo + ' · ' + totalRecs + ' receipt' + (totalRecs === 1 ? '' : 's') + ')', 'green');
+          }
+        } else if (pulledReceipts > 0 || addedTrips > 0 || updatedTrips > 0) {
+          showToast('Git Auto-Sync: ' + summaryTxt, 'green');
+        }
+      } catch (err) {
+        if (err && err.isConflict && attemptNum < 2) {
+          gitSync.busy = false;
+          gitSync.progressText = 'Merging conflict…';
+          return await syncGitRepoTwoWay(silent, true, attemptNum + 1);
+        }
+        gitSync.lastError = (err && err.message) ? err.message : 'Git sync error';
+        if (pushPreferred) gitSync.pendingPush = true;
+        if (!silent) showToast('Git sync failed: ' + gitSync.lastError, 'red');
+      } finally {
+        gitSync.busy = false;
+        gitSync.progressText = '';
+        renderCloudStatusUI();
+        if (document.documentElement.getAttribute('data-layout') === 'mobile') renderWorkspace();
+        if (gitSync.localEpoch !== runEpoch && !gitSync.lastError && isGitSyncConfigured() && gitSync.cfg.autoPush !== false) {
+          gitSync.pendingPush = true;
+          clearTimeout(gitSync.pushTimer);
+          gitSync.pushTimer = setTimeout(function () {
+            syncGitRepoTwoWay(true, true);
+          }, 500);
+        }
+      }
+    }
+
+    function copyGitPairingCode() {
+      if (!isGitSyncConfigured()) {
+        showToast('Connect Git Repository Sync first.', 'amber');
+        return;
+      }
+      try {
+        const json = JSON.stringify({
+          t: gitSync.cfg.token,
+          r: gitSync.cfg.repo,
+          b: gitSync.cfg.branch || 'main',
+          p: gitSync.cfg.syncReceipts !== false
+        });
+        const code = 'CLAIMFLOW_GIT1:' + utf8ToBase64(json);
+        copyToClipboard(code);
+        showToast('Copied 1-Tap Git Pair Code! Paste on your iPhone/Desktop.', 'green');
+      } catch (e) {
+        showToast('Could not generate Git pair code.', 'red');
+      }
+    }
+
+    async function pairGitFromCode() {
+      const inp = document.getElementById('git-pair-code-input');
+      const raw = inp ? inp.value.trim() : '';
+      if (!raw || raw.indexOf('CLAIMFLOW_GIT1:') !== 0) {
+        showToast('Paste a valid CLAIMFLOW_GIT1:... pairing code.', 'amber');
+        return;
+      }
+      try {
+        const decoded = base64ToUtf8(raw.slice('CLAIMFLOW_GIT1:'.length));
+        const obj = JSON.parse(decoded);
+        if (!obj || !obj.t || !obj.r) throw new Error('Incomplete Git pair code');
+        gitSync.cfg.enabled = true;
+        gitSync.cfg.token = sanitizeGistCredential(obj.t);
+        gitSync.cfg.repo = String(obj.r).trim();
+        gitSync.cfg.branch = String(obj.b || 'main').trim() || 'main';
+        gitSync.cfg.syncReceipts = obj.p !== false;
+        saveGitConfig();
+        if (inp) inp.value = '';
+        await syncGitRepoTwoWay(false, false);
+      } catch (err) {
+        showToast('Invalid Git pair code: ' + err.message, 'red');
+      }
+    }
+
+    function disconnectGitRepo() {
+      openModal({
+        title: 'Disconnect Git Repository Sync?',
+        message: 'Stops automatic Git syncing on this device. Your local trips and GitHub repository stay completely intact.',
+        confirmLabel: 'Disconnect',
+        confirmClass: 'btn-red-soft',
+        onConfirm: function () {
+          gitSync.cfg.enabled = false;
+          gitSync.cfg.token = '';
+          gitSync.pendingPush = false;
+          gitSync.lastError = '';
+          gitSync.progressText = '';
+          saveGitConfig();
+          renderCloudStatusUI();
+          if (document.documentElement.getAttribute('data-layout') === 'mobile') renderWorkspace();
+          showToast('Disconnected Git Repository Sync.', 'amber');
+        }
+      });
+    }
+
+    function triggerOneClickSync() {
+      if (isGitSyncConfigured()) {
+        syncGitRepoTwoWay(false, !!gitSync.pendingPush);
+        return;
+      }
+      if (cloudSync.handle) {
+        syncCloudNow();
+        return;
+      }
+      openCloudModal();
     }
 
     /**
@@ -7981,9 +8818,25 @@
     }
 
     function renderMobileGistSyncChipHtml() {
+      if (isGitSyncConfigured()) {
+        if (gitSync.busy) {
+          return '<button type="button" class="aware-sync-chip syncing" onclick="openCloudModal()">↻ ' + esc(gitSync.progressText || 'Syncing…') + '</button>';
+        }
+        if (gitSync.lastError) {
+          return '<button type="button" class="aware-sync-chip error" onclick="syncGitRepoTwoWay(false,true)" title="' + esc(gitSync.lastError) + '">⚠️ Retry Git</button>';
+        }
+        if (gitSync.pendingPush) {
+          return '<button type="button" class="aware-sync-chip pending" onclick="syncGitRepoTwoWay(false,true)">🔄 Push Sync</button>';
+        }
+        const t = gitSync.cfg.lastSyncedAt ? (' · ' + fmtTimeHHMM(gitSync.cfg.lastSyncedAt)) : '';
+        return '<button type="button" class="aware-sync-chip synced" onclick="syncGitRepoTwoWay(false,false)" title="1-Tap Git Sync with Desktop">🔄 Git' + esc(t) + '</button>';
+      }
+      if (cloudSync.needsManualWriteback) {
+        return '<button type="button" class="aware-sync-chip pending" onclick="exportFullWorkspaceJSON(true)" title="Save merged file back to Files/iCloud">📲 Save Back</button>';
+      }
       const lastM = loadLastMergeSummary();
-      const tip = lastM ? ('Last merge ' + fmtTimeHHMM(lastM.at) + ': ' + lastM.summary) : 'Backup or Smart-Merge JSON across iPhone & Desktop';
-      return '<button type="button" class="aware-sync-chip' + (lastM ? ' synced' : '') + '" onclick="openCloudModal()" title="' + esc(tip) + '">📦 Backup / Merge</button>';
+      const tip = lastM ? ('Last merge ' + fmtTimeHHMM(lastM.at) + ': ' + lastM.summary) : 'Backup, Smart-Merge or connect 1-Click Git Sync';
+      return '<button type="button" class="aware-sync-chip' + (lastM ? ' synced' : '') + '" onclick="openCloudModal()" title="' + esc(tip) + '">📦 Sync / Merge</button>';
     }
 
     /* --- Direct OneDrive API (Microsoft Graph + OAuth2 PKCE SPA Flow) --- */
@@ -9065,12 +9918,24 @@
 
     async function initCloudSync() {
       loadCloudPrefs();
+      loadGitConfig();
       const chkW = document.getElementById('chk-cloud-autowrite');
       const chkP = document.getElementById('chk-cloud-autopull');
       const chkE = document.getElementById('chk-cloud-embed-receipts');
       if (chkW) chkW.checked = !!cloudSync.prefs.autoWrite;
       if (chkP) chkP.checked = !!cloudSync.prefs.autoPull;
       if (chkE) chkE.checked = cloudSync.prefs.embedReceipts !== false;
+
+      const chkGPush = document.getElementById('chk-git-autopush');
+      const chkGPull = document.getElementById('chk-git-autopull');
+      const chkGRec = document.getElementById('chk-git-receipts');
+      if (chkGPush) chkGPush.checked = gitSync.cfg.autoPush !== false;
+      if (chkGPull) chkGPull.checked = gitSync.cfg.autoPull !== false;
+      if (chkGRec) chkGRec.checked = gitSync.cfg.syncReceipts !== false;
+
+      if (isGitSyncConfigured() && gitSync.cfg.autoPull !== false) {
+        syncGitRepoTwoWay(true, false);
+      }
 
       if (CLOUD_APIS_ENABLED) {
         loadOneDriveConfig();
@@ -9115,12 +9980,79 @@
     function renderCloudStatusUI() {
       const btn = document.getElementById('cloud-sync-btn');
       const btnTxt = document.getElementById('cloud-sync-btn-text');
+      const qSyncBtn = document.getElementById('quick-sync-now-btn');
+      const qSyncTxt = document.getElementById('quick-sync-now-text');
       const modePill = document.getElementById('cloud-mode-pill');
       const statusEl = document.getElementById('cloud-fs-status');
       const actionsEl = document.getElementById('cloud-fs-actions');
       const mergeBox = document.getElementById('last-merge-status-box');
       const mergePill = document.getElementById('merge-status-pill');
+      const wbBanner = document.getElementById('iphone-writeback-banner');
       const fsSupported = !!(window.showOpenFilePicker && window.showSaveFilePicker);
+      const gitConnected = isGitSyncConfigured();
+
+      // Method 4: Git Repository Sync UI
+      const gitPill = document.getElementById('git-mode-pill');
+      const gitBox = document.getElementById('git-status-box');
+      const gitActs = document.getElementById('git-connected-actions');
+      const gitSetup = document.getElementById('git-setup-panel');
+      const gitRepoInp = document.getElementById('git-repo-input');
+      const gitBrInp = document.getElementById('git-branch-input');
+
+      if (gitRepoInp && !gitRepoInp.value && gitSync.cfg.repo) gitRepoInp.value = gitSync.cfg.repo;
+      if (gitBrInp && !gitBrInp.value && gitSync.cfg.branch) gitBrInp.value = gitSync.cfg.branch;
+
+      if (gitPill) {
+        if (gitSync.busy) {
+          gitPill.className = 'pill pill-sky';
+          gitPill.textContent = gitSync.progressText || 'Syncing…';
+        } else if (gitConnected && gitSync.lastError) {
+          gitPill.className = 'pill pill-red';
+          gitPill.textContent = 'Sync Error';
+        } else if (gitConnected && gitSync.pendingPush) {
+          gitPill.className = 'pill pill-amber';
+          gitPill.textContent = 'Changes Queued';
+        } else if (gitConnected) {
+          gitPill.className = 'pill pill-green';
+          gitPill.textContent = '1-Click Git Sync ✓';
+        } else {
+          gitPill.className = 'pill pill-neutral';
+          gitPill.textContent = 'Not Connected';
+        }
+      }
+
+      if (gitBox) {
+        if (gitConnected) {
+          const lastGStr = gitSync.cfg.lastSyncedAt ? fmtTimeHHMM(gitSync.cfg.lastSyncedAt) : 'Just connected';
+          const recCnt = gitSync.lastSyncedReceiptsCount != null ? gitSync.lastSyncedReceiptsCount : receiptVault.photos.length;
+          gitBox.innerHTML = '<div style="font-size:12px;">'
+            + '<strong>🐙 <span class="mono">' + esc(gitSync.cfg.repo) + '</span></strong> <span class="mono" style="font-size:11px;color:var(--text-subtle);">(' + esc(gitSync.cfg.branch || 'main') + ')</span>'
+            + '<div style="font-size:11px;color:' + (gitSync.lastError ? 'var(--red-text)' : 'var(--text-subtle)') + ';">'
+            + (gitSync.lastError ? ('Error: ' + esc(gitSync.lastError)) : (gitSync.busy ? esc(gitSync.progressText || 'Syncing…') : ('Last synced: ' + lastGStr + ' · ' + store.trips.length + ' trip(s) · ' + recCnt + ' receipt(s)')))
+            + '</div></div>'
+            + '<span class="pill ' + (gitSync.lastError ? 'pill-red' : (gitSync.busy ? 'pill-sky' : 'pill-green')) + '">' + (gitSync.busy ? '↻ Syncing' : (gitSync.pendingPush ? 'Queued' : 'Auto ✓')) + '</span>';
+        } else {
+          gitBox.innerHTML = '<div style="font-size:12px;color:var(--text-muted);">True <strong>1-click two-way sync</strong> between iPhone Safari and Desktop via your own private GitHub repository. Stores each receipt as its own JPEG file so edits sync in under 1 second.</div>';
+        }
+      }
+
+      if (gitActs) {
+        gitActs.style.display = gitConnected ? 'flex' : 'none';
+        if (gitConnected) {
+          gitActs.innerHTML =
+            '<button type="button" class="btn btn-sm btn-primary" onclick="syncGitRepoTwoWay(false,false)"' + (gitSync.busy ? ' disabled' : '') + '>🔄 Sync Now</button>'
+            + '<button type="button" class="btn btn-sm btn-soft" onclick="testGitRepoConnection()"' + (gitSync.busy ? ' disabled' : '') + '>🩺 Test</button>'
+            + '<button type="button" class="btn btn-sm btn-green-soft" onclick="copyGitPairingCode()">📲 Copy 1-Tap Git Pair Code</button>'
+            + '<button type="button" class="btn btn-sm btn-red-soft" onclick="disconnectGitRepo()">Disconnect</button>';
+        }
+      }
+      if (gitSetup) {
+        gitSetup.style.display = gitConnected ? 'none' : 'flex';
+      }
+
+      if (wbBanner) {
+        wbBanner.style.display = cloudSync.needsManualWriteback ? 'flex' : 'none';
+      }
 
       if (mergeBox) {
         const lastM = loadLastMergeSummary();
@@ -9143,17 +10075,47 @@
         }
       }
 
+      // 1-Click Top Bar Sync Button (shown on BOTH Desktop & Mobile when Git Sync or Local Folder is active)
+      if (qSyncBtn && qSyncTxt) {
+        if (gitConnected) {
+          qSyncBtn.style.display = 'inline-flex';
+          qSyncBtn.disabled = !!gitSync.busy;
+          if (gitSync.busy) {
+            qSyncBtn.className = 'btn btn-sm btn-sky-soft';
+            qSyncTxt.textContent = '↻ Sync…';
+          } else if (gitSync.lastError) {
+            qSyncBtn.className = 'btn btn-sm btn-red-soft';
+            qSyncTxt.textContent = '⚠️ Retry';
+          } else if (gitSync.pendingPush) {
+            qSyncBtn.className = 'btn btn-sm btn-soft';
+            qSyncTxt.textContent = '↑ Sync';
+          } else {
+            qSyncBtn.className = 'btn btn-sm btn-green-soft';
+            qSyncTxt.textContent = '🔄 Sync';
+          }
+        } else if (cloudSync.handle) {
+          qSyncBtn.style.display = 'inline-flex';
+          qSyncBtn.disabled = false;
+          qSyncBtn.className = cloudSync.needsReconnect ? 'btn btn-sm btn-soft' : 'btn btn-sm btn-green-soft';
+          qSyncTxt.textContent = cloudSync.needsReconnect ? '🔓 Link' : '🔄 Sync';
+        } else {
+          qSyncBtn.style.display = 'none';
+        }
+      }
+
       if (btn) {
-        const isLinked = !!(cloudSync.handle && !cloudSync.needsReconnect);
-        const isWarn = !!(cloudSync.handle && cloudSync.needsReconnect);
-        btn.classList.toggle('linked', isLinked);
+        const isLinked = gitConnected || !!(cloudSync.handle && !cloudSync.needsReconnect);
+        const isWarn = (gitConnected && !!gitSync.lastError) || !!(cloudSync.handle && cloudSync.needsReconnect);
+        btn.classList.toggle('linked', isLinked && !isWarn);
         btn.classList.toggle('reconnect', isWarn);
       }
       if (btnTxt) {
-        if (cloudSync.handle) {
-          btnTxt.textContent = cloudSync.needsReconnect ? 'Reconnect JSON' : 'Backup / Merge ✓';
+        if (gitConnected) {
+          btnTxt.textContent = gitSync.busy ? 'Git Sync…' : (gitSync.lastError ? 'Git Error' : 'Git ✓');
+        } else if (cloudSync.handle) {
+          btnTxt.textContent = cloudSync.needsReconnect ? 'Reconnect JSON' : 'Folder ✓';
         } else {
-          btnTxt.textContent = 'Backup / Merge';
+          btnTxt.textContent = 'Backup / Sync';
         }
       }
 
@@ -9290,6 +10252,14 @@
 
     function scheduleCloudWrite(immediate) {
       bumpSyncEpochs();
+      if (isGitSyncConfigured() && gitSync.cfg.autoPush !== false) {
+        gitSync.pendingPush = true;
+        renderCloudStatusUI();
+        clearTimeout(gitSync.pushTimer);
+        gitSync.pushTimer = setTimeout(function () {
+          syncGitRepoTwoWay(true, true);
+        }, immediate ? 450 : 3000);
+      }
       if (CLOUD_APIS_ENABLED && oneDriveSync.cfg.enabled && oneDriveSync.cfg.clientId && (oneDriveSync.cfg.accessToken || oneDriveSync.cfg.refreshToken) && oneDriveSync.cfg.autoPush !== false) {
         oneDriveSync.pendingPush = true;
         clearTimeout(oneDriveSync.pushTimer);
@@ -9323,6 +10293,12 @@
     }
 
     async function checkCloudFileUpdates(force) {
+      if (isGitSyncConfigured() && (force || gitSync.cfg.autoPull !== false)) {
+        const nowGit = Date.now();
+        if (force || gitSync.pendingPush || (nowGit - gitSync.lastPullCheckAt > 15000)) {
+          syncGitRepoTwoWay(true, !!gitSync.pendingPush);
+        }
+      }
       if (CLOUD_APIS_ENABLED && oneDriveSync.cfg.enabled && oneDriveSync.cfg.clientId && (oneDriveSync.cfg.accessToken || oneDriveSync.cfg.refreshToken) && (force || oneDriveSync.cfg.autoPull !== false)) {
         const nowOd = Date.now();
         if (force || oneDriveSync.pendingPush || (nowOd - oneDriveSync.lastPullCheckAt > 15000)) {
@@ -9458,7 +10434,14 @@
       renderAll();
       await loadTripReceipts();
 
-      // Persist merged captures straight back to local folder DB if linked
+      // If this device has no direct write-back handle (e.g. iPhone Safari) & has local entries not in the imported file, prompt 1-tap Save Back
+      const isReadOnlyFileEnv = !(window.showOpenFilePicker && window.showSaveFilePicker);
+      if (!silent && isReadOnlyFileEnv && !isGitSyncConfigured() && (needsWriteBack || totalAddedLines > 0 || recStats.added > 0)) {
+        cloudSync.needsManualWriteback = true;
+        renderCloudStatusUI();
+      }
+
+      // Persist merged captures straight back to Git / local folder DB if linked
       if (needsWriteBack || recStats.added > 0 || recStats.updated > 0) {
         scheduleCloudWrite(!silent);
       }
@@ -9468,8 +10451,12 @@
       }
     }
 
-    async function exportFullWorkspaceJSON() {
+    async function exportFullWorkspaceJSON(clearWritebackFlag) {
       flushLocalSave(false, false);
+      if (clearWritebackFlag || cloudSync.needsManualWriteback) {
+        cloudSync.needsManualWriteback = false;
+        renderCloudStatusUI();
+      }
       const deletedIds = getDeletedReceiptIds();
       const deletedSet = {};
       deletedIds.forEach(function (id) { deletedSet[id] = true; });
@@ -9762,7 +10749,8 @@
       }
       updateVaultCountBadges();
       renderWorkspace();
-      if (document.getElementById('receipt-modal-backdrop').classList.contains('open')) {
+      const vaultBackdrop = document.getElementById('receipt-modal-backdrop');
+      if (vaultBackdrop && vaultBackdrop.classList.contains('open')) {
         renderReceiptModal();
       }
     }
@@ -10620,7 +11608,8 @@
             deductionExpr: '',
             deductionReason: '',
             fxAnchorId: defaultFxId,
-            customRate: ''
+            customRate: '',
+            updatedAt: Date.now()
           };
         };
 
@@ -13215,6 +14204,9 @@
 
     window.addEventListener('focus', function () { checkCloudFileUpdates(); });
     window.addEventListener('online', function () {
+      if (isGitSyncConfigured() && (gitSync.pendingPush || gitSync.cfg.autoPull !== false)) {
+        syncGitRepoTwoWay(true, !!gitSync.pendingPush);
+      }
       if (!CLOUD_APIS_ENABLED) return;
       if (oneDriveSync.cfg.enabled && (oneDriveSync.pendingPush || oneDriveSync.cfg.autoPull !== false)) {
         syncOneDriveTwoWay(true, !!oneDriveSync.pendingPush);
