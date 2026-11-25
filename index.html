@@ -2131,13 +2131,13 @@
         </div>
         <div id="last-merge-status-box" class="cloud-status-box"></div>
         <div id="iphone-writeback-banner" style="display:none;padding:9px 11px;border-radius:10px;background:var(--amber-soft);border:1px solid var(--amber-border);color:var(--amber-text);font-size:11.5px;gap:8px;flex-direction:column;">
-          <div><strong>Merged on this device!</strong> iOS Safari cannot overwrite files in-place after opening them. Tap below to write the combined trips &amp; new entries back to <code>claimflow-db.json</code>:</div>
-          <div><button type="button" class="btn btn-sm btn-primary" onclick="exportFullWorkspaceJSON(true)">📲 Save Merged File Back (claimflow-db.json)</button></div>
+          <div><strong>Merged on this device!</strong> iOS Safari blocks in-place file overwriting. Download the merged <code>claimflow-db.json</code> to replace your old file, or use <strong>Method 4 (Git Sync)</strong> for automatic in-place syncing:</div>
+          <div><button type="button" class="btn btn-sm btn-primary" onclick="exportFullWorkspaceJSON(true)">💾 Download Merged File (claimflow-db.json)</button></div>
         </div>
-        <div style="font-size:11.5px;color:var(--text-subtle);">On iPhone, <strong>Open &amp; Smart-Merge</strong> reads updates into your phone. Tap <strong>Save / Share All Trips</strong> to write your new phone entries out — or set up <strong>Method 4 (Git Sync)</strong> below for true 1-click two-way sync.</div>
+        <div style="font-size:11.5px;color:var(--text-subtle);">On Desktop Chrome/Edge, <strong>Open &amp; Smart-Merge</strong> reads, merges, and <strong>overwrites the exact same file in-place</strong>. On iPhone Safari, Apple prevents silent file overwrites, so use <strong>Save / Download DB</strong> or <strong>Method 4 (Git Sync)</strong> below.</div>
         <div style="display:flex;flex-wrap:wrap;gap:7px;">
-          <button type="button" class="btn btn-primary" onclick="exportFullWorkspaceJSON()">📲 Save / Share All Trips (claimflow-db.json)</button>
-          <button type="button" class="btn btn-green-soft" onclick="document.getElementById('import-workspace-input').click()">📥 Open &amp; Smart-Merge File</button>
+          <button type="button" class="btn btn-green-soft" onclick="openAndSmartMergeFile()">📥 Open, Smart-Merge &amp; Overwrite</button>
+          <button type="button" class="btn btn-primary" onclick="exportFullWorkspaceJSON()">💾 Save / Download DB (claimflow-db.json)</button>
         </div>
         <div style="display:flex;flex-wrap:wrap;gap:12px;">
           <label class="check-opt"><input id="chk-cloud-embed-receipts" type="checkbox" checked onchange="setCloudPref('embedReceipts',this.checked)" /><span>Embed receipt photos inside JSON backups</span></label>
@@ -2720,6 +2720,17 @@
         .replace(/>/g, '&gt;')
         .replace(/"/g, '&quot;')
         .replace(/'/g, '&#39;');
+    }
+
+    function escJsAttr(str) {
+      return String(str == null ? '' : str)
+        .replace(/\\/g, '\\\\')
+        .replace(/'/g, '\\\'')
+        .replace(/\r|\n/g, ' ')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
     }
 
     function parseISODate(iso) {
@@ -4889,7 +4900,7 @@
         : '';
 
       const chipsHtml = (opts.chips || []).map(function (ch) {
-        return '<button type="button" class="chip-btn" onclick="addReceipt(\'' + opts.scope + '\',null,\'' + esc(ch.label) + '\',\'' + (ch.curr || 'SGD') + '\')">+ ' + esc(ch.label) + '</button>';
+        return '<button type="button" class="chip-btn" onclick="addReceipt(\'' + opts.scope + '\',null,\'' + escJsAttr(ch.label) + '\',\'' + (ch.curr || 'SGD') + '\')">+ ' + esc(ch.label) + '</button>';
       }).join('');
 
       return '<div id="cat-card-' + esc(opts.scope) + '" class="card' + (collapsed ? ' collapsed' : '') + '">'
@@ -7542,6 +7553,7 @@
       progressText: '',
       lastSyncedReceiptsCount: null,
       lastError: '',
+      lastTestOk: '',
       lastPullCheckAt: 0,
       pushTimer: null
     };
@@ -7683,8 +7695,7 @@
     function gitHeaders(token, includeContentType) {
       const h = {
         'Authorization': 'Bearer ' + sanitizeGistCredential(token),
-        'Accept': 'application/vnd.github+json',
-        'X-GitHub-Api-Version': '2022-11-28'
+        'Accept': 'application/vnd.github+json'
       };
       if (includeContentType) h['Content-Type'] = 'application/json';
       return h;
@@ -7697,15 +7708,21 @@
         if (typeof navigator !== 'undefined' && navigator.onLine === false) {
           throw new Error('Offline — changes queued for Git sync');
         }
-        throw new Error((phaseLabel || 'Git request') + ' failed (network/CORS — check internet or token)');
+        throw new Error((phaseLabel || 'Git request') + ' failed (network/CORS — check internet or ad-blocker)');
       }
     }
 
-    function formatGitHttpError(res, phaseLabel, apiMsg) {
+    function formatGitHttpError(res, phaseLabel, apiMsg, token) {
       const detail = apiMsg ? (' (' + apiMsg + ')') : '';
-      if (res.status === 401) return 'Invalid or expired GitHub token (401)';
-      if (res.status === 403) return 'GitHub permission denied — grant Contents: Read & Write (403)' + detail;
-      if (res.status === 404) return 'Repo or branch not found — check owner/repo & token access (404)';
+      const scopes = (res && res.headers && res.headers.get) ? (res.headers.get('x-oauth-scopes') || '') : '';
+      const isClassic = /^ghp_/i.test(String(token || ''));
+      const missingRepoScope = isClassic && scopes && !/\brepo\b/i.test(scopes);
+      if (res.status === 401) return 'Invalid or expired GitHub token (401) — double-check the pasted token.';
+      if (missingRepoScope) {
+        return 'This Classic token only has "' + scopes + '" scope — Git Repo Sync needs the "repo" scope (or a Fine-Grained token with Contents: Read & write).';
+      }
+      if (res.status === 403) return 'GitHub permission denied (403) — ensure token has Contents: Read & write (Fine-Grained) or repo (Classic).' + detail;
+      if (res.status === 404) return 'Repo or branch not found (404) — use owner/repo format (e.g. yourname/claimflow-sync) and grant this token access to that repo.' + detail;
       if (res.status === 409) return 'Concurrent Git update conflict (409) — retrying merge';
       if (res.status === 422) return phaseLabel + ' rejected (422)' + detail;
       return phaseLabel + ' failed (HTTP ' + res.status + ')' + detail;
@@ -7716,20 +7733,77 @@
         .replace(/^https?:\/\/github\.com\//i, '')
         .replace(/\.git$/i, '')
         .replace(/^\/+|\/+$/g, '');
-      if (!cleaned) throw new Error('Enter a GitHub repository (e.g. username/claimflow-sync)');
       if (cleaned.indexOf('/') >= 0) {
         const parts = cleaned.split('/').filter(Boolean);
         if (parts.length < 2) throw new Error('Use owner/repo format (e.g. username/claimflow-sync)');
         return { owner: parts[0], repo: parts[1], full: parts[0] + '/' + parts[1] };
       }
-      // Single repo name supplied -> look up authenticated GitHub username
-      const res = await gitFetch(GIT_API_BASE + '/user?_cb=' + Date.now(), {
+
+      // 1. Try GET /user/repos (works for BOTH Fine-Grained & Classic tokens and returns exact owner/repo + default_branch)
+      let detectedOwner = '';
+      let scopesHint = '';
+      const reposRes = await gitFetch(GIT_API_BASE + '/user/repos?per_page=100&sort=updated&_cb=' + Date.now(), {
         method: 'GET', mode: 'cors', headers: gitHeaders(token, false)
-      }, 'Lookup GitHub username');
-      if (!res.ok) throw new Error('Include owner/repo (e.g. yourname/' + cleaned + ') — fine-grained tokens cannot auto-lookup /user');
-      const user = await res.json();
-      if (!user || !user.login) throw new Error('Use owner/repo format (e.g. yourname/' + cleaned + ')');
-      return { owner: user.login, repo: cleaned, full: user.login + '/' + cleaned };
+      }, 'Find accessible repositories');
+      if (reposRes.status === 401) {
+        throw new Error(formatGitHttpError(reposRes, 'Auth check', '', token));
+      }
+      if (reposRes.headers && reposRes.headers.get) {
+        scopesHint = reposRes.headers.get('x-oauth-scopes') || '';
+      }
+      if (reposRes.ok) {
+        const repos = await reposRes.json().catch(function () { return []; });
+        if (Array.isArray(repos) && repos.length > 0) {
+          const wantName = (cleaned || 'claimflow-sync').toLowerCase();
+          const exact = repos.find(function (r) { return r && r.name && r.name.toLowerCase() === wantName; });
+          if (exact && exact.owner && exact.owner.login) {
+            return {
+              owner: exact.owner.login,
+              repo: exact.name,
+              full: exact.full_name || (exact.owner.login + '/' + exact.name),
+              defaultBranch: exact.default_branch || 'main',
+              existingRepo: exact
+            };
+          }
+          if (!cleaned && repos.length === 1 && repos[0].owner && repos[0].owner.login) {
+            return {
+              owner: repos[0].owner.login,
+              repo: repos[0].name,
+              full: repos[0].full_name || (repos[0].owner.login + '/' + repos[0].name),
+              defaultBranch: repos[0].default_branch || 'main',
+              existingRepo: repos[0]
+            };
+          }
+          if (repos[0] && repos[0].owner && repos[0].owner.login) {
+            detectedOwner = repos[0].owner.login;
+          }
+        }
+      }
+
+      if (!cleaned) {
+        throw new Error('Enter your GitHub repository (e.g. yourname/claimflow-sync).');
+      }
+
+      // 2. Fallback: lookup authenticated user via GET /user
+      if (!detectedOwner) {
+        const userRes = await gitFetch(GIT_API_BASE + '/user?_cb=' + Date.now(), {
+          method: 'GET', mode: 'cors', headers: gitHeaders(token, false)
+        }, 'Lookup GitHub username');
+        if (userRes.ok) {
+          const user = await userRes.json().catch(function () { return {}; });
+          if (user && user.login) detectedOwner = user.login;
+        }
+      }
+
+      if (detectedOwner) {
+        return { owner: detectedOwner, repo: cleaned, full: detectedOwner + '/' + cleaned };
+      }
+
+      const isClassic = /^ghp_/i.test(String(token || ''));
+      if (isClassic && scopesHint && !/\brepo\b/i.test(scopesHint)) {
+        throw new Error('Your Classic token only has "' + scopesHint + '" scope (likely your old Gist token). Create a token with "repo" scope (Classic) or Contents: Read & write (Fine-Grained).');
+      }
+      throw new Error('Include your GitHub username as owner/repo (e.g. yourname/' + cleaned + ') and ensure the token is granted access to "' + cleaned + '".');
     }
 
     function encodeGitPath(path) {
@@ -7745,7 +7819,8 @@
       if (res.status === 404) return null;
       if (!res.ok) {
         const errObj = await res.json().catch(function () { return {}; });
-        throw new Error(formatGitHttpError(res, 'Read ' + path, errObj.message));
+        if (res.status === 409 && /empty/i.test(String(errObj.message || ''))) return null;
+        throw new Error(formatGitHttpError(res, 'Read ' + path, errObj.message, token));
       }
       const obj = await res.json();
       if (obj && typeof obj.content === 'string' && obj.content.length > 0) {
@@ -7758,7 +7833,7 @@
         const bRes = await gitFetch(blobUrl, {
           method: 'GET', mode: 'cors', headers: gitHeaders(token, false)
         }, 'Read blob ' + path);
-        if (!bRes.ok) throw new Error(formatGitHttpError(bRes, 'Read blob ' + path));
+        if (!bRes.ok) throw new Error(formatGitHttpError(bRes, 'Read blob ' + path, '', token));
         const blobObj = await bRes.json();
         return { sha: obj.sha, content: String(blobObj.content || '').replace(/\s+/g, ''), size: blobObj.size || obj.size || 0 };
       }
@@ -7774,7 +7849,8 @@
       if (res.status === 404) return {};
       if (!res.ok) {
         const errObj = await res.json().catch(function () { return {}; });
-        throw new Error(formatGitHttpError(res, 'List receipts', errObj.message));
+        if (res.status === 409 && /empty/i.test(String(errObj.message || ''))) return {};
+        throw new Error(formatGitHttpError(res, 'List receipts', errObj.message, token));
       }
       const arr = await res.json();
       const map = {};
@@ -7791,18 +7867,32 @@
     async function gitPutFile(owner, repo, path, base64Content, message, sha, branch, token) {
       const url = GIT_API_BASE + '/repos/' + encodeURIComponent(owner) + '/' + encodeURIComponent(repo)
         + '/contents/' + encodeGitPath(path);
-      const body = {
-        message: message || ('ClaimFlow sync ' + path),
-        content: String(base64Content || '').replace(/\s+/g, ''),
-        branch: branch
+      const makeReq = function (includeBranch) {
+        const body = {
+          message: message || ('ClaimFlow sync ' + path),
+          content: String(base64Content || '').replace(/\s+/g, '')
+        };
+        if (includeBranch && branch) body.branch = branch;
+        if (sha) body.sha = sha;
+        return gitFetch(url, {
+          method: 'PUT',
+          mode: 'cors',
+          headers: gitHeaders(token, true),
+          body: JSON.stringify(body)
+        }, 'Save ' + path);
       };
-      if (sha) body.sha = sha;
-      const res = await gitFetch(url, {
-        method: 'PUT',
-        mode: 'cors',
-        headers: gitHeaders(token, true),
-        body: JSON.stringify(body)
-      }, 'Save ' + path);
+
+      let res = await makeReq(true);
+      // Newly created empty repos have no branch ref yet — retry once without `branch` so GitHub creates the default branch cleanly
+      if (!sha && (res.status === 404 || res.status === 409 || res.status === 422)) {
+        const peekErr = await res.clone().json().catch(function () { return {}; });
+        const msg = String(peekErr.message || '');
+        if (/branch|empty|not found|reference/i.test(msg) || res.status === 404) {
+          const retryRes = await makeReq(false);
+          if (retryRes.ok) res = retryRes;
+        }
+      }
+
       if (res.status === 409) {
         const err = new Error('CONFLICT_409');
         err.isConflict = true;
@@ -7810,7 +7900,7 @@
       }
       if (!res.ok) {
         const errObj = await res.json().catch(function () { return {}; });
-        throw new Error(formatGitHttpError(res, 'Save ' + path, errObj.message));
+        throw new Error(formatGitHttpError(res, 'Save ' + path, errObj.message, token));
       }
       const out = await res.json().catch(function () { return {}; });
       return (out && out.content && out.content.sha) ? out.content.sha : '';
@@ -7840,33 +7930,63 @@
       const repoInp = document.getElementById('git-repo-input');
       const brInp = document.getElementById('git-branch-input');
       const tokInp = document.getElementById('git-token-input');
-      const token = sanitizeGistCredential((tokInp && tokInp.value) ? tokInp.value : gitSync.cfg.token);
-      const rawRepo = ((repoInp && repoInp.value) ? repoInp.value : gitSync.cfg.repo || '').trim();
-      const branch = ((brInp && brInp.value) ? brInp.value : gitSync.cfg.branch || 'main').trim() || 'main';
-      if (!token || !rawRepo) {
-        showToast('Enter both GitHub Repository and Token first.', 'amber');
+      const rawTok = (tokInp && tokInp.value) ? tokInp.value.trim() : '';
+      if (rawTok.indexOf('CLAIMFLOW_GIT1:') === 0) {
+        const pairInp = document.getElementById('git-pair-code-input');
+        if (pairInp) pairInp.value = rawTok;
+        if (tokInp) tokInp.value = '';
+        await pairGitFromCode();
         return;
       }
-      showToast('Testing Git repository access…', 'indigo');
+      const token = sanitizeGistCredential(rawTok || gitSync.cfg.token);
+      const rawRepo = ((repoInp && repoInp.value) ? repoInp.value : gitSync.cfg.repo || '').trim();
+      let branch = ((brInp && brInp.value) ? brInp.value : gitSync.cfg.branch || 'main').trim() || 'main';
+      if (!token) {
+        gitSync.lastError = 'Paste your GitHub Personal Access Token first.';
+        gitSync.lastTestOk = '';
+        renderCloudStatusUI();
+        showToast(gitSync.lastError, 'amber');
+        return;
+      }
+      gitSync.lastError = '';
+      gitSync.lastTestOk = '';
+      gitSync.progressText = 'Testing Git…';
+      renderCloudStatusUI();
       try {
         const target = await resolveGitOwnerRepo(rawRepo, token);
-        const res = await gitFetch(GIT_API_BASE + '/repos/' + encodeURIComponent(target.owner) + '/' + encodeURIComponent(target.repo) + '?_cb=' + Date.now(), {
-          method: 'GET', mode: 'cors', headers: gitHeaders(token, false)
-        }, 'Verify Git repository');
-        if (res.status === 404) {
-          throw new Error('Repo "' + target.full + '" not found — create a Private repo with that name on GitHub, or tap Connect with a Classic repo token to auto-create it.');
+        if (repoInp) repoInp.value = target.full;
+        let info = target.existingRepo || null;
+        if (!info) {
+          const res = await gitFetch(GIT_API_BASE + '/repos/' + encodeURIComponent(target.owner) + '/' + encodeURIComponent(target.repo) + '?_cb=' + Date.now(), {
+            method: 'GET', mode: 'cors', headers: gitHeaders(token, false)
+          }, 'Verify Git repository');
+          if (res.status === 404) {
+            const scopes = (res.headers && res.headers.get) ? (res.headers.get('x-oauth-scopes') || '') : '';
+            if (/^ghp_/i.test(token) && scopes && !/\brepo\b/i.test(scopes)) {
+              throw new Error('This Classic token only has "' + scopes + '" scope (not "repo"). Generate a token with "repo" or Fine-Grained "Contents: Read & write".');
+            }
+            throw new Error('Repo "' + target.full + '" not found or token has no access. Check owner/repo spelling and make sure this repo is selected in your token permissions.');
+          }
+          if (!res.ok) {
+            const errObj = await res.json().catch(function () { return {}; });
+            throw new Error(formatGitHttpError(res, 'Repo check', errObj.message, token));
+          }
+          info = await res.json();
         }
-        if (!res.ok) {
-          const errObj = await res.json().catch(function () { return {}; });
-          throw new Error(formatGitHttpError(res, 'Repo check', errObj.message));
-        }
-        const info = await res.json();
         const canPush = !info.permissions || info.permissions.push !== false;
         if (!canPush) throw new Error('Token only has Read access — enable Contents: Read & write.');
+        if (info.default_branch) {
+          branch = info.default_branch;
+          if (brInp && (!brInp.value.trim() || brInp.value.trim() === 'main')) brInp.value = branch;
+        }
         gitSync.lastError = '';
+        gitSync.lastTestOk = 'Verified ✓ ' + target.full + ' (' + (info.private ? 'Private' : 'Public') + ' · branch ' + branch + (info.size === 0 ? ' · empty repo ready' : '') + ')';
+        gitSync.progressText = '';
         renderCloudStatusUI();
-        showToast('Connected ✓ ' + target.full + ' (' + (info.private ? 'Private' : 'Public') + ' · branch ' + (info.default_branch || branch) + ')', 'green');
+        showToast(gitSync.lastTestOk, 'green');
       } catch (err) {
+        gitSync.progressText = '';
+        gitSync.lastTestOk = '';
         gitSync.lastError = err.message || 'Test failed';
         renderCloudStatusUI();
         showToast('Git test failed: ' + gitSync.lastError, 'red');
@@ -7877,57 +7997,82 @@
       const repoInp = document.getElementById('git-repo-input');
       const brInp = document.getElementById('git-branch-input');
       const tokInp = document.getElementById('git-token-input');
-      const token = sanitizeGistCredential((tokInp && tokInp.value) ? tokInp.value : gitSync.cfg.token);
-      const rawRepo = ((repoInp && repoInp.value) ? repoInp.value : gitSync.cfg.repo || '').trim();
-      let branch = ((brInp && brInp.value) ? brInp.value : gitSync.cfg.branch || 'main').trim() || 'main';
-      if (!token) {
-        showToast('Paste your GitHub Personal Access Token first.', 'amber');
+      const rawTok = (tokInp && tokInp.value) ? tokInp.value.trim() : '';
+      const rawRepoField = (repoInp && repoInp.value) ? repoInp.value.trim() : '';
+
+      // If user accidentally pasted a CLAIMFLOW_GIT1:... pair code into the Token or Repo box, auto-pair seamlessly!
+      if (rawTok.indexOf('CLAIMFLOW_GIT1:') === 0 || rawRepoField.indexOf('CLAIMFLOW_GIT1:') === 0) {
+        const pairInp = document.getElementById('git-pair-code-input');
+        if (pairInp) pairInp.value = rawTok.indexOf('CLAIMFLOW_GIT1:') === 0 ? rawTok : rawRepoField;
+        if (tokInp && rawTok.indexOf('CLAIMFLOW_GIT1:') === 0) tokInp.value = '';
+        if (repoInp && rawRepoField.indexOf('CLAIMFLOW_GIT1:') === 0) repoInp.value = '';
+        await pairGitFromCode();
         return;
       }
-      if (!rawRepo) {
-        showToast('Enter your GitHub Repository (e.g. username/claimflow-sync).', 'amber');
+
+      const token = sanitizeGistCredential(rawTok || gitSync.cfg.token);
+      const rawRepo = (rawRepoField || gitSync.cfg.repo || '').trim();
+      let branch = ((brInp && brInp.value) ? brInp.value : gitSync.cfg.branch || 'main').trim() || 'main';
+      if (!token) {
+        gitSync.lastError = 'Paste your GitHub Personal Access Token (github_pat_... or ghp_...) first.';
+        renderCloudStatusUI();
+        showToast(gitSync.lastError, 'amber');
         return;
       }
 
       gitSync.busy = true;
       gitSync.lastError = '';
+      gitSync.lastTestOk = '';
       gitSync.progressText = 'Checking repo…';
       renderCloudStatusUI();
 
       try {
         const target = await resolveGitOwnerRepo(rawRepo, token);
-        const checkRes = await gitFetch(GIT_API_BASE + '/repos/' + encodeURIComponent(target.owner) + '/' + encodeURIComponent(target.repo) + '?_cb=' + Date.now(), {
-          method: 'GET', mode: 'cors', headers: gitHeaders(token, false)
-        }, 'Check repository');
+        if (repoInp) repoInp.value = target.full;
 
-        if (checkRes.status === 404) {
-          // Attempt to auto-create private repo (succeeds for classic repo tokens or fine-grained with Administration: Write)
-          gitSync.progressText = 'Creating private repo…';
-          renderCloudStatusUI();
-          const createRes = await gitFetch(GIT_API_BASE + '/user/repos', {
-            method: 'POST',
-            mode: 'cors',
-            headers: gitHeaders(token, true),
-            body: JSON.stringify({
-              name: target.repo,
-              description: 'ClaimFlow Private Travel Claims Sync Repository',
-              private: true,
-              auto_init: true
-            })
-          }, 'Auto-create private repo');
-          if (!createRes.ok) {
-            throw new Error('Repo "' + target.full + '" not found. Create an empty Private repo named "' + target.repo + '" on GitHub first, then tap Connect again.');
+        let info = target.existingRepo || null;
+        if (!info) {
+          const checkRes = await gitFetch(GIT_API_BASE + '/repos/' + encodeURIComponent(target.owner) + '/' + encodeURIComponent(target.repo) + '?_cb=' + Date.now(), {
+            method: 'GET', mode: 'cors', headers: gitHeaders(token, false)
+          }, 'Check repository');
+
+          if (checkRes.status === 404) {
+            const scopes = (checkRes.headers && checkRes.headers.get) ? (checkRes.headers.get('x-oauth-scopes') || '') : '';
+            if (/^ghp_/i.test(token) && scopes && !/\brepo\b/i.test(scopes)) {
+              throw new Error('This Classic token only has "' + scopes + '" scope (not "repo"). Create a token with "repo" scope (Classic) or Contents: Read & write (Fine-Grained).');
+            }
+            // Attempt to auto-create private repo (succeeds for classic repo tokens)
+            gitSync.progressText = 'Creating private repo…';
+            renderCloudStatusUI();
+            const createRes = await gitFetch(GIT_API_BASE + '/user/repos', {
+              method: 'POST',
+              mode: 'cors',
+              headers: gitHeaders(token, true),
+              body: JSON.stringify({
+                name: target.repo,
+                description: 'ClaimFlow Private Travel Claims Sync Repository',
+                private: true,
+                auto_init: true
+              })
+            }, 'Auto-create private repo');
+            if (!createRes.ok) {
+              throw new Error('Repo "' + target.full + '" was not found or your token does not have access to it. Make sure "' + target.full + '" exists on GitHub and is enabled in your token\'s Repository access.');
+            }
+            info = await createRes.json();
+          } else if (!checkRes.ok) {
+            const errObj = await checkRes.json().catch(function () { return {}; });
+            throw new Error(formatGitHttpError(checkRes, 'Repo check', errObj.message, token));
+          } else {
+            info = await checkRes.json();
           }
-          const created = await createRes.json();
-          if (created && created.default_branch) branch = created.default_branch;
-        } else if (!checkRes.ok) {
-          const errObj = await checkRes.json().catch(function () { return {}; });
-          throw new Error(formatGitHttpError(checkRes, 'Repo check', errObj.message));
-        } else {
-          const info = await checkRes.json();
-          if (info && info.default_branch && (!brInp || !brInp.value.trim() || brInp.value.trim() === 'main')) {
-            branch = info.default_branch;
-          }
+        }
+
+        if (info && info.permissions && info.permissions.push === false) {
+          throw new Error('Token only has Read access to "' + target.full + '" — grant Contents: Read & write.');
+        }
+        if (info && info.default_branch && (!brInp || !brInp.value.trim() || brInp.value.trim() === 'main')) {
+          branch = info.default_branch;
+          if (brInp) brInp.value = branch;
         }
 
         gitSync.cfg.enabled = true;
@@ -10006,15 +10151,18 @@
         if (gitSync.busy) {
           gitPill.className = 'pill pill-sky';
           gitPill.textContent = gitSync.progressText || 'Syncing…';
-        } else if (gitConnected && gitSync.lastError) {
+        } else if (gitSync.lastError) {
           gitPill.className = 'pill pill-red';
-          gitPill.textContent = 'Sync Error';
+          gitPill.textContent = gitConnected ? 'Sync Error' : 'Connect Failed';
         } else if (gitConnected && gitSync.pendingPush) {
           gitPill.className = 'pill pill-amber';
           gitPill.textContent = 'Changes Queued';
         } else if (gitConnected) {
           gitPill.className = 'pill pill-green';
           gitPill.textContent = '1-Click Git Sync ✓';
+        } else if (gitSync.lastTestOk) {
+          gitPill.className = 'pill pill-green';
+          gitPill.textContent = 'Test Passed ✓';
         } else {
           gitPill.className = 'pill pill-neutral';
           gitPill.textContent = 'Not Connected';
@@ -10031,6 +10179,10 @@
             + (gitSync.lastError ? ('Error: ' + esc(gitSync.lastError)) : (gitSync.busy ? esc(gitSync.progressText || 'Syncing…') : ('Last synced: ' + lastGStr + ' · ' + store.trips.length + ' trip(s) · ' + recCnt + ' receipt(s)')))
             + '</div></div>'
             + '<span class="pill ' + (gitSync.lastError ? 'pill-red' : (gitSync.busy ? 'pill-sky' : 'pill-green')) + '">' + (gitSync.busy ? '↻ Syncing' : (gitSync.pendingPush ? 'Queued' : 'Auto ✓')) + '</span>';
+        } else if (gitSync.lastError) {
+          gitBox.innerHTML = '<div style="font-size:12px;color:var(--red-text);line-height:1.45;"><strong>⚠️ Could not connect:</strong> ' + esc(gitSync.lastError) + '</div>';
+        } else if (gitSync.lastTestOk) {
+          gitBox.innerHTML = '<div style="font-size:12px;color:var(--green-text);line-height:1.45;"><strong>✓ ' + esc(gitSync.lastTestOk) + '</strong> — tap <strong>Connect &amp; 1-Click Sync</strong> below!</div>';
         } else {
           gitBox.innerHTML = '<div style="font-size:12px;color:var(--text-muted);">True <strong>1-click two-way sync</strong> between iPhone Safari and Desktop via your own private GitHub repository. Stores each receipt as its own JPEG file so edits sync in under 1 second.</div>';
         }
@@ -10408,14 +10560,13 @@
         const filteredRecs = collectedReceipts
           .filter(function (r) { return r && r.id && !deletedSet[r.id]; })
           .map(function (r) {
-            const mappedTripId = (r.tripId && tripIdRemap[r.tripId]) ? tripIdRemap[r.tripId] : (r.tripId || state.id);
-            const rm = allDayIdRemaps[mappedTripId];
-            const mappedDayId = (rm && r.dayId && rm[r.dayId]) ? rm[r.dayId] : (r.dayId || '');
-            return Object.assign({}, r, { tripId: mappedTripId, dayId: mappedDayId });
+            const targetTripId = (r.tripId && tripIdRemap[r.tripId]) ? tripIdRemap[r.tripId] : (r.tripId || state.id);
+            const tripDayRemap = allDayIdRemaps[targetTripId];
+            const remappedDayId = (tripDayRemap && r.dayId && tripDayRemap[r.dayId]) ? tripDayRemap[r.dayId] : (r.dayId || '');
+            return Object.assign({}, r, { tripId: targetTripId, dayId: remappedDayId });
           });
-        if (filteredRecs.length > 0) {
-          recStats = await restoreEmbeddedReceiptsDetailed(filteredRecs);
-        }
+        recStats = await restoreEmbeddedReceiptsDetailed(filteredRecs);
+        if (recStats.added > 0 || recStats.updated > 0) needsWriteBack = true;
       }
 
       const summaryTxt = buildMergeSummaryText({
@@ -10427,28 +10578,64 @@
         addedReceipts: recStats.added,
         updatedReceipts: recStats.updated
       });
-      if (!silent || addedTrips > 0 || updatedTrips > 0 || recStats.added > 0 || recStats.updated > 0) {
-        recordLastMergeSummary(summaryTxt, sourceName || 'claimflow-db.json');
+      recordLastMergeSummary(summaryTxt, sourceName || 'claimflow-db.json');
+
+      if (!silent && !window.showOpenFilePicker && !isGitSyncConfigured()) {
+        cloudSync.needsManualWriteback = true;
       }
 
       renderAll();
-      await loadTripReceipts();
-
-      // If this device has no direct write-back handle (e.g. iPhone Safari) & has local entries not in the imported file, prompt 1-tap Save Back
-      const isReadOnlyFileEnv = !(window.showOpenFilePicker && window.showSaveFilePicker);
-      if (!silent && isReadOnlyFileEnv && !isGitSyncConfigured() && (needsWriteBack || totalAddedLines > 0 || recStats.added > 0)) {
-        cloudSync.needsManualWriteback = true;
-        renderCloudStatusUI();
+      if (recStats.added > 0 || recStats.updated > 0) {
+        await loadTripReceipts();
       }
-
-      // Persist merged captures straight back to Git / local folder DB if linked
-      if (needsWriteBack || recStats.added > 0 || recStats.updated > 0) {
-        scheduleCloudWrite(!silent);
+      if (needsWriteBack && !silent) {
+        scheduleCloudWrite(false);
       }
-
       if (!silent || addedTrips > 0 || updatedTrips > 0 || recStats.added > 0 || recStats.updated > 0) {
         showToast('Smart-Merge: ' + summaryTxt, 'green');
       }
+    }
+
+    async function openAndSmartMergeFile() {
+      // On Desktop Chrome/Edge, open with File System Access handle so Smart-Merge overwrites the exact same file in-place
+      if (window.showOpenFilePicker) {
+        try {
+          const picked = await window.showOpenFilePicker({
+            types: [{ description: 'ClaimFlow JSON Database', accept: { 'application/json': ['.json'] } }],
+            multiple: false
+          });
+          const handle = picked && picked[0];
+          if (!handle) return;
+          cloudSync.handle = handle;
+          cloudSync.fileName = handle.name || 'claimflow-db.json';
+          cloudSync.needsReconnect = false;
+          await idbSaveHandle(handle);
+
+          const file = await handle.getFile();
+          const text = await file.text();
+          if (text && text.trim()) {
+            const parsed = JSON.parse(text);
+            if (parsed && Array.isArray(parsed.trips)) {
+              await mergeWorkspacePayload(parsed, false, cloudSync.fileName);
+            } else if (parsed && parsed.trip) {
+              await mergeWorkspacePayload({ trips: [parsed] }, false, cloudSync.fileName);
+            } else {
+              throw new Error('Invalid ClaimFlow backup file');
+            }
+          }
+          await writeCloudFile();
+          renderCloudStatusUI();
+          showToast('Merged & overwrote ' + cloudSync.fileName + ' in-place ✓', 'green');
+          return;
+        } catch (err) {
+          if (err && err.name === 'AbortError') return;
+          showToast('In-place merge failed: ' + err.message, 'red');
+          return;
+        }
+      }
+      // Fallback for iPhone Safari / Firefox (read-only file input)
+      const inp = document.getElementById('import-workspace-input');
+      if (inp) inp.click();
     }
 
     async function exportFullWorkspaceJSON(clearWritebackFlag) {
@@ -10457,6 +10644,24 @@
         cloudSync.needsManualWriteback = false;
         renderCloudStatusUI();
       }
+
+      // If a writable file handle is already linked (Desktop Chrome/Edge), overwrite it directly in-place
+      if (cloudSync.handle) {
+        try {
+          if (cloudSync.needsReconnect && cloudSync.handle.requestPermission) {
+            const perm = await cloudSync.handle.requestPermission({ mode: 'readwrite' });
+            if (perm === 'granted') cloudSync.needsReconnect = false;
+          }
+          if (!cloudSync.needsReconnect) {
+            await writeCloudFile();
+            showToast('Overwrote ' + (cloudSync.fileName || 'claimflow-db.json') + ' in-place ✓', 'green');
+            return;
+          }
+        } catch (err) {
+          console.warn('Direct overwrite skipped, falling back to download:', err);
+        }
+      }
+
       const deletedIds = getDeletedReceiptIds();
       const deletedSet = {};
       deletedIds.forEach(function (id) { deletedSet[id] = true; });
@@ -10473,22 +10678,6 @@
       }
       const jsonStr = JSON.stringify(payload, null, 2);
       const fileName = 'claimflow-db.json';
-      try {
-        if (typeof File === 'function' && navigator.share) {
-          const file = new File([jsonStr], fileName, { type: 'application/json' });
-          if (!navigator.canShare || navigator.canShare({ files: [file] })) {
-            await navigator.share({
-              files: [file],
-              title: 'ClaimFlow Backup (' + store.trips.length + ' trips' + (photoCount > 0 ? (', ' + photoCount + ' receipts') : '') + ')'
-            });
-            showToast('Shared claimflow-db.json' + (photoCount > 0 ? (' (' + photoCount + ' receipts embedded)') : '') + ' ✓', 'green');
-            return;
-          }
-        }
-      } catch (err) {
-        if (err && err.name === 'AbortError') return;
-        // Fall through cleanly to direct file download if iOS Share Sheet rejects .json
-      }
       downloadFile(jsonStr, fileName, 'application/json');
       showToast('Downloaded claimflow-db.json (' + store.trips.length + ' trips' + (photoCount > 0 ? (', ' + photoCount + ' receipts') : '') + ') ✓', 'green');
     }
