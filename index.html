@@ -1653,11 +1653,12 @@
       box-shadow: 0 3px 10px rgba(15, 23, 42, 0.22);
     }
     .print-doc-root.print-bg-darkbox .meal-print-photo-img-box {
-      background: #1e293b !important; padding: 6px;
+      background: #1e293b !important; padding: 8px;
     }
     .print-doc-root.print-bg-darkbox .meal-print-photo-img-box img {
-      background: #ffffff; border-radius: 3px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.55);
+      background: transparent !important; border-radius: 2px;
+      box-shadow: none;
+      filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.62));
     }
 
     /* Slide & Receipt Box Mode 3: 🌑 Dark Slides (Full dark-slate #0f172a presentation slides) */
@@ -1681,11 +1682,12 @@
       box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
     }
     .print-doc-root.print-bg-darkslides .meal-print-photo-img-box {
-      background: #1e293b !important; padding: 6px;
+      background: #1e293b !important; padding: 8px;
     }
     .print-doc-root.print-bg-darkslides .meal-print-photo-img-box img {
-      background: #ffffff; border-radius: 3px;
-      box-shadow: 0 5px 16px rgba(0, 0, 0, 0.65);
+      background: transparent !important; border-radius: 2px;
+      box-shadow: none;
+      filter: drop-shadow(0 5px 15px rgba(0, 0, 0, 0.72));
     }
     .print-doc-root.print-bg-darkslides .meal-print-photo-label {
       background: #0b1220 !important; border-top-color: #334155 !important;
@@ -1989,7 +1991,7 @@
           📷 <span class="lbl-txt">Receipts</span> (<span id="receipt-vault-count">0</span>)
         </button>
         <button type="button" id="cloud-sync-btn" class="btn btn-sm cloud-btn desktop-only" onclick="openCloudModal()">
-          ☁️ <span id="cloud-sync-btn-text">Cloud Sync</span>
+          📦 <span id="cloud-sync-btn-text">Backup / Merge</span>
         </button>
         <button type="button" class="btn btn-sm desktop-only" onclick="openPrintModal()">🖨️ Print</button>
         <button type="button" id="theme-btn" class="btn btn-icon btn-sm desktop-only" onclick="toggleTheme()" title="Toggle Light / Dark Theme"></button>
@@ -2084,7 +2086,7 @@
       </div>
       <div class="sheet-grid">
         <button type="button" class="sheet-action good" onclick="closeQuickMenu(); manualSaveNow();">💾 Save Now</button>
-        <button type="button" class="sheet-action" onclick="closeQuickMenu(); openCloudModal();">☁️ Cloud Sync</button>
+        <button type="button" class="sheet-action" onclick="closeQuickMenu(); openCloudModal();">📦 Backup / Merge</button>
         <button type="button" class="sheet-action" onclick="closeQuickMenu(); createNewBlankTrip();">＋ New Blank Trip</button>
         <button type="button" class="sheet-action" onclick="closeQuickMenu(); duplicateCurrentTrip();">📑 Save As Copy</button>
         <button type="button" class="sheet-action" onclick="closeQuickMenu(); printAllMealDaysPDF();">🍽️ All Meal Days PDF</button>
@@ -2108,135 +2110,48 @@
     </div>
   </div>
 
-  <!-- CLOUD FOLDER & MULTI-DEVICE SYNC MODAL -->
+  <!-- BACKUP, SMART-MERGE & LOCAL FOLDER SYNC MODAL -->
   <div id="cloud-modal-backdrop" class="modal-backdrop no-print" onclick="if(event.target===this) closeCloudModal()">
     <div class="cloud-modal-box">
       <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
         <div>
-          <strong style="font-size:15px;">☁️ Automatic Cloud &amp; Multi-Device Sync</strong>
-          <div style="font-size:11.5px;color:var(--text-subtle);">Direct OneDrive API auto-sync (iPhone &amp; Laptop), Private GitHub Gist, or local backups</div>
+          <strong style="font-size:15px;">📦 Backup &amp; Smart-Merge (iPhone ↔ Desktop)</strong>
+          <div style="font-size:11.5px;color:var(--text-subtle);">Merge JSON backups with embedded receipt photos — 100% offline, zero cloud errors</div>
         </div>
         <button type="button" class="btn btn-icon-sm btn-ghost" onclick="closeCloudModal()">✕</button>
       </div>
 
-      <div class="cloud-section" style="border-color:var(--sky-border);background:color-mix(in srgb, var(--sky-soft) 38%, var(--surface-2));">
-        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;">
-          <strong style="font-size:13px;">1. ☁️ OneDrive Direct Auto-Sync (iPhone &amp; Laptop — Microsoft Graph API)</strong>
-          <span id="od-mode-pill" class="pill pill-neutral">Not Connected</span>
-        </div>
-        <div id="od-status-box" class="cloud-status-box"></div>
-        <div id="od-connected-actions" style="display:none;flex-wrap:wrap;gap:7px;"></div>
-        <div id="od-setup-panel" style="display:flex;flex-direction:column;gap:8px;">
-          <div class="gist-setup-steps">
-            <strong>One-time Microsoft App Registration (Free, Private, Zero Backend):</strong><br/>
-            1. Open <strong>portal.azure.com</strong> → <em>App registrations</em> → <strong>New registration</strong> (Name: <code>ClaimFlow</code>, Accounts: <em>Personal Microsoft accounts</em> or <em>Any + Personal</em>).<br/>
-            2. Under <strong>Redirect URI</strong>, choose <strong>Single-page application (SPA)</strong> and paste this exact URL:<br/>
-            <div style="display:flex;align-items:center;gap:6px;margin:4px 0;">
-              <input id="od-redirect-uri-display" class="input mono" type="text" readonly style="font-size:11px;padding:4px 7px;min-height:28px;" />
-              <button type="button" class="btn btn-sm btn-soft" onclick="copyOneDriveRedirectUri()">Copy URI</button>
-            </div>
-            <div id="od-https-warning" style="display:none;margin:4px 0;padding:6px 8px;border-radius:7px;background:var(--amber-soft);border:1px solid var(--amber-border);color:var(--amber-text);font-size:11px;"></div>
-            3. Copy the <strong>Application (client) ID</strong> below and tap <strong>Sign in with Microsoft</strong>. Files auto-save to <code>OneDrive / &lt;Folder&gt; / claimflow-db.json</code>.
-          </div>
-          <div class="grid-3">
-            <div style="grid-column:span 2;">
-              <label class="field-label">Azure Application (Client) ID</label>
-              <input id="od-client-id-input" class="input mono" type="text" autocomplete="off" placeholder="e.g. 12345678-abcd-4ef0-9123-456789abcdef" />
-            </div>
-            <div>
-              <label class="field-label">Account Type</label>
-              <select id="od-tenant-select" class="select">
-                <option value="consumers">Personal (Outlook/Hotmail)</option>
-                <option value="common">Personal + Work/School</option>
-                <option value="organizations">Work / School Only</option>
-              </select>
-            </div>
-          </div>
-          <div class="grid-2">
-            <div>
-              <label class="field-label">OneDrive Folder Path</label>
-              <input id="od-folder-input" class="input mono" type="text" value="ClaimFlow" placeholder="ClaimFlow (or approot)" />
-            </div>
-            <div style="display:flex;align-items:flex-end;">
-              <button type="button" class="btn btn-primary" style="width:100%;" onclick="startOneDriveLogin()">☁️ Sign in with Microsoft OneDrive</button>
-            </div>
-          </div>
-          <div style="display:flex;gap:7px;padding-top:6px;border-top:1px solid var(--border);">
-            <input id="od-pair-code-input" class="input mono" type="text" autocomplete="off" placeholder="Or paste CLAIMFLOW_OD1:... setup code from your other device" />
-            <button type="button" class="btn btn-sky-soft" onclick="applyOneDriveSetupCode()">📲 Apply Code</button>
-          </div>
-        </div>
-        <div style="display:flex;flex-wrap:wrap;gap:12px;">
-          <label class="check-opt"><input id="chk-od-autopush" type="checkbox" checked onchange="setOneDrivePref('autoPush',this.checked)" /><span>Auto-push edits (2.5s debounce)</span></label>
-          <label class="check-opt"><input id="chk-od-autopull" type="checkbox" checked onchange="setOneDrivePref('autoPull',this.checked)" /><span>Auto-pull on open / return</span></label>
-          <label class="check-opt"><input id="chk-od-receipts" type="checkbox" checked onchange="setOneDrivePref('syncReceipts',this.checked)" /><span>Sync receipt photos (differential + chunked)</span></label>
-        </div>
-      </div>
-
       <div class="cloud-section" style="border-color:var(--accent-border);background:color-mix(in srgb, var(--accent-soft) 28%, var(--surface-2));">
         <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;">
-          <strong style="font-size:13px;">2. ⚡ Zero-File-Picker Auto-Sync (Alternative — Private GitHub Gist)</strong>
-          <span id="gist-mode-pill" class="pill pill-neutral">Not Connected</span>
+          <strong style="font-size:13px;">1. 📲 iPhone ↔ Desktop JSON Backup &amp; Smart-Merge</strong>
+          <span id="merge-status-pill" class="pill pill-green">Smart-Merge Ready</span>
         </div>
-        <div id="gist-status-box" class="cloud-status-box"></div>
-        <div id="gist-connected-actions" style="display:none;flex-wrap:wrap;gap:7px;"></div>
-        <div id="gist-setup-panel" style="display:flex;flex-direction:column;gap:8px;">
-          <div class="gist-setup-steps">
-            <strong>One-time 30-second setup (100% free &amp; private):</strong><br/>
-            1. Open <strong>github.com/settings/tokens</strong> → <em>Generate new token (classic)</em> → tick <strong>only <code>gist</code></strong> → copy token.<br/>
-            2. Paste token below &amp; tap <strong>Connect &amp; Auto-Create Private Gist</strong> (leave Gist ID blank).<br/>
-            3. On your iPhone, tap <strong>Copy 1-Tap Device Pair Code</strong> on laptop and paste it below!
-          </div>
-          <div class="grid-2">
-            <div>
-              <label class="field-label">GitHub Token (gist scope)</label>
-              <input id="gist-token-input" class="input mono" type="password" autocomplete="off" placeholder="ghp_... or github_pat_..." />
-            </div>
-            <div>
-              <label class="field-label">Private Gist ID (optional)</label>
-              <input id="gist-id-input" class="input mono" type="text" autocomplete="off" placeholder="Leave blank to auto-create" />
-            </div>
-          </div>
-          <div style="display:flex;flex-wrap:wrap;gap:7px;">
-            <button type="button" class="btn btn-primary" onclick="connectGitHubGist()">⚡ Connect &amp; Auto-Sync</button>
-          </div>
-          <div style="display:flex;gap:7px;padding-top:6px;border-top:1px solid var(--border);">
-            <input id="gist-pair-code-input" class="input mono" type="text" autocomplete="off" placeholder="Or paste CLAIMFLOW_GIST1:... device pairing code here" />
-            <button type="button" class="btn btn-green-soft" onclick="pairGistFromCode()">📲 Pair Device</button>
-          </div>
+        <div id="last-merge-status-box" class="cloud-status-box"></div>
+        <div style="font-size:11.5px;color:var(--text-subtle);">Export <code>claimflow-db.json</code> from your iPhone (via AirDrop / iCloud / OneDrive Files) and tap <strong>Open &amp; Smart-Merge File</strong> on Desktop — new phone meals, transport rides &amp; receipts merge directly into matching trips without duplicates.</div>
+        <div style="display:flex;flex-wrap:wrap;gap:7px;">
+          <button type="button" class="btn btn-primary" onclick="exportFullWorkspaceJSON()">📲 Save / Share All Trips (claimflow-db.json)</button>
+          <button type="button" class="btn btn-green-soft" onclick="document.getElementById('import-workspace-input').click()">📥 Open &amp; Smart-Merge File</button>
         </div>
         <div style="display:flex;flex-wrap:wrap;gap:12px;">
-          <label class="check-opt"><input id="chk-gist-autopush" type="checkbox" checked onchange="setGistPref('autoPush',this.checked)" /><span>Auto-push edits (2.5s debounce)</span></label>
-          <label class="check-opt"><input id="chk-gist-autopull" type="checkbox" checked onchange="setGistPref('autoPull',this.checked)" /><span>Auto-pull on open / return (zero polling)</span></label>
-          <label class="check-opt"><input id="chk-gist-receipts" type="checkbox" checked onchange="setGistPref('syncReceipts',this.checked)" /><span>Sync receipt photos (differential)</span></label>
-        </div>
-      </div>
-
-      <div class="cloud-section">
-        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;">
-          <strong style="font-size:13px;">3. Direct Local Cloud Folder Sync (Desktop Chrome / Edge)</strong>
-          <span id="cloud-mode-pill" class="pill pill-neutral">Not Linked</span>
-        </div>
-        <div id="cloud-fs-status" class="cloud-status-box"></div>
-        <div id="cloud-fs-actions" style="display:flex;flex-wrap:wrap;gap:7px;"></div>
-        <div style="display:flex;flex-wrap:wrap;gap:12px;">
-          <label class="check-opt"><input id="chk-cloud-autowrite" type="checkbox" checked onchange="setCloudPref('autoWrite',this.checked)" /><span>Auto-write edits to cloud file</span></label>
-          <label class="check-opt"><input id="chk-cloud-autopull" type="checkbox" checked onchange="setCloudPref('autoPull',this.checked)" /><span>Auto-pull newer edits on tab focus</span></label>
           <label class="check-opt"><input id="chk-cloud-embed-receipts" type="checkbox" checked onchange="setCloudPref('embedReceipts',this.checked)" /><span>Embed receipt photos inside JSON backups</span></label>
         </div>
       </div>
 
       <div class="cloud-section">
-        <strong style="font-size:13px;">4. Manual Backup File (iCloud / OneDrive / Google Drive)</strong>
-        <div style="font-size:11.5px;color:var(--text-subtle);">Save all trips (with embedded receipt photos when enabled) to a single <code>claimflow-db.json</code> via iOS Share Sheet or download, and Smart-Merge newer edits on any device.</div>
-        <div style="display:flex;flex-wrap:wrap;gap:7px;">
-          <button type="button" class="btn btn-soft" onclick="exportFullWorkspaceJSON()">📲 Save / Share All Trips (claimflow-db.json)</button>
-          <button type="button" class="btn" onclick="document.getElementById('import-workspace-input').click()">📥 Open &amp; Smart-Merge File</button>
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;">
+          <strong style="font-size:13px;">2. 📂 Direct Local Folder Sync (Desktop Chrome / Edge)</strong>
+          <span id="cloud-mode-pill" class="pill pill-neutral">Not Linked</span>
+        </div>
+        <div id="cloud-fs-status" class="cloud-status-box"></div>
+        <div id="cloud-fs-actions" style="display:flex;flex-wrap:wrap;gap:7px;"></div>
+        <div style="display:flex;flex-wrap:wrap;gap:12px;">
+          <label class="check-opt"><input id="chk-cloud-autowrite" type="checkbox" checked onchange="setCloudPref('autoWrite',this.checked)" /><span>Auto-write edits to local JSON file</span></label>
+          <label class="check-opt"><input id="chk-cloud-autopull" type="checkbox" checked onchange="setCloudPref('autoPull',this.checked)" /><span>Auto-merge newer file changes on tab focus</span></label>
         </div>
       </div>
 
       <div class="cloud-section">
-        <strong style="font-size:13px;">5. One-Time Cross-Device Sync Code (No Account Needed)</strong>
+        <strong style="font-size:13px;">3. 🔗 Quick Text Sync Code (Numbers Only · No File Needed)</strong>
         <div style="display:flex;flex-wrap:wrap;gap:7px;">
           <button type="button" class="btn btn-sm btn-soft" onclick="copySyncCode(false)">Copy Current Trip Code</button>
           <button type="button" class="btn btn-sm" onclick="copySyncCode(true)">Copy All Trips Code</button>
@@ -2245,6 +2160,12 @@
           <input id="sync-code-input" class="input mono" type="text" placeholder="Paste CLAIMFLOW1:... code here" />
           <button type="button" class="btn btn-green-soft" onclick="importFromSyncCode()">Merge Code</button>
         </div>
+      </div>
+
+      <!-- Cloud API panels hidden while CLOUD_APIS_ENABLED = false -->
+      <div id="hidden-cloud-api-panels" style="display:none;" aria-hidden="true">
+        <span id="od-mode-pill"></span><div id="od-status-box"></div><div id="od-connected-actions"></div><div id="od-setup-panel"></div>
+        <span id="gist-mode-pill"></span><div id="gist-status-box"></div><div id="gist-connected-actions"></div><div id="gist-setup-panel"></div>
       </div>
     </div>
   </div>
@@ -2266,8 +2187,8 @@
           <button type="button" class="btn btn-sm btn-soft" onclick="triggerVaultUpload('receipt', false)">🖼️ +Photos / PDF</button>
           <button type="button" id="vault-bank-upload-btn" class="btn btn-sm btn-sky-soft" onclick="triggerVaultUpload('bank', false)">💳 +Bank / PDF</button>
           <button type="button" class="btn btn-sm btn-green-soft" onclick="pasteReceiptInVault()" title="Paste copied bank screenshot or receipt straight from clipboard">📋 Paste</button>
-          <button type="button" id="vault-bw-toggle-btn" class="btn btn-sm btn-green-soft" onclick="toggleReceiptBWMode()" title="Crisp Black &amp; White document scan mode (auto-compressed under 300 KB)">🖤 B&amp;W (&lt;300 KB): ON</button>
-          <button type="button" id="vault-optimize-btn" class="btn btn-sm btn-soft" onclick="optimizeExistingReceipts()" title="Compress existing receipts larger than 300 KB to save storage and speed up cloud sync">🗜️ Optimize (&lt;300 KB)</button>
+          <button type="button" id="vault-bw-toggle-btn" class="btn btn-sm" onclick="toggleReceiptBWMode()" title="Default Full Color (<300 KB). Tap to toggle optional crisp B&amp;W Scan mode">🎨 Full Color (&lt;300 KB)</button>
+          <button type="button" id="vault-optimize-btn" class="btn btn-sm btn-soft" onclick="optimizeExistingReceipts()" title="Compress existing receipts larger than 300 KB to save storage and speed up JSON backups">🗜️ Optimize (&lt;300 KB)</button>
           <button type="button" id="vault-slidebg-btn" class="btn btn-sm" onclick="cyclePrintSlideBg()" title="Cycle PDF &amp; Share Sheet background: Light Paper / Dark Box / Dark Slides">☀️ Light Paper</button>
         </div>
         <div style="display:flex;gap:6px;flex-wrap:wrap;">
@@ -2559,9 +2480,11 @@
     const LEGACY_KEY = 'claimflow_v2_trips_store';
     const THEME_KEY = 'claimflow_v3_theme';
     const LAYOUT_PREF_KEY = 'claimflow_v3_layout_mode';
-    const BW_MODE_KEY = 'claimflow_v3_bw_mode';
+    const BW_MODE_KEY = 'claimflow_v5_bw_mode';
     const PRINT_PREFS_KEY = 'claimflow_v4_print_prefs';
     const CUSTOM_PRESETS_KEY = 'claimflow_v4_custom_presets';
+    const LAST_MERGE_KEY = 'claimflow_v5_last_merge';
+    const CLOUD_APIS_ENABLED = false;
     const FIXED_OVERNIGHT_RATE = 50;
 
     const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -2912,61 +2835,6 @@
       if (preset && preset.destCode) return preset.destCode;
       if (preset && preset.tzDiffFromSgt !== null && preset.tzDiffFromSgt !== undefined) return 'CUSTOM';
       return 'TYO';
-    }
-
-    function getZoneAbbr(code, isoDate) {
-      const c = (code === 'SIN') ? 'SG' : (code || 'SG');
-      if (c === 'SG') return 'SGT';
-      if (c === 'TYO') return 'JST';
-      if (c === 'BKK' || c === 'VN' || c === 'SGN' || c === 'PNH') return 'ICT';
-      if (c === 'KUL') return 'MYT';
-      if (c === 'ORD') return isUsDst(isoDate) ? 'CDT' : 'CST';
-      const off = getUtcOffset(c, isoDate);
-      return formatUtcLabel(off);
-    }
-
-    /** US Daylight Saving Time check: 2nd Sunday of March to 1st Sunday of November */
-    function isUsDst(isoDate) {
-      const dt = parseISODate(isoDate) || new Date();
-      const y = dt.getFullYear();
-      const mar1 = new Date(y, 2, 1);
-      const dstStart = new Date(y, 2, 1 + ((7 - mar1.getDay()) % 7) + 7);
-      const nov1 = new Date(y, 10, 1);
-      const dstEnd = new Date(y, 10, 1 + ((7 - nov1.getDay()) % 7));
-      return dt >= dstStart && dt < dstEnd;
-    }
-
-    /** Returns UTC offset in hours for a given airport code & date */
-    function getUtcOffset(code, isoDate) {
-      const norm = code === 'SIN' ? 'SG' : (code === 'SGN' ? 'VN' : code);
-      const z = AIRPORT_ZONES.find(function (item) { return item.code === norm || item.disp === code; });
-      if (!z) return 8;
-      if (z.dstRule === 'US') {
-        return isUsDst(isoDate) ? z.stdOffset + 1 : z.stdOffset;
-      }
-      return z.stdOffset;
-    }
-
-    function formatTzDiffFromSgt(offsetHours) {
-      const diff = offsetHours - 8;
-      if (diff === 0) return '0 HR';
-      return (diff > 0 ? '+' : '') + diff + ' HR';
-    }
-
-    function formatUtcLabel(offsetHours) {
-      return 'UTC' + (offsetHours >= 0 ? '+' : '') + offsetHours;
-    }
-
-    function getZoneShortLabel(code, isoDate) {
-      const off = getUtcOffset(code, isoDate);
-      if (code === 'SG') return 'SGT (UTC+8)';
-      if (code === 'TYO') return 'JST (UTC+9)';
-      if (code === 'BKK') return 'ICT (UTC+7)';
-      if (code === 'VN') return 'ICT (UTC+7)';
-      if (code === 'PNH') return 'ICT (UTC+7)';
-      if (code === 'KUL') return 'MYT (UTC+8)';
-      if (code === 'ORD') return (isUsDst(isoDate) ? 'CDT (UTC-5)' : 'CST (UTC-6)');
-      return code + ' (' + formatUtcLabel(off) + ')';
     }
 
     /** Safe arithmetic expression parser (+ and - sums) */
@@ -3629,9 +3497,22 @@
         SETUP_SECTION_KEYS.forEach(function (k) { t.ui.collapsed[k] = true; });
         t.ui.setupDefaultsApplied = true;
       }
+      t.deletedItemIds = Array.isArray(t.deletedItemIds) ? t.deletedItemIds.filter(Boolean).slice(-400) : [];
       if (!t.id) t.id = uid('trip');
       if (!t.updatedAt) t.updatedAt = Date.now();
       return t;
+    }
+
+    function recordDeletedItemId(id, targetTrip) {
+      const trip = targetTrip || state;
+      if (!trip || !id) return;
+      if (!Array.isArray(trip.deletedItemIds)) trip.deletedItemIds = [];
+      if (trip.deletedItemIds.indexOf(id) < 0) {
+        trip.deletedItemIds.push(id);
+        if (trip.deletedItemIds.length > 400) {
+          trip.deletedItemIds.splice(0, trip.deletedItemIds.length - 400);
+        }
+      }
     }
 
     /* ==========================================================================
@@ -3721,11 +3602,6 @@
       scheduleCloudWrite(!!immediateCloud);
     }
 
-    /**
-     * Calm, debounced persistence:
-     * - While typing: waits 1.2s of pause before serializing to localStorage (2.5s for Cloud file).
-     * - Structural changes / explicit Save: flushes immediately.
-     */
     function persistStore(immediate, metaChanged) {
       state.updatedAt = Date.now();
       hasPendingSave = true;
@@ -3740,12 +3616,19 @@
       }, 1200);
     }
 
+    /** Saves UI-only state (collapse/expand tabs, filters) without bumping trip.updatedAt so Desktop clicks never outdate phone captures */
+    function persistUiOnly() {
+      try {
+        localStorage.setItem(STORE_KEY, JSON.stringify(store));
+      } catch (e) {}
+    }
+
     function manualSaveNow() {
       persistStore(true, true);
-      if (oneDriveSync.cfg.enabled && oneDriveSync.cfg.accessToken) {
+      if (CLOUD_APIS_ENABLED && oneDriveSync.cfg.enabled && oneDriveSync.cfg.clientId && (oneDriveSync.cfg.accessToken || oneDriveSync.cfg.refreshToken)) {
         syncOneDriveTwoWay(false, true);
         showToast('Saved locally & auto-syncing to OneDrive…', 'green');
-      } else if (gistSync.cfg.enabled && gistSync.cfg.token && gistSync.cfg.gistId) {
+      } else if (CLOUD_APIS_ENABLED && gistSync.cfg.enabled && gistSync.cfg.token && gistSync.cfg.gistId) {
         syncGistTwoWay(false, true);
         showToast('Saved locally & auto-syncing to Private Gist…', 'green');
       } else if (cloudSync.handle && !cloudSync.needsReconnect) {
@@ -3871,122 +3754,103 @@
     function applyRoutePreset(presetId) {
       const preset = findRoutePresetById(presetId);
       if (!preset) return;
-      const cap = Number.isFinite(Number(preset.mealCap))
-        ? Number(preset.mealCap)
-        : getDefaultMealCapForDestination(preset.destCode, preset.currency, preset.label);
-      const tzDiff = (preset.tzDiffFromSgt !== null && preset.tzDiffFromSgt !== undefined && Number.isFinite(Number(preset.tzDiffFromSgt)))
-        ? round2(Number(preset.tzDiffFromSgt))
-        : (preset.destCode ? round2(getUtcOffset(preset.destCode, state.trip.startDate) - 8) : 0);
-
       state.trip.presetId = preset.id;
       state.trip.route = preset.label.replace('↔', '–');
       state.trip.foreignCurrency = preset.currency;
-      state.trip.dailyMealCap = cap;
+      state.trip.dailyMealCap = Number.isFinite(Number(preset.mealCap))
+        ? Number(preset.mealCap)
+        : getDefaultMealCapForDestination(preset.destCode, preset.currency, preset.label);
+
+      const destCode = preset.destCode || 'CUSTOM';
+      const tzDiff = (preset.tzDiffFromSgt !== null && preset.tzDiffFromSgt !== undefined && Number.isFinite(Number(preset.tzDiffFromSgt)))
+        ? round2(Number(preset.tzDiffFromSgt))
+        : (preset.destCode ? round2(getUtcOffset(preset.destCode, state.trip.startDate) - 8) : 0);
       state.trip.tzDiffFromSgt = tzDiff;
 
-      const destAirport = preset.destCode || 'CUSTOM';
       if (state.flights && Array.isArray(state.flights.legs)) {
         if (state.flights.legs[0]) {
           state.flights.legs[0].fromCode = 'SG';
-          state.flights.legs[0].toCode = destAirport;
+          state.flights.legs[0].toCode = destCode;
         }
         if (state.flights.legs[1]) {
-          state.flights.legs[1].fromCode = destAirport;
+          state.flights.legs[1].fromCode = destCode;
           state.flights.legs[1].toCode = 'SG';
         }
       }
-      persistStore(true);
+      persistStore(true, true);
       renderAll();
-      showToast('Applied ' + preset.label + ' (' + preset.currency + ' · Cap $' + cap + ' · ' + formatTzDiffFromSgt(8 + tzDiff) + ' vs SGT)', 'green');
+      showToast('Applied ' + preset.label + ' (' + preset.currency + ' · Cap $' + fmtForeign(state.trip.dailyMealCap) + '/d · ' + formatTzDiffFromSgt(8 + tzDiff) + ')', 'green');
     }
 
-    function activateCustomDestinationMode() {
-      const curTzDiff = getCurrentTripTzDiff();
+    function selectCustomDestinationMode() {
       state.trip.presetId = 'CUSTOM';
-      state.trip.tzDiffFromSgt = curTzDiff;
-      persistStore(true);
+      if (!Number.isFinite(parseFloat(state.trip.tzDiffFromSgt))) {
+        state.trip.tzDiffFromSgt = getCurrentTripTzDiff();
+      }
+      if (state.flights && Array.isArray(state.flights.legs)) {
+        if (state.flights.legs[0]) state.flights.legs[0].toCode = 'CUSTOM';
+        if (state.flights.legs[1]) state.flights.legs[1].fromCode = 'CUSTOM';
+      }
+      persistStore(true, true);
       renderAll();
-      showToast('Custom mode enabled — edit Allowance, Currency & Time Diff.', 'indigo');
+      showToast('Custom destination unlocked — edit Allowance, Currency & Time Diff.', 'indigo');
     }
 
-    function saveCurrentDestinationAsPreset() {
+    function saveCurrentAsCustomPreset() {
       const rawRoute = (state.trip.route || '').trim();
-      const curr = (state.trip.foreignCurrency || 'USD').trim().toUpperCase() || 'USD';
       if (!rawRoute) {
-        showToast('Enter a Route / Title first (e.g. SG–LON or SG–ICN).', 'amber');
+        showToast('Enter a Route / Destination title first.', 'amber');
         return;
       }
-      const label = rawRoute.replace(/\s*[-–—]+\s*/, '↔');
-      const upper = rawRoute.toUpperCase();
-      let destCode = '';
-      if (state.trip.presetId !== 'CUSTOM') {
-        AIRPORT_ZONES.forEach(function (z) {
-          if (z.code === 'SG') return;
-          const re = new RegExp('\\b(' + z.code + '|' + z.disp + ')\\b');
-          if (re.test(upper)) destCode = z.code;
-        });
-      }
-      const parsedCap = parseFloat(state.trip.dailyMealCap);
-      const mealCap = (Number.isFinite(parsedCap) && parsedCap >= 0)
-        ? parsedCap
-        : getDefaultMealCapForDestination(destCode, curr, rawRoute);
+      const label = rawRoute.replace(/\s*[–—-]\s*/g, '↔');
+      const currency = (state.trip.foreignCurrency || 'USD').trim().toUpperCase();
+      const capNum = parseFloat(state.trip.dailyMealCap);
+      const mealCap = Number.isFinite(capNum) && capNum >= 0 ? capNum : getDefaultMealCapForDestination('', currency, rawRoute);
       const tzDiff = getCurrentTripTzDiff();
 
-      const list = loadCustomRoutePresets();
-      const existIdx = list.findIndex(function (p) { return p.label.toLowerCase() === label.toLowerCase(); });
-      const rec = {
-        id: existIdx >= 0 ? list[existIdx].id : uid('preset'),
+      const customList = loadCustomRoutePresets();
+      const existIdx = customList.findIndex(function (p) { return p.label.toLowerCase() === label.toLowerCase(); });
+      const newPreset = {
+        id: existIdx >= 0 ? customList[existIdx].id : uid('preset'),
         label: label,
         country: 'Custom',
-        destCode: destCode,
-        currency: curr,
+        destCode: '',
+        currency: currency,
         mealCap: mealCap,
         tzDiffFromSgt: tzDiff,
         custom: true
       };
-      if (existIdx >= 0) list[existIdx] = rec;
-      else list.push(rec);
-      saveCustomRoutePresets(list);
-      state.trip.presetId = rec.id;
-      state.trip.tzDiffFromSgt = tzDiff;
+      if (existIdx >= 0) customList[existIdx] = newPreset;
+      else customList.push(newPreset);
+      saveCustomRoutePresets(customList);
+
+      state.trip.presetId = newPreset.id;
       persistStore(true, true);
-      renderWorkspace();
-      showToast((existIdx >= 0 ? 'Updated' : 'Saved') + ' custom "' + rec.label + '" (' + curr + ' · $' + mealCap + '/d · ' + formatTzDiffFromSgt(8 + tzDiff) + ') ✓', 'green');
+      renderAll();
+      showToast('Saved custom destination "' + label + '" (' + currency + ' · $' + fmtForeign(mealCap) + '/d · ' + formatTzDiffFromSgt(8 + tzDiff) + ') ✓', 'green');
     }
 
     function deleteCustomRoutePreset(presetId, evt) {
-      if (evt) {
-        evt.preventDefault();
-        evt.stopPropagation();
-      }
-      const list = loadCustomRoutePresets();
-      const found = list.find(function (p) { return p.id === presetId; });
-      const next = list.filter(function (p) { return p.id !== presetId; });
-      saveCustomRoutePresets(next);
+      if (evt) evt.stopPropagation();
+      const list = loadCustomRoutePresets().filter(function (p) { return p.id !== presetId; });
+      saveCustomRoutePresets(list);
       if (state.trip.presetId === presetId) {
         state.trip.presetId = 'CUSTOM';
         persistStore(true, false);
-      } else {
-        scheduleCloudWrite(false);
       }
       renderWorkspace();
-      showToast('Removed custom destination' + (found ? (' "' + found.label + '"') : '') + '.', 'amber');
+      showToast('Removed custom destination preset.', 'amber');
     }
 
     function updateTripField(field, val, needsFullRender) {
-      if (field === 'overnightRate') {
-        state.trip.overnightRate = FIXED_OVERNIGHT_RATE;
-        return;
-      }
       if (field === 'dailyMealCap') {
         const n = parseFloat(val);
-        state.trip[field] = Number.isFinite(n) && n >= 0 ? n : 0;
+        state.trip.dailyMealCap = Number.isFinite(n) && n >= 0 ? n : 0;
       } else if (field === 'tzDiffFromSgt') {
         const n = parseFloat(val);
-        state.trip.tzDiffFromSgt = Number.isFinite(n) ? Math.max(-16, Math.min(12, round2(n))) : 0;
+        state.trip.tzDiffFromSgt = Number.isFinite(n) ? Math.max(-20, Math.min(14, round2(n))) : 0;
       } else if (field === 'foreignCurrency') {
-        const cleaned = String(val || '').replace(/[^a-zA-Z]/g, '').toUpperCase().slice(0, 6);
-        state.trip.foreignCurrency = cleaned || 'USD';
+        state.trip.foreignCurrency = String(val || 'USD').trim().toUpperCase().slice(0, 6) || 'USD';
       } else {
         state.trip[field] = val;
       }
@@ -4034,7 +3898,7 @@
 
     function toggleCollapse(key) {
       state.ui.collapsed[key] = !state.ui.collapsed[key];
-      persistStore(true);
+      persistUiOnly();
       renderWorkspace();
     }
 
@@ -4042,7 +3906,7 @@
       WORKSPACE_SECTION_KEYS.forEach(function (k) {
         state.ui.collapsed[k] = !!collapsed;
       });
-      persistStore(true);
+      persistUiOnly();
       renderWorkspace();
       showToast(collapsed ? 'Closed all sections (marked Done).' : 'Expanded all sections.', 'indigo');
     }
@@ -4051,7 +3915,7 @@
       SETUP_SECTION_KEYS.forEach(function (k) {
         state.ui.collapsed[k] = !!collapsed;
       });
-      persistStore(true);
+      persistUiOnly();
       renderWorkspace();
       showToast(collapsed ? 'Closed all Setup sections.' : 'Expanded all Setup sections.', 'indigo');
     }
@@ -4119,7 +3983,7 @@
 
     function computeSummary() {
       const fxCode = (state.trip.foreignCurrency || 'JPY').trim().toUpperCase() || 'FX';
-      const cap = Number.isFinite(parseFloat(state.trip.dailyMealCap)) ? parseFloat(state.trip.dailyMealCap) : 50;
+      const cap = Number.isFinite(parseFloat(state.trip.dailyMealCap)) ? parseFloat(state.trip.dailyMealCap) : 100;
       const overnightRate = FIXED_OVERNIGHT_RATE;
 
       const airFare = calcCategory(state.airFare.items);
@@ -4129,7 +3993,6 @@
       const data = calcCategory(state.data ? state.data.items : []);
       const otherMisc = calcCategory(state.otherMisc ? state.otherMisc.items : []);
 
-      // Flights & Overnight Allowance
       const countPreWork = !!(state.timeOff && state.timeOff.countPreWork);
       const flightAnalyses = (state.flights.legs || []).map(function (leg) {
         return { leg: leg, calc: analyzeFlightLeg(leg, countPreWork) };
@@ -4140,14 +4003,12 @@
         : autoOvernightCount;
       const overnightTotal = round2(overnightCount * overnightRate);
 
-      // Time Off Claim (TOIL)
       const toilEntries = (state.timeOff && Array.isArray(state.timeOff.entries) ? state.timeOff.entries : []).map(function (entry) {
         return { entry: entry, calc: calcTimeOffEntry(entry, countPreWork) };
       });
       const toilTotalDays = round2(toilEntries.reduce(function (acc, x) { return acc + x.calc.claimedDays; }, 0));
       const toilTotalHours = round2(toilEntries.reduce(function (acc, x) { return acc + x.calc.qualHours; }, 0));
 
-      // Daily Meals with Cap
       const mealDays = (state.meals || []).map(function (day) {
         const rows = (day.items || []).map(calcReceiptItem);
         const raw = round2(rows.reduce(function (acc, r) { return acc + r.sgd; }, 0));
@@ -4158,10 +4019,7 @@
       const mealsRawTotal = round2(mealDays.reduce(function (acc, d) { return acc + d.raw; }, 0));
       const mealsCappedTotal = round2(mealDays.reduce(function (acc, d) { return acc + d.capped; }, 0));
 
-      // Reporting Category Rollup:
-      // Misc = Overnight Allowance + Daily Meals + Other Misc (EXCLUDES Data / Telco!)
       const reportingMiscTotal = round2(otherMisc.total + overnightTotal + mealsCappedTotal);
-
       const grandClaimable = round2(
         airFare.total
         + hotel.total
@@ -4219,7 +4077,6 @@
         return prefix + fmt2(r.sgd);
       }
 
-      // Foreign currency item
       const reason = (r.item.deductionReason || 'excl.').trim();
       let foreignPart = '';
       if (r.deduction > 0) {
@@ -4238,7 +4095,8 @@
       }
       return prefix + foreignPart + ' = ' + fmt2(r.sgd);
     }
-    function buildHRMSClaims(summary, forceIncludeAirFare) {
+
+    function buildHRMSClaims(summary) {
       const claims = [];
       const isDetailed = state.console.formatMode === 'detailed';
       const refPrefix = (state.console.includeRefPrefix && (state.trip.ref || '').trim())
@@ -4260,7 +4118,6 @@
         return head + '\n' + parts.map(function (p) { return '• ' + p; }).join('\n') + '\nTotal: SGD ' + fmt2(catObj.total);
       }
 
-      // 1. Air Fare (always flows straight into claim & HRMS console; toggleable in Print Settings)
       if (summary.airFare.total > 0) {
         claims.push({
           id: 'airFare',
@@ -4274,7 +4131,6 @@
         });
       }
 
-      // 2. Hotel
       if (summary.hotel.total > 0) {
         const stayCount = summary.hotel.rows.filter(function (r) { return r.sgd > 0; }).length;
         claims.push({
@@ -4289,7 +4145,6 @@
         });
       }
 
-      // 3. SG Transport
       if (summary.sgTransport.total > 0) {
         claims.push({
           id: 'sgTransport',
@@ -4303,7 +4158,6 @@
         });
       }
 
-      // 4. Overseas Transport
       if (summary.overseasTransport.total > 0) {
         claims.push({
           id: 'overseasTransport',
@@ -4317,7 +4171,6 @@
         });
       }
 
-      // 5. Data / Telco (Separate Reporting Category — NOT included in Misc)
       if (summary.data.total > 0) {
         claims.push({
           id: 'data',
@@ -4331,7 +4184,6 @@
         });
       }
 
-      // 6. Other Miscellaneous (Misc > Other)
       if (summary.otherMisc.total > 0) {
         claims.push({
           id: 'otherMisc',
@@ -4345,7 +4197,6 @@
         });
       }
 
-      // 7. Overnight Travel Allowance (Misc > Overnight)
       if (summary.flights.overnightTotal > 0) {
         const legNotes = summary.flights.analyses
           .filter(function (f) { return f.calc.valid && f.calc.isOvernight; })
@@ -4370,7 +4221,6 @@
         });
       }
 
-      // 8. Daily Meals (Misc > Meals — Day-by-Day Split OR Combined; omits redundant "Meals — " prefix)
       const activeMealDays = summary.meals.days.filter(function (d) { return d.capped > 0; });
       if (activeMealDays.length > 0) {
         const buildMealDayParts = function (d) {
@@ -4426,7 +4276,7 @@
     }
 
     /* ==========================================================================
-       7. WORKSPACE RENDERERS
+       7. WORKSPACE RENDERERS & MOBILE AWARE MODE
        ========================================================================== */
     function chevronSvg() {
       return '<svg class="card-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>';
@@ -4442,13 +4292,14 @@
       if (name === 'calendar') return '<svg ' + a + '><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>';
       if (name === 'share') return '<svg ' + a + '><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>';
       if (name === 'doc') return '<svg ' + a + '><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>';
-      if (name === 'eye') return '<svg ' + a + '><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';
       if (name === 'layers') return '<svg ' + a + '><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>';
       if (name === 'sliders') return '<svg ' + a + '><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg>';
+      if (name === 'eye') return '<svg ' + a + '><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';
+      if (name === 'paste') return '<svg ' + a + '><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/></svg>';
+      if (name === 'lock') return '<svg ' + a + '><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>';
+      if (name === 'unlock') return '<svg ' + a + '><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg>';
+      if (name === 'check') return '<svg ' + a + '><polyline points="20 6 9 17 4 12"/></svg>';
       if (name === 'bookmarkPlus') return '<svg ' + a + '><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/><line x1="12" y1="7" x2="12" y2="13"/><line x1="9" y1="10" x2="15" y2="10"/></svg>';
-      if (name === 'lock') return '<svg ' + a + '><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>';
-      if (name === 'unlock') return '<svg ' + a + '><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg>';
-      if (name === 'paste') return '<svg ' + a + '><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg>';
       return '';
     }
 
@@ -4460,7 +4311,53 @@
       return '<button type="button" class="btn btn-sm btn-green-soft" onclick="toggleCollapse(\'' + esc(sectionKey) + '\')">✓ Done &amp; Close Tab</button>';
     }
 
-    function renderReceiptRow(scope, item, idx, fxCode, dayId, rowOpts) {
+    let mobileAwareDayId = null;
+    let mobileAwareTripId = null;
+    let mobileTransportTab = 'overseas';
+    let mobileTransportUserPicked = false;
+    let mobileUnlockedLines = {};
+
+    function canAutoLockTodayLine(item, calc) {
+      if (!item || !item.id) return false;
+      const c = calc || calcReceiptItem(item);
+      return getReceiptCountForItem(item.id) > 0 && c.sgd > 0 && c.grossParsed.valid;
+    }
+
+    function isTodayLineLocked(item, calc) {
+      return canAutoLockTodayLine(item, calc) && !mobileUnlockedLines[item.id];
+    }
+
+    function toggleMobileLineLock(itemId, unlock) {
+      if (!itemId) return;
+      if (unlock) mobileUnlockedLines[itemId] = true;
+      else delete mobileUnlockedLines[itemId];
+      renderWorkspace();
+      if (unlock) {
+        setTimeout(function () {
+          const inp = document.getElementById('rc-amt-input-' + itemId);
+          if (inp) inp.focus();
+        }, 40);
+      }
+    }
+
+    function handleTodayAmtBlur(itemId) {
+      if (!itemId || mobileUnlockedLines[itemId]) return;
+      if (document.documentElement.getAttribute('data-layout') !== 'mobile' || currentMobileView !== 'today') return;
+      const tgt = resolveReceiptTargetForItem(itemId);
+      const list = getItemsList(tgt.scope, tgt.dayId);
+      const item = list ? list.find(function (r) { return r.id === itemId; }) : null;
+      if (item && canAutoLockTodayLine(item)) {
+        setTimeout(function () {
+          const ae = document.activeElement;
+          const rowEl = document.getElementById('rc-row-' + itemId);
+          if (rowEl && ae && rowEl.contains(ae)) return;
+          if (!mobileUnlockedLines[itemId]) renderWorkspace();
+        }, 120);
+      }
+    }
+
+    function renderReceiptRow(scope, item, idx, fxCode, dayId, opts) {
+      const cfg = opts || {};
       const calc = calcReceiptItem(item);
       const isFx = calc.isFx;
       const dayArg = dayId ? ('\'' + esc(dayId) + '\'') : 'null';
@@ -4468,42 +4365,33 @@
       const itemPhotos = receiptVault.photos.filter(function (p) { return p.itemId === item.id; });
       const photoCount = itemPhotos.length;
       const badgeCol = getReceiptBadgeColors(idx);
-      const idxBadgeHtml = '<span class="rc-idx-badge" style="background:' + badgeCol.bg + ';color:' + badgeCol.text + ';">#' + (idx + 1) + '</span>';
 
-      const todayLockMode = !!(rowOpts && rowOpts.todayLockMode);
-      const isReadyToLock = todayLockMode && photoCount > 0 && calc.hasValue && calc.sgd > 0 && calc.grossParsed.valid && calc.dedParsed.valid;
-      const isLocked = isReadyToLock && !mobileUnlockedLines[item.id];
-
-      if (isLocked) {
+      // Mobile Today Mode: Auto-locked slick display once receipt is tagged & price is entered
+      if (cfg.todayLockMode && isTodayLineLocked(item, calc)) {
         const firstPh = itemPhotos[0];
         const titleTxt = (item.label || '').trim() || placeholder;
-        const metaParts = [
-          '<span class="rc-locked-check">✓ Tagged</span>',
-          '<span>' + photoCount + ' file' + (photoCount === 1 ? '' : 's') + '</span>'
-        ];
-        if (isFx) {
-          metaParts.push('<span class="mono">' + fmtForeignPretty(calc.net) + ' ' + esc(fxCode) + '</span>');
-        }
-        if (calc.deduction > 0) {
-          metaParts.push('<span class="mono">−' + (isFx ? fmtForeignPretty(calc.deduction) : fmt2(calc.deduction)) + '</span>');
-        }
+        const fxTag = isFx ? (' · ' + fmtForeignPretty(calc.net) + ' ' + fxCode) : '';
         return '<div id="rc-row-' + esc(item.id) + '" class="rc-locked-card">'
-          + '<button type="button" class="rc-locked-thumb" style="border-color:' + badgeCol.bg + ';" onclick="openLockedLinePhoto(\'' + scope + '\',\'' + esc(item.id) + '\',' + dayArg + ')" title="Tap to view attached receipt">'
-          + '<img src="' + firstPh.dataUrl + '" alt="' + esc(titleTxt) + '" loading="lazy" />'
+          + '<button type="button" class="rc-locked-thumb" onclick="openReceiptLightbox(\'' + esc(firstPh.id) + '\')" title="View attached receipt">'
+          + '<img src="' + firstPh.dataUrl + '" alt="Receipt" loading="lazy" />'
           + '<span class="rc-locked-thumb-num" style="background:' + badgeCol.bg + ';">#' + (idx + 1) + '</span>'
           + (photoCount > 1 ? ('<span class="rc-locked-thumb-cnt">×' + photoCount + '</span>') : '')
           + '</button>'
           + '<div class="rc-locked-info">'
           + '<div class="rc-locked-title">' + esc(titleTxt) + '</div>'
-          + '<div class="rc-locked-meta">' + metaParts.join('<span>·</span>') + '</div>'
+          + '<div class="rc-locked-meta">'
+          + '<span class="rc-locked-check">' + slickSvg('check', 12) + '<span>' + photoCount + ' file' + (photoCount === 1 ? '' : 's') + '</span></span>'
+          + (fxTag ? ('<span class="mono">' + esc(fxTag) + '</span>') : '')
+          + '</div>'
           + '</div>'
           + '<div class="rc-locked-right">'
           + '<span id="rc-locked-sgd-' + esc(item.id) + '" class="rc-locked-amt">$' + fmt2(calc.sgd) + '</span>'
-          + '<button type="button" class="rc-lock-toggle is-locked" onclick="toggleTodayLineLock(\'' + esc(item.id) + '\', false)" title="Locked — tap to unlock and edit" aria-label="Unlock line">' + slickSvg('lock', 14) + '</button>'
+          + '<button type="button" class="rc-lock-toggle is-locked" onclick="toggleMobileLineLock(\'' + esc(item.id) + '\',true)" title="Unlock line to edit">' + slickSvg('lock', 14) + '</button>'
           + '</div>'
           + '</div>';
       }
 
+      const idxBadgeHtml = '<span class="rc-idx-badge" style="background:' + badgeCol.bg + ';color:' + badgeCol.text + ';">#' + (idx + 1) + '</span>';
       const anchorOpts = state.fxAnchors.map(function (a) {
         const r = getAnchorRate(a);
         const label = (a.name || 'Card Ref') + (r > 0 ? (' (' + r.toFixed(5) + ')') : ' (No rate)');
@@ -4524,17 +4412,14 @@
         + '</div>'
       ) : '';
       const showSgdReadout = isFx || calc.grossParsed.isExpression || calc.deduction > 0;
-      const safeDayId = dayId ? esc(dayId) : '';
-      const unlockedBarHtml = (isReadyToLock && mobileUnlockedLines[item.id])
-        ? ('<div class="rc-unlocked-bar">'
-          + '<span>Unlocked for editing</span>'
-          + '<button type="button" class="rc-lock-toggle is-unlocked" onclick="toggleTodayLineLock(\'' + esc(item.id) + '\', true)" title="Lock line back into compact view">' + slickSvg('unlock', 12) + '<span>Lock</span></button>'
-          + '</div>')
+      const unlockedBarHtml = (cfg.todayLockMode && mobileUnlockedLines[item.id] && canAutoLockTodayLine(item, calc))
+        ? ('<div class="rc-unlocked-bar"><span>Unlocked for editing</span><button type="button" class="rc-lock-toggle is-unlocked" onclick="toggleMobileLineLock(\'' + esc(item.id) + '\',false)">' + slickSvg('unlock', 12) + '<span>Lock</span></button></div>')
         : '';
-      const blurAttr = todayLockMode ? (' onblur="handleTodayRowBlur(\'' + esc(item.id) + '\')" onkeydown="handleTodayRowKeydown(event,\'' + esc(item.id) + '\')"') : '';
-      const focusAttr = ' onfocus="setActiveReceiptRow(\'' + scope + '\',\'' + esc(item.id) + '\',\'' + safeDayId + '\')"';
 
-      return '<div id="rc-row-' + esc(item.id) + '" class="receipt-row">'
+      const focusAttr = 'onfocus="setActiveReceiptRow(\'' + esc(scope) + '\',\'' + esc(item.id) + '\',' + dayArg + ')"';
+      const blurAttr = cfg.todayLockMode ? (' onblur="handleTodayAmtBlur(\'' + esc(item.id) + '\')"') : '';
+
+      return '<div id="rc-row-' + esc(item.id) + '" class="receipt-row" onclick="setActiveReceiptRow(\'' + esc(scope) + '\',\'' + esc(item.id) + '\',' + dayArg + ')">'
         + unlockedBarHtml
         + '<div class="receipt-main">'
         + idxBadgeHtml
@@ -4542,14 +4427,14 @@
         + '<button type="button" class="' + (!isFx ? 'active-sgd' : '') + '" onclick="setReceiptCurrency(\'' + scope + '\',\'' + esc(item.id) + '\',\'SGD\',' + dayArg + ')">SGD</button>'
         + '<button type="button" class="' + (isFx ? 'active-fx' : '') + '" onclick="setReceiptCurrency(\'' + scope + '\',\'' + esc(item.id) + '\',\'FX\',' + dayArg + ')">' + esc(fxCode) + '</button>'
         + '</div>'
-        + '<div class="rc-label-wrap"><input class="input" type="text" placeholder="' + esc(placeholder) + '" value="' + esc(item.label) + '" oninput="updateReceiptField(\'' + scope + '\',\'' + esc(item.id) + '\',\'label\',this.value,' + dayArg + ',this)"' + focusAttr + blurAttr + ' /></div>'
-        + '<div class="rc-amt-wrap"><input id="rc-amt-input-' + esc(item.id) + '" class="input mono input-right' + (calc.grossParsed.valid ? '' : ' invalid') + '" type="text" inputmode="decimal" placeholder="' + (isFx ? ('0 ' + esc(fxCode)) : 'SGD 0.00') + '" value="' + esc(item.amountExpr) + '" oninput="updateReceiptField(\'' + scope + '\',\'' + esc(item.id) + '\',\'amountExpr\',this.value,' + dayArg + ',this)"' + focusAttr + blurAttr + ' /></div>'
+        + '<div class="rc-label-wrap"><input class="input" type="text" placeholder="' + esc(placeholder) + '" value="' + esc(item.label) + '" ' + focusAttr + ' oninput="updateReceiptField(\'' + scope + '\',\'' + esc(item.id) + '\',\'label\',this.value,' + dayArg + ',this)" /></div>'
+        + '<div class="rc-amt-wrap"><input id="rc-amt-input-' + esc(item.id) + '" class="input mono input-right' + (calc.grossParsed.valid ? '' : ' invalid') + '" type="text" inputmode="decimal" placeholder="' + (isFx ? ('0 ' + esc(fxCode)) : 'SGD 0.00') + '" value="' + esc(item.amountExpr) + '" ' + focusAttr + blurAttr + ' oninput="updateReceiptField(\'' + scope + '\',\'' + esc(item.id) + '\',\'amountExpr\',this.value,' + dayArg + ',this)" /></div>'
         + '<div class="rc-sgd-wrap">'
         + '<span id="rc-sgd-' + esc(item.id) + '" class="rc-sgd-val" style="' + (showSgdReadout ? '' : 'display:none') + '">SGD ' + fmt2(calc.sgd) + '</span>'
-        + '<button type="button" class="rc-photo-btn rc-cam-btn" title="Snap photo with camera for this line" aria-label="Snap photo with camera" onclick="triggerReceiptUpload({ scope:\'' + scope + '\', itemId:\'' + esc(item.id) + '\', dayId:\'' + safeDayId + '\', role:\'receipt\' }, true)">' + slickSvg('camera', 14) + '</button>'
-        + '<button type="button" class="rc-photo-btn rc-lib-btn" title="Attach from Photo Library or PDF Files" aria-label="Attach from Photo Library or Files" onclick="triggerReceiptUpload({ scope:\'' + scope + '\', itemId:\'' + esc(item.id) + '\', dayId:\'' + safeDayId + '\', role:\'receipt\' }, false)">' + slickSvg('image', 14) + '</button>'
-        + '<button type="button" class="rc-photo-btn rc-paste-btn" title="1-tap Paste copied bank screenshot or receipt onto this line" aria-label="Paste screenshot from clipboard" onclick="pasteReceiptToLine(\'' + scope + '\',\'' + esc(item.id) + '\',\'' + safeDayId + '\')">' + slickSvg('paste', 14) + '</button>'
-        + (photoCount > 0 ? ('<button type="button" class="rc-photo-btn has-photo" title="' + photoCount + ' photo(s) attached — tap to view/manage" onclick="handleItemPhotoClick(\'' + scope + '\',\'' + esc(item.id) + '\',' + dayArg + ')"><span>' + photoCount + '</span></button>') : '')
+        + (photoCount > 0 ? ('<button type="button" class="rc-photo-btn has-photo" title="' + photoCount + ' file(s) attached — tap to view/manage" onclick="handleItemPhotoClick(\'' + scope + '\',\'' + esc(item.id) + '\',' + dayArg + ')">' + photoCount + '</button>') : '')
+        + '<button type="button" class="rc-photo-btn rc-cam-btn" title="Snap photo with Camera" onclick="triggerReceiptUpload({ scope:\'' + esc(scope) + '\', itemId:\'' + esc(item.id) + '\', dayId:\'' + esc(dayId || '') + '\', role:\'receipt\' }, true)">' + slickSvg('camera', 14) + '</button>'
+        + '<button type="button" class="rc-photo-btn rc-lib-btn" title="Attach from Photo Library / Files (PDF)" onclick="triggerReceiptUpload({ scope:\'' + esc(scope) + '\', itemId:\'' + esc(item.id) + '\', dayId:\'' + esc(dayId || '') + '\', role:\'receipt\' }, false)">' + slickSvg('image', 14) + '</button>'
+        + '<button type="button" class="rc-photo-btn rc-paste-btn" title="1-Tap Paste Bank Screenshot from Clipboard" onclick="pasteReceiptToLine(\'' + esc(scope) + '\',\'' + esc(item.id) + '\',' + dayArg + ')">' + slickSvg('paste', 14) + '</button>'
         + '<button type="button" class="btn btn-icon-sm btn-ghost btn-danger-ghost" title="Remove row" onclick="removeReceipt(\'' + scope + '\',\'' + esc(item.id) + '\',' + dayArg + ')">✕</button>'
         + '</div>'
         + '</div>'
@@ -4564,71 +4449,63 @@
       const collapsed = !!state.ui.collapsed.setup;
       const range = fmtRangeNoYear(state.trip.startDate, state.trip.endDate);
       const allPresets = getAllRoutePresets();
-      const isCustomMode = state.trip.presetId === 'CUSTOM' || !findRoutePresetById(state.trip.presetId);
-      const curTzDiff = getCurrentTripTzDiff();
-      const curUtcOffset = round2(8 + curTzDiff);
+      const isCustomMode = state.trip.presetId === 'CUSTOM';
+      const tzDiff = getCurrentTripTzDiff();
+      const utcOff = round2(8 + tzDiff);
 
       const presetsHtml = allPresets.map(function (p) {
-        const active = !isCustomMode && state.trip.presetId === p.id;
+        const active = state.trip.presetId === p.id;
+        const off = (p.tzDiffFromSgt !== null && p.tzDiffFromSgt !== undefined && Number.isFinite(Number(p.tzDiffFromSgt)))
+          ? round2(8 + Number(p.tzDiffFromSgt))
+          : getUtcOffset(p.destCode, state.trip.startDate);
         const capVal = Number.isFinite(Number(p.mealCap)) ? Number(p.mealCap) : getDefaultMealCapForDestination(p.destCode, p.currency, p.label);
-        const tzOff = (p.tzDiffFromSgt !== null && p.tzDiffFromSgt !== undefined && Number.isFinite(Number(p.tzDiffFromSgt)))
-          ? (8 + Number(p.tzDiffFromSgt))
-          : (p.destCode ? getUtcOffset(p.destCode, state.trip.startDate) : 8);
-        const tzPart = ' · ' + formatTzDiffFromSgt(tzOff);
-        const delHtml = p.custom
-          ? ('<span class="preset-del-x" role="button" tabindex="0" title="Remove custom destination" aria-label="Remove ' + esc(p.label) + '" onclick="deleteCustomRoutePreset(\'' + esc(p.id) + '\', event)">✕</span>')
-          : '';
-        return '<button type="button" class="preset-btn' + (active ? ' active' : '') + (p.custom ? ' is-custom' : '') + '" onclick="applyRoutePreset(\'' + esc(p.id) + '\')">'
+        return '<button type="button" class="preset-btn' + (active ? ' active' : '') + '" onclick="applyRoutePreset(\'' + esc(p.id) + '\')">'
           + '<span>' + esc(p.label) + '</span>'
-          + '<span class="tz-tag">' + esc(p.currency + tzPart) + '</span>'
-          + '<span class="preset-cap-tag">$' + capVal + '</span>'
-          + delHtml
+          + '<span class="tz-tag">' + esc(p.currency) + ' · ' + esc(formatTzDiffFromSgt(off)) + '</span>'
+          + '<span class="preset-cap-tag">$' + esc(fmtForeign(capVal)) + '</span>'
+          + (p.custom ? ('<span class="preset-del-x" title="Delete custom preset" onclick="deleteCustomRoutePreset(\'' + esc(p.id) + '\',event)">✕</span>') : '')
           + '</button>';
       }).join('')
-        + '<button type="button" class="preset-btn preset-custom-btn' + (isCustomMode ? ' active' : '') + '" onclick="activateCustomDestinationMode()" title="Manually edit Daily Meal Allowance, Currency &amp; Time Difference">'
-        + slickSvg('sliders', 13) + '<span>Custom</span>'
+        + '<button type="button" class="preset-btn preset-custom-btn' + (isCustomMode ? ' active' : '') + '" onclick="selectCustomDestinationMode()">'
+        + '<span>Custom</span>'
+        + '<span class="tz-tag">' + esc(summary.fxCode) + ' · ' + esc(formatTzDiffFromSgt(utcOff)) + '</span>'
+        + '<span class="preset-cap-tag">$' + esc(fmtForeign(summary.cap)) + '</span>'
         + '</button>';
 
-      const currDatalistOpts = PRESET_CURRENCIES.map(function (c) {
-        return '<option value="' + c + '"></option>';
+      const currOpts = (PRESET_CURRENCIES.indexOf(summary.fxCode) >= 0 ? PRESET_CURRENCIES : [summary.fxCode].concat(PRESET_CURRENCIES)).map(function (c) {
+        return '<option value="' + esc(c) + '"' + (summary.fxCode === c ? ' selected' : '') + '>' + esc(c) + '</option>';
       }).join('');
 
-      const policyBadgesHtml = '<div class="setup-badges-bar">'
-        + '<span class="setup-badge-item cap-badge">🍽️ Meal Cap <strong id="setup-cap-badge-body" class="mono">SGD $' + fmtForeign(summary.cap) + '/day</strong></span>'
-        + '<span class="setup-badge-item curr-badge">💱 Currency <strong id="setup-curr-badge-body" class="mono">' + esc(summary.fxCode) + '</strong></span>'
-        + '<span class="setup-badge-item tz-badge">🕒 Time Diff <strong id="setup-tz-badge-body" class="mono">' + esc(formatTzDiffFromSgt(curUtcOffset)) + ' (' + esc(formatUtcLabel(curUtcOffset)) + ')</strong></span>'
-        + '</div>';
-
-      const customPanelHtml = isCustomMode ? (
-        '<div class="custom-dest-panel">'
-        + '<div class="custom-dest-head">'
-        + '<span>Custom Allowance, Currency &amp; Time Difference</span>'
-        + '<button type="button" class="btn btn-sm btn-soft" onclick="saveCurrentDestinationAsPreset()" title="Save as reusable destination preset">' + slickSvg('bookmarkPlus', 13) + '<span>Save Preset</span></button>'
-        + '</div>'
-        + '<div class="grid-3">'
-        + '<div><label class="field-label">Daily Meal Cap (SGD)</label><input class="input mono input-right" type="number" step="1" min="0" value="' + esc(state.trip.dailyMealCap) + '" oninput="updateTripField(\'dailyMealCap\',this.value)" /></div>'
-        + '<div><label class="field-label">Foreign Currency</label><input class="input mono" type="text" list="cf-curr-datalist" maxlength="6" placeholder="e.g. EUR" value="' + esc(summary.fxCode) + '" oninput="updateTripField(\'foreignCurrency\',this.value)" onchange="updateTripField(\'foreignCurrency\',this.value,true)" /><datalist id="cf-curr-datalist">' + currDatalistOpts + '</datalist></div>'
-        + '<div><label class="field-label">Time Diff vs SGT (hrs)</label><input class="input mono input-right" type="number" step="0.5" min="-16" max="12" placeholder="e.g. -6" value="' + esc(curTzDiff) + '" oninput="updateTripField(\'tzDiffFromSgt\',this.value)" /><div id="setup-custom-tz-utc" class="mono" style="font-size:10.5px;color:var(--sky-text);margin-top:3px;text-align:right;">' + esc(formatTzDiffFromSgt(curUtcOffset) + ' · ' + formatUtcLabel(curUtcOffset)) + '</div></div>'
-        + '</div>'
-        + '</div>'
-      ) : '';
+      const customPanelHtml = isCustomMode
+        ? ('<div class="custom-dest-panel">'
+          + '<div class="custom-dest-head">'
+          + '<span>Custom Destination Settings (Manual Override)</span>'
+          + '<span id="setup-custom-tz-utc" class="mono" style="font-size:11px;opacity:0.9;">' + esc(formatTzDiffFromSgt(utcOff) + ' · ' + formatUtcLabel(utcOff)) + '</span>'
+          + '</div>'
+          + '<div class="grid-3">'
+          + '<div><label class="field-label">Daily Meal Cap (SGD)</label><input class="input mono input-right" type="number" step="5" min="0" value="' + esc(state.trip.dailyMealCap) + '" oninput="updateTripField(\'dailyMealCap\',this.value)" /></div>'
+          + '<div><label class="field-label">Foreign Currency</label><input class="input mono" list="custom-curr-list" maxlength="6" placeholder="e.g. EUR" value="' + esc(summary.fxCode) + '" onchange="updateTripField(\'foreignCurrency\',this.value,true)" /><datalist id="custom-curr-list">' + currOpts + '</datalist></div>'
+          + '<div><label class="field-label">Time Diff vs SGT (hrs)</label><input class="input mono input-right" type="number" step="0.5" min="-20" max="14" value="' + esc(tzDiff) + '" oninput="updateTripField(\'tzDiffFromSgt\',this.value)" /></div>'
+          + '</div>'
+          + '</div>')
+        : '';
 
       return '<div class="card' + (collapsed ? ' collapsed' : '') + '">'
         + '<div class="card-head">'
         + '<button type="button" class="card-head-toggle" onclick="toggleCollapse(\'setup\')">'
         + chevronSvg()
         + '<div><div class="card-title">Trip Setup &amp; Destination Preset</div>'
-        + '<div class="card-sub">' + esc((state.trip.ref ? 'Ref ' + state.trip.ref + ' · ' : '') + (state.trip.route || 'Trip') + (range ? ' (' + range + ')' : '')) + '</div></div>'
+        + '<div class="card-sub">' + esc((state.trip.ref ? 'Ref ' + state.trip.ref + ' · ' : '') + (state.trip.route || 'Trip') + (range ? ' (' + range + ')' : '') + ' · ' + summary.fxCode) + '</div></div>'
         + '</button>'
         + '<div class="card-head-right">' + closedBadgeHtml(collapsed)
-        + '<span id="setup-cap-badge" class="pill pill-amber mono">Cap $' + fmtForeign(summary.cap) + '/d</span>'
+        + '<span id="setup-cap-badge" class="pill pill-amber mono">Cap $' + esc(fmtForeign(summary.cap)) + '/d</span>'
         + '<span id="setup-curr-badge-head" class="pill pill-accent mono">' + esc(summary.fxCode) + '</span></div>'
         + '</div>'
         + (collapsed ? '' : (
           '<div class="card-body">'
           + '<div class="preset-head-row">'
-          + '<label class="field-label">Quick Destination Preset</label>'
-          + '<button type="button" class="btn btn-icon-sm btn-soft" onclick="saveCurrentDestinationAsPreset()" title="Save current Route, Allowance, Currency &amp; Time Diff as a custom destination preset" aria-label="Save custom destination">' + slickSvg('bookmarkPlus', 14) + '</button>'
+          + '<label class="field-label">Quick Destination Preset (Auto Currency, Cap &amp; Timezone)</label>'
+          + '<button type="button" class="btn btn-icon-sm btn-soft" onclick="saveCurrentAsCustomPreset()" title="Save current Route, Currency, Meal Cap &amp; Time Diff as a reusable preset">' + slickSvg('bookmarkPlus', 14) + '</button>'
           + '</div>'
           + '<div class="preset-strip">' + presetsHtml + '</div>'
           + '<div class="grid-4">'
@@ -4637,7 +4514,11 @@
           + '<div><label class="field-label">Start Date</label><div class="date-pill-wrap"><div class="date-pill-btn"><span>' + esc(fmtDateNoYear(state.trip.startDate, 'short')) + '</span><span>📅</span></div><input class="date-pill-native" type="date" value="' + esc(state.trip.startDate) + '" onchange="updateTripField(\'startDate\',this.value,true)" /></div></div>'
           + '<div><label class="field-label">End Date</label><div class="date-pill-wrap"><div class="date-pill-btn"><span>' + esc(fmtDateNoYear(state.trip.endDate, 'short')) + '</span><span>📅</span></div><input class="date-pill-native" type="date" value="' + esc(state.trip.endDate) + '" onchange="updateTripField(\'endDate\',this.value,true)" /></div></div>'
           + '</div>'
-          + policyBadgesHtml
+          + '<div class="setup-badges-bar">'
+          + '<span class="setup-badge-item cap-badge">🍽️ Meal Cap <strong id="setup-cap-badge-body" class="mono">SGD $' + esc(fmtForeign(summary.cap)) + '/day</strong></span>'
+          + '<span class="setup-badge-item curr-badge">💱 Currency <strong id="setup-curr-badge-body" class="mono">' + esc(summary.fxCode) + '</strong></span>'
+          + '<span class="setup-badge-item tz-badge">🕒 Time Diff <strong id="setup-tz-badge-body" class="mono">' + esc(formatTzDiffFromSgt(utcOff) + ' (' + formatUtcLabel(utcOff) + ')') + '</strong></span>'
+          + '</div>'
           + customPanelHtml
           + '<div class="chip-bar" style="justify-content:space-between;">'
           + '<button type="button" class="btn btn-sm btn-soft" onclick="syncMealDaysToDateRange()">↻ Sync Meal Days to Trip Dates</button>'
@@ -4738,31 +4619,25 @@
       const subList = TIME_OFF_SUBCATS[draft.type] || TIME_OFF_SUBCATS.Travel;
 
       const airportOpts = function (selected) {
-        const base = AIRPORT_ZONES.map(function (z) {
+        const list = AIRPORT_ZONES.map(function (z) {
           return '<option value="' + z.code + '"' + (z.code === selected ? ' selected' : '') + '>' + esc(z.disp + ' (' + getZoneAbbr(z.code, draft.date) + ')') + '</option>';
         });
-        if (state.trip.presetId === 'CUSTOM' || selected === 'CUSTOM' || getTripDestAirportCode() === 'CUSTOM') {
-          base.push('<option value="CUSTOM"' + (selected === 'CUSTOM' ? ' selected' : '') + '>' + esc(getAirportDispCode('CUSTOM') + ' (' + getZoneAbbr('CUSTOM', draft.date) + ')') + '</option>');
-        }
-        return base.join('');
+        list.push('<option value="CUSTOM"' + (selected === 'CUSTOM' ? ' selected' : '') + '>' + esc(getAirportDispCode('CUSTOM') + ' (' + formatUtcLabel(8 + getCurrentTripTzDiff()) + ')') + '</option>');
+        return list.join('');
       };
       const subOpts = subList.map(function (s) {
         return '<option value="' + esc(s) + '"' + (draft.subCategory === s ? ' selected' : '') + '>' + esc(s) + '</option>';
       }).join('');
 
-      const preset = findRoutePresetById(state.trip.presetId);
       const destCode = getTripDestAirportCode();
       const destOff = getUtcOffset(destCode, state.trip.startDate);
-      const destLabel = preset ? preset.label : (state.trip.route || 'Custom');
-      const destCountry = preset ? preset.country : getAirportDispCode(destCode);
       const tzGuideHtml = '<div class="tz-guide-bar">'
-        + '<div><strong>SGT Window Policy (' + esc(destLabel) + '):</strong> '
-        + esc(destCountry) + ' is <span class="mono"><strong>' + esc(getZoneShortLabel(destCode, state.trip.startDate)) + '</strong></span> (' + esc(formatTzDiffFromSgt(destOff)) + ' vs SGT). '
+        + '<div><strong>SGT Window Policy (' + esc(state.trip.route || 'Trip') + '):</strong> '
+        + 'Destination is <span class="mono"><strong>' + esc(getZoneShortLabel(destCode, state.trip.startDate)) + '</strong></span> (' + esc(formatTzDiffFromSgt(destOff)) + ' vs SGT). '
         + 'All Travel &amp; Work claims are converted and calculated in <strong>SGT</strong> (4h = 0.5d, 6h = 1.0d; Weekday after 18:00 / red-eye; Full day Weekends/PH).</div>'
         + '<button type="button" class="btn btn-sm btn-sky-soft" onclick="syncToilFromFlights()">↻ Sync from Flight Log</button>'
         + '</div>';
 
-      // Quick SGT-Window Calculator & "Add to Claim" Composer
       const composerHtml = '<div class="toil-composer">'
         + '<div class="toil-composer-grid">'
         + '<div><label class="field-label">Type</label><select class="select" onchange="updateToilDraft(\'type\',this.value,true)">'
@@ -4794,7 +4669,6 @@
         + '<div id="toil-draft-preview">' + renderToilPreviewHtml(draft) + '</div>'
         + '</div>';
 
-      // Claim Summary Table rows
       const tableRowsHtml = summary.timeOff.entries.map(function (item) {
         const en = item.entry;
         const c = item.calc;
@@ -4882,7 +4756,7 @@
         + '<div class="card-sub">Calculated in SGT · 4h = 0.5d · 6h = 1.0d · Outlook, Excel (TSV), CSV &amp; SGT PDF Export</div></div>'
         + '</button>'
         + '<div class="card-head-right">' + closedBadgeHtml(collapsed)
-        + '<button type="button" class="btn btn-sm btn-soft" onclick="openSlidePreviewModal({ type: \'toil\' })" title="Print Preview TOIL Statement">👁️ Preview</button>'
+        + '<button type="button" class="btn btn-sm btn-soft btn-preview-cat" onclick="openSlidePreviewModal({ type: \'toil\' })" title="Print Preview TOIL Statement">👁️ Preview</button>'
         + '<span id="cat-total-timeOff" class="cat-total-pill">' + summary.timeOff.totalDays.toFixed(1) + ' Day(s)</span></div>'
         + '</div>'
         + (collapsed ? '' : (
@@ -4977,7 +4851,7 @@
         + '<div><div class="card-title">' + esc(opts.title) + '</div><div class="card-sub">' + esc(opts.subtitle) + '</div></div>'
         + '</button>'
         + '<div class="card-head-right">' + closedBadgeHtml(collapsed) + extraHeader
-        + '<button type="button" class="btn btn-sm btn-soft" onclick="openSlidePreviewModal({ type: \'category\', scope: \'' + esc(opts.scope) + '\' })" title="Print Preview for ' + esc(opts.title) + '">👁️ Preview</button>'
+        + '<button type="button" class="btn btn-sm btn-soft btn-preview-cat" onclick="openSlidePreviewModal({ type: \'category\', scope: \'' + esc(opts.scope) + '\' })" title="Print Preview for ' + esc(opts.title) + '">👁️ Preview</button>'
         + '<span id="cat-total-' + opts.scope + '" class="cat-total-pill">SGD ' + fmt2(opts.total) + '</span></div>'
         + '</div>'
         + (collapsed ? '' : (
@@ -4999,13 +4873,11 @@
     function renderFlightsCard(summary) {
       const collapsed = !!state.ui.collapsed.flights;
       const airportOpts = function (selected) {
-        const base = AIRPORT_ZONES.map(function (z) {
+        const list = AIRPORT_ZONES.map(function (z) {
           return '<option value="' + z.code + '"' + (z.code === selected ? ' selected' : '') + '>' + z.code + '</option>';
         });
-        if (state.trip.presetId === 'CUSTOM' || selected === 'CUSTOM' || getTripDestAirportCode() === 'CUSTOM') {
-          base.push('<option value="CUSTOM"' + (selected === 'CUSTOM' ? ' selected' : '') + '>' + esc(getAirportDispCode('CUSTOM')) + '</option>');
-        }
-        return base.join('');
+        list.push('<option value="CUSTOM"' + (selected === 'CUSTOM' ? ' selected' : '') + '>' + esc(getAirportDispCode('CUSTOM')) + '</option>');
+        return list.join('');
       };
 
       const legsHtml = summary.flights.analyses.map(function (item, idx) {
@@ -5045,10 +4917,10 @@
         + '<button type="button" class="card-head-toggle" onclick="toggleCollapse(\'flights\')">'
         + chevronSvg()
         + '<div><div class="card-title">Flight Log &amp; Overnight Allowance</div>'
-        + '<div class="card-sub">Misc &gt; Overnight · Auto timezone → SGT · Detects 22:00–06:00 SGT legs (SGD ' + fmt2(summary.overnightRate) + '/leg)</div></div>'
+        + '<div class="card-sub">Misc &gt; Overnight · Auto timezone → SGT · Detects 22:00–06:00 SGT legs (Fixed SGD ' + fmt2(FIXED_OVERNIGHT_RATE) + '/leg)</div></div>'
         + '</button>'
         + '<div class="card-head-right">' + closedBadgeHtml(collapsed) + '<span class="pill pill-accent">Misc &gt; Overnight</span>'
-        + '<button type="button" class="btn btn-sm btn-soft" onclick="openSlidePreviewModal({ type: \'overnight\' })" title="Print Preview for Overnight Allowance">👁️ Preview</button>'
+        + '<button type="button" class="btn btn-sm btn-soft btn-preview-cat" onclick="openSlidePreviewModal({ type: \'overnight\' })" title="Print Preview for Overnight Allowance">👁️ Preview</button>'
         + '<span id="cat-total-flights" class="cat-total-pill">SGD ' + fmt2(summary.flights.overnightTotal) + '</span></div>'
         + '</div>'
         + (collapsed ? '' : (
@@ -5077,7 +4949,6 @@
       const collapsed = !!state.ui.collapsed.meals;
       const cap = summary.cap > 0 ? summary.cap : 0;
 
-      // Day-at-a-Glance Jump Strip
       const jumpStripHtml = summary.meals.days.length > 0
         ? '<div class="meal-jump-strip">' + summary.meals.days.map(function (d) {
             const pCount = getReceiptsForMealDay(d.day).length;
@@ -5155,6 +5026,7 @@
           + '<button type="button" class="btn btn-sm btn-primary" onclick="triggerReceiptUpload({ scope:\'mealDay\', dayId:\'' + esc(d.day.id) + '\', itemId:\'\', role:\'receipt\' }, true)">📸 Snap</button>'
           + '<button type="button" class="btn btn-sm btn-soft" onclick="triggerReceiptUpload({ scope:\'mealDay\', dayId:\'' + esc(d.day.id) + '\', itemId:\'\', role:\'receipt\' }, false)">🖼️ +Photos / PDF</button>'
           + '<button type="button" class="btn btn-sm btn-sky-soft" onclick="triggerReceiptUpload({ scope:\'mealDay\', dayId:\'' + esc(d.day.id) + '\', itemId:\'\', role:\'bank\' }, false)">💳 +Bank / PDF</button>'
+          + '<button type="button" class="btn btn-sm btn-green-soft" onclick="pasteReceiptFromClipboard({ scope:\'mealDay\', dayId:\'' + esc(d.day.id) + '\', itemId:\'\', role:\'bank\' })">📋 Paste</button>'
           + '</div>'
           + '</div>'
           + photosHtml
@@ -5170,8 +5042,8 @@
         + '<div class="card-sub">Misc &gt; Meals · Day-by-day cap enforcement, inline photo strip &amp; 1-Page Landscape PDF/Share</div></div>'
         + '</button>'
         + '<div class="card-head-right">' + closedBadgeHtml(collapsed)
-        + '<span id="meals-cap-badge" class="pill pill-amber mono">Cap $' + fmtForeign(summary.cap) + '/d</span>'
-        + '<button type="button" class="btn btn-sm btn-soft" onclick="openSlidePreviewModal({ type: \'meals\' })" title="Print Preview for All Daily Meals">👁️ Preview</button>'
+        + '<span id="meals-cap-badge" class="pill pill-amber mono">Cap $' + esc(fmtForeign(summary.cap)) + '/d</span>'
+        + '<button type="button" class="btn btn-sm btn-soft btn-preview-cat" onclick="openSlidePreviewModal({ type: \'meals\' })" title="Print Preview for All Daily Meals">👁️ Preview</button>'
         + '<span id="cat-total-meals" class="cat-total-pill">SGD ' + fmt2(summary.meals.cappedTotal) + '</span></div>'
         + '</div>'
         + (collapsed ? '' : (
@@ -5249,7 +5121,7 @@
           setMobileView('today');
         } else if (state.ui.collapsed.meals) {
           state.ui.collapsed.meals = false;
-          persistStore(false);
+          persistUiOnly();
           renderWorkspace();
         }
         setTimeout(function () {
@@ -5269,14 +5141,14 @@
           } else {
             const collapseKey = target.scope === 'overnight' ? 'flights' : target.scope;
             state.ui.collapsed[collapseKey] = false;
-            persistStore(false);
+            persistUiOnly();
             setMobileView('setup');
           }
         } else {
           const collapseKey = target.scope === 'overnight' ? 'flights' : target.scope;
           if (state.ui.collapsed[collapseKey]) {
             state.ui.collapsed[collapseKey] = false;
-            persistStore(false);
+            persistUiOnly();
             renderWorkspace();
           }
         }
@@ -5290,71 +5162,6 @@
         }, 70);
       }
       showToast('Missing receipt: ' + target.label, 'amber');
-    }
-
-    /**
-     * Mobile Aware Mode Helpers:
-     * Detects today's date against the trip's meal days (or picks the closest day / user-selected day)
-     * and keeps Today's Meals + Daily Transport open and ready for instant entry & capture.
-     */
-    let mobileAwareDayId = null;
-    let mobileAwareTripId = null;
-    let mobileTransportTab = 'overseas';
-    let mobileTransportUserPicked = false;
-    let mobileUnlockedLines = {};
-
-    function toggleTodayLineLock(itemId, lockNow) {
-      if (!itemId) return;
-      if (lockNow) {
-        delete mobileUnlockedLines[itemId];
-      } else {
-        mobileUnlockedLines[itemId] = true;
-      }
-      renderWorkspace();
-      if (!lockNow) {
-        setTimeout(function () {
-          const inp = document.getElementById('rc-amt-input-' + itemId);
-          if (inp) inp.focus();
-        }, 40);
-      }
-    }
-
-    function openLockedLinePhoto(scope, itemId, dayId) {
-      const existing = receiptVault.photos.filter(function (p) { return p.itemId === itemId; });
-      if (existing.length === 1) {
-        openReceiptLightbox(existing[0].id);
-      } else {
-        handleItemPhotoClick(scope, itemId, dayId);
-      }
-    }
-
-    function handleTodayRowBlur(itemId) {
-      if (!itemId || mobileUnlockedLines[itemId]) return;
-      setTimeout(function () {
-        const rowEl = document.getElementById('rc-row-' + itemId);
-        if (!rowEl) return;
-        const active = document.activeElement;
-        if (active && rowEl.contains(active)) return;
-        if (getReceiptCountForItem(itemId) <= 0) return;
-        const target = resolveReceiptTargetForItem(itemId);
-        const list = getItemsList(target.scope, target.dayId || null);
-        const row = list && list.find(function (r) { return r.id === itemId; });
-        if (!row) return;
-        const calc = calcReceiptItem(row);
-        if (calc.hasValue && calc.sgd > 0 && calc.grossParsed.valid && calc.dedParsed.valid) {
-          renderWorkspace();
-        }
-      }, 120);
-    }
-
-    function handleTodayRowKeydown(evt, itemId) {
-      if (evt && evt.key === 'Enter') {
-        evt.preventDefault();
-        if (evt.target && evt.target.blur) evt.target.blur();
-        if (itemId && !mobileUnlockedLines[itemId]) {
-          handleTodayRowBlur(itemId);
-        }
-      }
     }
 
     function detectAwareMealDay(summary) {
@@ -6227,7 +6034,10 @@
       const list = getItemsList(scope, dayId);
       if (!list) return;
       const idx = list.findIndex(function (r) { return r.id === id; });
-      if (idx >= 0) list.splice(idx, 1);
+      if (idx >= 0) {
+        list.splice(idx, 1);
+        recordDeletedItemId(id);
+      }
       persistStore(true);
       renderAll();
     }
@@ -6238,6 +6048,7 @@
       const row = list.find(function (r) { return r.id === id; });
       if (!row) return;
       row[field] = val;
+      row.updatedAt = Date.now();
       if (inputEl && (field === 'amountExpr' || field === 'deductionExpr')) {
         inputEl.classList.toggle('invalid', !parseAmountExpression(val).valid);
       }
@@ -6251,6 +6062,7 @@
       const row = list.find(function (r) { return r.id === id; });
       if (!row) return;
       row.currency = curr;
+      row.updatedAt = Date.now();
       if (curr === 'FX' && !row.fxAnchorId && state.fxAnchors[0]) {
         row.fxAnchorId = state.fxAnchors[0].id;
       }
@@ -6263,7 +6075,8 @@
         id: uid('fx'),
         name: 'Card Ref ' + (state.fxAnchors.length + 1),
         foreignAmount: '',
-        sgdAmount: ''
+        sgdAmount: '',
+        updatedAt: Date.now()
       });
       persistStore();
       renderAll();
@@ -6275,6 +6088,7 @@
         return;
       }
       state.fxAnchors = state.fxAnchors.filter(function (a) { return a.id !== id; });
+      recordDeletedItemId(id);
       persistStore();
       renderAll();
     }
@@ -6283,6 +6097,7 @@
       const a = state.fxAnchors.find(function (x) { return x.id === id; });
       if (!a) return;
       a[field] = val;
+      a.updatedAt = Date.now();
       persistStore();
       refreshCalculatedUI();
     }
@@ -6298,7 +6113,8 @@
         toCode: isReturn ? 'SG' : preset.destCode,
         depLocal: '',
         arrLocal: '',
-        arrDayOffset: 0
+        arrDayOffset: 0,
+        updatedAt: Date.now()
       });
       persistStore();
       renderAll();
@@ -6306,6 +6122,7 @@
 
     function removeFlightLeg(id) {
       state.flights.legs = state.flights.legs.filter(function (l) { return l.id !== id; });
+      recordDeletedItemId(id);
       persistStore();
       renderAll();
     }
@@ -6314,6 +6131,7 @@
       const leg = state.flights.legs.find(function (l) { return l.id === id; });
       if (!leg) return;
       leg[field] = field === 'arrDayOffset' ? (parseInt(val, 10) || 0) : val;
+      leg.updatedAt = Date.now();
       persistStore();
       if (fullRender) renderAll();
       else refreshCalculatedUI();
@@ -6450,6 +6268,7 @@
 
     function removeTimeOffEntry(id) {
       state.timeOff.entries = state.timeOff.entries.filter(function (e) { return e.id !== id; });
+      recordDeletedItemId(id);
       persistStore(true);
       renderAll();
     }
@@ -6458,6 +6277,7 @@
       const entry = state.timeOff.entries.find(function (e) { return e.id === id; });
       if (!entry) return;
       entry[field] = val;
+      entry.updatedAt = Date.now();
       persistStore(!!fullRender);
       if (fullRender) renderAll();
       else refreshCalculatedUI();
@@ -6758,6 +6578,11 @@
     }
 
     function removeMealDay(dayId) {
+      const victim = (state.meals || []).find(function (d) { return d.id === dayId; });
+      if (victim) {
+        recordDeletedItemId(victim.id);
+        (victim.items || []).forEach(function (it) { recordDeletedItemId(it.id); });
+      }
       state.meals = state.meals.filter(function (d) { return d.id !== dayId; });
       persistStore(true);
       renderAll();
@@ -6780,7 +6605,7 @@
 
     function setFilterTab(tab) {
       state.console.filterTab = tab;
-      persistStore(false);
+      persistUiOnly();
       renderConsole();
     }
 
@@ -7538,7 +7363,7 @@
         try {
           const parsed = JSON.parse(String(reader.result || '{}'));
           if (parsed && Array.isArray(parsed.trips)) {
-            await mergeWorkspacePayload(parsed, false);
+            await mergeWorkspacePayload(parsed, false, file.name);
             return;
           }
           if (!parsed || !parsed.trip) throw new Error('Unrecognized ClaimFlow JSON format');
@@ -7547,22 +7372,54 @@
           delete parsed._receipts;
           delete parsed._customPresets;
           const imported = normalizeTrip(parsed);
-          const idx = store.trips.findIndex(function (t) { return t.id === imported.id; });
-          if (idx >= 0) store.trips[idx] = imported;
-          else store.trips.unshift(imported);
-          store.activeTripId = imported.id;
-          state = imported;
-          persistStore(true, true);
-          let restoredCount = 0;
-          if (embeddedReceipts.length > 0) {
-            const mapped = embeddedReceipts.map(function (r) {
-              return Object.assign({}, r, { tripId: r.tripId || imported.id });
-            });
-            restoredCount = await restoreEmbeddedReceipts(mapped);
+          const idx = findMatchingLocalTripIndex(imported);
+          let targetTripId = imported.id;
+          let dayIdRemap = {};
+          let addedLines = 0;
+          let addedDays = 0;
+          let updatedLines = 0;
+          if (idx >= 0) {
+            targetTripId = store.trips[idx].id;
+            const mergedRes = smartMergeTrips(store.trips[idx], imported);
+            store.trips[idx] = mergedRes.trip;
+            dayIdRemap = mergedRes.dayIdRemap || {};
+            addedLines = mergedRes.addedLines || 0;
+            addedDays = mergedRes.addedDays || 0;
+            updatedLines = mergedRes.updatedLines || 0;
+          } else {
+            store.trips.unshift(imported);
           }
+          store.activeTripId = targetTripId;
+          state = getActiveTrip();
+          persistStore(true, true);
+          let recStats = { added: 0, updated: 0, skipped: 0 };
+          if (embeddedReceipts.length > 0) {
+            const deletedSet = {};
+            getDeletedReceiptIds().forEach(function (id) { deletedSet[id] = true; });
+            const mapped = embeddedReceipts
+              .filter(function (r) { return r && r.id && !deletedSet[r.id]; })
+              .map(function (r) {
+                const remappedDay = (r.dayId && dayIdRemap[r.dayId]) ? dayIdRemap[r.dayId] : (r.dayId || '');
+                return Object.assign({}, r, { tripId: targetTripId, dayId: remappedDay });
+              });
+            recStats = await restoreEmbeddedReceiptsDetailed(mapped);
+          }
+          if (Object.keys(dayIdRemap).length > 0) {
+            await remapStoredReceiptsDayIds(targetTripId, dayIdRemap);
+          }
+          const summaryTxt = buildMergeSummaryText({
+            addedTrips: idx < 0 ? 1 : 0,
+            updatedTrips: idx >= 0 ? 1 : 0,
+            addedLines: addedLines,
+            updatedLines: updatedLines,
+            addedDays: addedDays,
+            addedReceipts: recStats.added,
+            updatedReceipts: recStats.updated
+          });
+          recordLastMergeSummary(summaryTxt, file.name || 'trip.json');
           renderAll();
           await loadTripReceipts();
-          showToast('Imported "' + formatTripOptionLabel(imported) + '"' + (restoredCount > 0 ? (' + ' + restoredCount + ' receipt photo' + (restoredCount === 1 ? '' : 's')) : '') + ' ✓', 'green');
+          showToast((idx >= 0 ? 'Smart-Merged "' : 'Imported "') + formatTripOptionLabel(state) + '" · ' + summaryTxt, 'green');
         } catch (err) {
           showToast('Import failed: ' + err.message, 'red');
         }
@@ -7635,6 +7492,8 @@
       },
       busy: false,
       pendingPush: false,
+      localEpoch: 0,
+      lastSyncedReceiptsCount: null,
       lastError: '',
       lastPullCheckAt: 0,
       pushTimer: null
@@ -7653,10 +7512,311 @@
       },
       busy: false,
       pendingPush: false,
+      localEpoch: 0,
+      lastSyncedReceiptsCount: null,
       lastError: '',
       lastPullCheckAt: 0,
       pushTimer: null
     };
+
+    function bumpSyncEpochs() {
+      oneDriveSync.localEpoch = (oneDriveSync.localEpoch || 0) + 1;
+      gistSync.localEpoch = (gistSync.localEpoch || 0) + 1;
+    }
+
+    /**
+     * Capture-Safe Item-Level Smart-Merge:
+     * Prevents coarse whole-trip timestamp overwrite from dropping phone captures (meals, transport, photos)
+     * when Desktop was recently clicked or edited. Unifies meal days by calendar date with receipt dayId remapping
+     * and respects explicit deletions tracked via deletedItemIds.
+     */
+    function isBlankReceiptRow(it) {
+      if (!it) return true;
+      return !String(it.label || '').trim()
+        && !String(it.amountExpr || '').trim()
+        && !String(it.deductionExpr || '').trim();
+    }
+
+    function mergeItemArraysById(localArr, remoteArr, deletedSet, localNewer, kind) {
+      const lList = Array.isArray(localArr) ? localArr : [];
+      const rList = Array.isArray(remoteArr) ? remoteArr : [];
+      const lMap = {};
+      const rMap = {};
+      const order = [];
+      let addedCount = 0;
+      let updatedCount = 0;
+
+      lList.forEach(function (it) {
+        if (!it || !it.id || deletedSet[it.id]) return;
+        lMap[it.id] = it;
+        order.push(it.id);
+      });
+      rList.forEach(function (it) {
+        if (!it || !it.id || deletedSet[it.id]) return;
+        rMap[it.id] = it;
+        if (!lMap[it.id]) order.push(it.id);
+      });
+
+      const merged = [];
+      order.forEach(function (id) {
+        const li = lMap[id];
+        const ri = rMap[id];
+        if (li && !ri) {
+          merged.push(li);
+        } else if (!li && ri) {
+          merged.push(ri);
+          if (kind !== 'receipt' || !isBlankReceiptRow(ri)) addedCount++;
+        } else if (li && ri) {
+          let chosen = null;
+          if (kind === 'receipt') {
+            const lBlank = isBlankReceiptRow(li);
+            const rBlank = isBlankReceiptRow(ri);
+            if (lBlank && !rBlank) chosen = ri;
+            else if (!lBlank && rBlank) chosen = li;
+          } else if (kind === 'fx') {
+            const lHas = String(li.sgdAmount || '').trim() !== '';
+            const rHas = String(ri.sgdAmount || '').trim() !== '';
+            if (!lHas && rHas) chosen = ri;
+            else if (lHas && !rHas) chosen = li;
+          }
+          if (!chosen) {
+            const lt = Number(li.updatedAt) || 0;
+            const rt = Number(ri.updatedAt) || 0;
+            if (rt > lt) chosen = ri;
+            else if (lt > rt) chosen = li;
+            else chosen = localNewer ? li : ri;
+          }
+          if (chosen === ri && JSON.stringify(li) !== JSON.stringify(ri)) updatedCount++;
+          merged.push(chosen);
+        }
+      });
+
+      // Drop untouched blank placeholder rows if real captured rows are present
+      if (kind === 'receipt' && merged.length > 1) {
+        const nonBlank = merged.filter(function (it) { return !isBlankReceiptRow(it); });
+        if (nonBlank.length > 0) {
+          nonBlank._mergeMeta = { added: addedCount, updated: updatedCount };
+          return nonBlank;
+        }
+      }
+      merged._mergeMeta = { added: addedCount, updated: updatedCount };
+      return merged;
+    }
+
+    function normalizeMatchToken(str) {
+      return String(str || '').trim().toUpperCase().replace(/[\s–—↔-]+/g, '-');
+    }
+
+    /**
+     * Smart Trip Matcher:
+     * 1. Exact Trip ID match
+     * 2. Fallback: Matching Ref # + Route
+     * 3. Fallback: Matching Route + Start/End Dates
+     * Ensures phone captures unify cleanly into the matching Desktop trip instead of creating duplicates.
+     */
+    function findMatchingLocalTripIndex(inc) {
+      if (!inc) return -1;
+      const byId = store.trips.findIndex(function (t) { return t.id === inc.id; });
+      if (byId >= 0) return byId;
+
+      const incRef = normalizeMatchToken(inc.trip && inc.trip.ref);
+      const incRoute = normalizeMatchToken(inc.trip && inc.trip.route);
+      const incStart = String((inc.trip && inc.trip.startDate) || '').trim();
+      const incEnd = String((inc.trip && inc.trip.endDate) || '').trim();
+
+      if (incRef && incRoute) {
+        const byRefRoute = store.trips.findIndex(function (t) {
+          return normalizeMatchToken(t.trip && t.trip.ref) === incRef
+            && normalizeMatchToken(t.trip && t.trip.route) === incRoute;
+        });
+        if (byRefRoute >= 0) return byRefRoute;
+      }
+
+      if (incRoute && incStart && incEnd) {
+        const byRouteDates = store.trips.findIndex(function (t) {
+          return normalizeMatchToken(t.trip && t.trip.route) === incRoute
+            && String((t.trip && t.trip.startDate) || '').trim() === incStart
+            && String((t.trip && t.trip.endDate) || '').trim() === incEnd;
+        });
+        if (byRouteDates >= 0) return byRouteDates;
+      }
+      return -1;
+    }
+
+    function buildMergeSummaryText(stats) {
+      const s = stats || {};
+      const parts = [];
+      if (s.addedTrips > 0) parts.push('+' + s.addedTrips + ' trip' + (s.addedTrips === 1 ? '' : 's'));
+      if (s.addedDays > 0) parts.push('+' + s.addedDays + ' day' + (s.addedDays === 1 ? '' : 's'));
+      if (s.addedLines > 0) parts.push('+' + s.addedLines + ' line' + (s.addedLines === 1 ? '' : 's'));
+      if (s.updatedLines > 0) parts.push(s.updatedLines + ' updated');
+      const recChg = (s.addedReceipts || 0) + (s.updatedReceipts || 0);
+      if (recChg > 0) parts.push('+' + recChg + ' receipt' + (recChg === 1 ? '' : 's'));
+      if (parts.length === 0) {
+        if (s.updatedTrips > 0) return 'Synced trip metadata ✓';
+        return 'Already up to date ✓';
+      }
+      return parts.join(', ') + ' ✓';
+    }
+
+    function loadLastMergeSummary() {
+      try {
+        const raw = localStorage.getItem(LAST_MERGE_KEY);
+        return raw ? JSON.parse(raw) : null;
+      } catch (e) { return null; }
+    }
+
+    function recordLastMergeSummary(summaryText, sourceName) {
+      try {
+        localStorage.setItem(LAST_MERGE_KEY, JSON.stringify({
+          summary: summaryText || 'Merged ✓',
+          source: sourceName || 'claimflow-db.json',
+          at: Date.now()
+        }));
+      } catch (e) {}
+    }
+
+    function smartMergeTrips(localRaw, remoteRaw) {
+      const local = normalizeTrip(JSON.parse(JSON.stringify(localRaw)));
+      const remote = normalizeTrip(JSON.parse(JSON.stringify(remoteRaw)));
+      const localTs = Number(local.updatedAt) || 0;
+      const remoteTs = Number(remote.updatedAt) || 0;
+      const localNewer = localTs >= remoteTs;
+
+      // Union explicit deletions so deleted items never resurrect on merge
+      const deletedIds = [];
+      const deletedSet = {};
+      (local.deletedItemIds || []).concat(remote.deletedItemIds || []).forEach(function (id) {
+        if (id && !deletedSet[id]) {
+          deletedSet[id] = true;
+          deletedIds.push(id);
+        }
+      });
+      if (deletedIds.length > 400) deletedIds.splice(0, deletedIds.length - 400);
+
+      // Keep canonical local ID and UI collapse state; start from newer trip's content metadata while preserving non-empty fields
+      const base = localNewer ? JSON.parse(JSON.stringify(local)) : JSON.parse(JSON.stringify(remote));
+      base.id = local.id;
+      base.ui = local.ui;
+      const other = localNewer ? remote : local;
+      ['ref', 'route', 'startDate', 'endDate', 'foreignCurrency'].forEach(function (f) {
+        if (!String(base.trip[f] || '').trim() && String(other.trip[f] || '').trim()) {
+          base.trip[f] = other.trip[f];
+        }
+      });
+
+      let addedLines = 0;
+      let updatedLines = 0;
+      let addedDays = 0;
+      const tally = function (arr) {
+        if (arr && arr._mergeMeta) {
+          addedLines += arr._mergeMeta.added || 0;
+          updatedLines += arr._mergeMeta.updated || 0;
+          delete arr._mergeMeta;
+        }
+        return arr;
+      };
+
+      // Union-merge all item categories & anchors
+      base.fxAnchors = tally(mergeItemArraysById(local.fxAnchors, remote.fxAnchors, deletedSet, localNewer, 'fx'));
+      if (base.fxAnchors.length === 0) base.fxAnchors = local.fxAnchors.length ? local.fxAnchors : remote.fxAnchors;
+      base.airFare.items = tally(mergeItemArraysById(local.airFare && local.airFare.items, remote.airFare && remote.airFare.items, deletedSet, localNewer, 'receipt'));
+      base.hotel.items = tally(mergeItemArraysById(local.hotel && local.hotel.items, remote.hotel && remote.hotel.items, deletedSet, localNewer, 'receipt'));
+      base.sgTransport.items = tally(mergeItemArraysById(local.sgTransport && local.sgTransport.items, remote.sgTransport && remote.sgTransport.items, deletedSet, localNewer, 'receipt'));
+      base.overseasTransport.items = tally(mergeItemArraysById(local.overseasTransport && local.overseasTransport.items, remote.overseasTransport && remote.overseasTransport.items, deletedSet, localNewer, 'receipt'));
+      base.data.items = tally(mergeItemArraysById(local.data && local.data.items, remote.data && remote.data.items, deletedSet, localNewer, 'receipt'));
+      base.otherMisc.items = tally(mergeItemArraysById(local.otherMisc && local.otherMisc.items, remote.otherMisc && remote.otherMisc.items, deletedSet, localNewer, 'receipt'));
+      base.flights.legs = tally(mergeItemArraysById(local.flights && local.flights.legs, remote.flights && remote.flights.legs, deletedSet, localNewer, 'flight'));
+      base.timeOff.entries = tally(mergeItemArraysById(local.timeOff && local.timeOff.entries, remote.timeOff && remote.timeOff.entries, deletedSet, localNewer, 'toil'));
+
+      // Union-merge Daily Meals: unify by ID OR calendar date, remapping retired dayIds for receipts
+      const dayIdRemap = {};
+      const mergedDays = [];
+      const dayById = {};
+      const dayByDate = {};
+
+      const ingestDay = function (d, isFromLocal) {
+        if (!d || !d.id || deletedSet[d.id]) return;
+        const dateKey = String(d.date || '').trim();
+        let target = dayById[d.id] || (dateKey ? dayByDate[dateKey] : null);
+        if (!target) {
+          const cleanItems = (d.items || []).filter(function (it) { return it && it.id && !deletedSet[it.id]; });
+          const cloned = {
+            id: d.id,
+            date: dateKey,
+            items: cleanItems
+          };
+          mergedDays.push(cloned);
+          dayById[cloned.id] = cloned;
+          if (dateKey) dayByDate[dateKey] = cloned;
+          if (!isFromLocal) {
+            addedDays++;
+            addedLines += cleanItems.filter(function (it) { return !isBlankReceiptRow(it); }).length;
+          }
+        } else {
+          if (d.id !== target.id) {
+            dayIdRemap[d.id] = target.id;
+            dayById[d.id] = target;
+          }
+          const lItems = isFromLocal ? d.items : target.items;
+          const rItems = isFromLocal ? target.items : d.items;
+          target.items = tally(mergeItemArraysById(lItems, rItems, deletedSet, localNewer, 'receipt'));
+        }
+      };
+
+      (local.meals || []).forEach(function (d) { ingestDay(d, true); });
+      (remote.meals || []).forEach(function (d) { ingestDay(d, false); });
+      mergedDays.sort(function (a, b) { return String(a.date || '').localeCompare(String(b.date || '')); });
+      base.meals = mergedDays;
+
+      // Preserve completed/copied HRMS checkmarks from both sides
+      base.console.completedMap = Object.assign({}, other.console && other.console.completedMap, base.console && base.console.completedMap);
+      base.console.copiedMap = Object.assign({}, other.console && other.console.copiedMap, base.console && base.console.copiedMap);
+      base.console.manualDescriptions = Object.assign({}, other.console && other.console.manualDescriptions, base.console && base.console.manualDescriptions);
+      base.deletedItemIds = deletedIds;
+
+      const sigOf = function (t) {
+        const copy = Object.assign({}, t);
+        delete copy.updatedAt;
+        delete copy.ui;
+        return JSON.stringify(copy);
+      };
+      const localSig = sigOf(local);
+      const remoteSig = sigOf(remote);
+      const mergedSig = sigOf(base);
+      const changedLocal = mergedSig !== localSig;
+      const changedRemote = mergedSig !== remoteSig;
+
+      base.updatedAt = Math.max(localTs, remoteTs, (changedLocal && changedRemote) ? Date.now() : 0);
+      return {
+        trip: normalizeTrip(base),
+        changedLocal: changedLocal,
+        changedRemote: changedRemote,
+        dayIdRemap: dayIdRemap,
+        addedLines: addedLines,
+        updatedLines: updatedLines,
+        addedDays: addedDays
+      };
+    }
+
+    async function remapStoredReceiptsDayIds(tripId, dayIdRemap) {
+      if (!dayIdRemap || Object.keys(dayIdRemap).length === 0) return 0;
+      const all = await idbGetReceiptsForTrip(tripId);
+      let remapped = 0;
+      for (let i = 0; i < all.length; i++) {
+        const rec = all[i];
+        if (rec && rec.dayId && dayIdRemap[rec.dayId] && dayIdRemap[rec.dayId] !== rec.dayId) {
+          rec.dayId = dayIdRemap[rec.dayId];
+          await idbPutReceipt(rec);
+          if (rec.tripId === state.id) {
+            const vIdx = receiptVault.photos.findIndex(function (p) { return p.id === rec.id; });
+            if (vIdx >= 0) receiptVault.photos[vIdx].dayId = rec.dayId;
+          }
+          remapped++;
+        }
+      }
+      return remapped;
+    }
 
     function getDeletedReceiptIds() {
       try {
@@ -7724,7 +7884,7 @@
     }
 
     const GIST_SHARD_PREFIX = 'claimflow-receipts-';
-    const GIST_SHARD_MAX_CHARS = 850000; // Keep each Gist file under GitHub's 1 MB truncation threshold
+    const GIST_SHARD_MAX_CHARS = 450000; // <= 450 KB per shard so GitHub serves every shard inline without truncation
 
     function sanitizeGistCredential(val) {
       return String(val || '').replace(/[\r\n\s]+/g, '');
@@ -7821,33 +7981,9 @@
     }
 
     function renderMobileGistSyncChipHtml() {
-      if (oneDriveSync.cfg.enabled && oneDriveSync.cfg.clientId && (oneDriveSync.cfg.accessToken || oneDriveSync.cfg.refreshToken)) {
-        if (oneDriveSync.busy) {
-          return '<button type="button" class="aware-sync-chip syncing" onclick="openCloudModal()">↻ OneDrive…</button>';
-        }
-        if (oneDriveSync.lastError) {
-          return '<button type="button" class="aware-sync-chip error" onclick="syncOneDriveTwoWay(false,false)" title="' + esc(oneDriveSync.lastError) + '">⚠️ Retry OneDrive</button>';
-        }
-        if (oneDriveSync.pendingPush) {
-          return '<button type="button" class="aware-sync-chip pending" onclick="syncOneDriveTwoWay(false,true)">☁️ Queued</button>';
-        }
-        const tOd = oneDriveSync.cfg.lastSyncedAt ? (' · ' + fmtTimeHHMM(oneDriveSync.cfg.lastSyncedAt)) : '';
-        return '<button type="button" class="aware-sync-chip synced" onclick="syncOneDriveTwoWay(false,false)" title="Tap to sync with OneDrive now">☁️ OneDrive' + esc(tOd) + '</button>';
-      }
-      if (gistSync.cfg.enabled && gistSync.cfg.gistId) {
-        if (gistSync.busy) {
-          return '<button type="button" class="aware-sync-chip syncing" onclick="openCloudModal()">↻ Syncing…</button>';
-        }
-        if (gistSync.lastError) {
-          return '<button type="button" class="aware-sync-chip error" onclick="syncGistTwoWay(false)" title="' + esc(gistSync.lastError) + '">⚠️ Retry Sync</button>';
-        }
-        if (gistSync.pendingPush) {
-          return '<button type="button" class="aware-sync-chip pending" onclick="syncGistTwoWay(false)">☁️ Queued</button>';
-        }
-        const t = gistSync.cfg.lastSyncedAt ? (' · ' + fmtTimeHHMM(gistSync.cfg.lastSyncedAt)) : '';
-        return '<button type="button" class="aware-sync-chip synced" onclick="syncGistTwoWay(false)" title="Tap to sync now">☁️ Auto' + esc(t) + '</button>';
-      }
-      return '<button type="button" class="aware-sync-chip" onclick="openCloudModal()">☁️ Auto-Sync</button>';
+      const lastM = loadLastMergeSummary();
+      const tip = lastM ? ('Last merge ' + fmtTimeHHMM(lastM.at) + ': ' + lastM.summary) : 'Backup or Smart-Merge JSON across iPhone & Desktop';
+      return '<button type="button" class="aware-sync-chip' + (lastM ? ' synced' : '') + '" onclick="openCloudModal()" title="' + esc(tip) + '">📦 Backup / Merge</button>';
     }
 
     /* --- Direct OneDrive API (Microsoft Graph + OAuth2 PKCE SPA Flow) --- */
@@ -7999,7 +8135,6 @@
         pkce = raw ? JSON.parse(raw) : null;
       } catch (e) {}
 
-      // Clean OAuth query params from address bar immediately
       try {
         const cleanUrl = window.location.origin + window.location.pathname + (window.location.hash || '');
         window.history.replaceState({}, document.title, cleanUrl);
@@ -8117,7 +8252,7 @@
     }
 
     async function oneDriveReadJsonFile(fileName, token) {
-      const url = buildOneDriveItemEndpoint(fileName) + ':/content';
+      const url = buildOneDriveItemEndpoint(fileName) + ':/content?_cb=' + Date.now();
       const res = await fetch(url, {
         headers: { 'Authorization': 'Bearer ' + token }
       });
@@ -8131,7 +8266,6 @@
       return JSON.parse(text);
     }
 
-    /** Writes JSON to OneDrive (auto-switches to Graph Upload Session for files > 3.5 MB so large receipt vaults sync cleanly) */
     async function oneDriveWriteJsonFile(fileName, jsonString, token) {
       const bytes = new TextEncoder().encode(jsonString);
       if (bytes.byteLength <= 3.5 * 1024 * 1024) {
@@ -8151,7 +8285,6 @@
         return;
       }
 
-      // Large file (> 3.5 MB): Microsoft Graph Resumable Upload Session (3.2 MB chunks, multiple of 320 KiB)
       const sessUrl = buildOneDriveItemEndpoint(fileName) + ':/createUploadSession';
       const sessRes = await fetch(sessUrl, {
         method: 'POST',
@@ -8168,7 +8301,7 @@
       }
       const sess = await sessRes.json();
       const uploadUrl = sess.uploadUrl;
-      const chunkSize = 3276800; // 10 × 320 KiB (Graph requirement)
+      const chunkSize = 3276800;
       const total = bytes.byteLength;
       for (let start = 0; start < total; start += chunkSize) {
         const end = Math.min(total, start + chunkSize);
@@ -8188,6 +8321,7 @@
     }
 
     async function syncOneDriveTwoWay(silent, pushPreferred) {
+      if (!CLOUD_APIS_ENABLED) return;
       if (!oneDriveSync.cfg.enabled || !oneDriveSync.cfg.clientId || (!oneDriveSync.cfg.accessToken && !oneDriveSync.cfg.refreshToken)) return;
       if (oneDriveSync.busy) {
         if (pushPreferred) oneDriveSync.pendingPush = true;
@@ -8203,14 +8337,15 @@
 
       oneDriveSync.busy = true;
       oneDriveSync.lastError = '';
+      const runEpoch = oneDriveSync.localEpoch;
       renderCloudStatusUI();
 
       try {
         const token = await ensureOneDriveToken();
         let needPushDb = !!pushPreferred;
         let pulledUpdates = 0;
+        const allDayIdRemaps = {};
 
-        // 1. Pull & Smart-Merge Remote claimflow-db.json
         const remoteDb = await oneDriveReadJsonFile(GIST_DATA_FILE, token);
         const localDeletedBefore = getDeletedReceiptIds();
         const mergedDeleted = mergeDeletedReceiptIds(remoteDb && remoteDb.deletedReceiptIds);
@@ -8229,17 +8364,25 @@
             if (idx < 0) {
               store.trips.unshift(rt);
               pulledUpdates++;
-            } else if ((rt.updatedAt || 0) > (store.trips[idx].updatedAt || 0)) {
-              store.trips[idx] = rt;
-              pulledUpdates++;
-            } else if ((store.trips[idx].updatedAt || 0) > (rt.updatedAt || 0)) {
-              needPushDb = true;
+            } else {
+              const resM = smartMergeTrips(store.trips[idx], rt);
+              store.trips[idx] = resM.trip;
+              if (resM.changedLocal) pulledUpdates++;
+              if (resM.changedRemote) needPushDb = true;
+              if (resM.dayIdRemap && Object.keys(resM.dayIdRemap).length > 0) {
+                allDayIdRemaps[rt.id] = Object.assign(allDayIdRemaps[rt.id] || {}, resM.dayIdRemap);
+              }
             }
           });
 
           store.trips.forEach(function (lt) {
             if (!remoteById[lt.id]) needPushDb = true;
           });
+
+          const remapTripIds = Object.keys(allDayIdRemaps);
+          for (let rti = 0; rti < remapTripIds.length; rti++) {
+            await remapStoredReceiptsDayIds(remapTripIds[rti], allDayIdRemaps[remapTripIds[rti]]);
+          }
 
           if (pulledUpdates > 0) {
             state = getActiveTrip();
@@ -8250,7 +8393,6 @@
           needPushDb = true;
         }
 
-        // 2. Differential Receipt Photos Sync (claimflow-receipts.json)
         let needPushReceipts = false;
         let mergedReceipts = [];
         let pulledReceipts = 0;
@@ -8275,6 +8417,10 @@
           const toRestore = [];
           remoteRecs.forEach(function (rr) {
             if (!rr || !rr.id || deletedSet[rr.id]) return;
+            const remapForTrip = allDayIdRemaps[rr.tripId];
+            if (remapForTrip && rr.dayId && remapForTrip[rr.dayId]) {
+              rr = Object.assign({}, rr, { dayId: remapForTrip[rr.dayId] });
+            }
             const lr = localMap[rr.id];
             if (!lr) {
               toRestore.push(rr);
@@ -8302,9 +8448,9 @@
           if (pulledReceipts > 0 || localRecs.length !== receiptVault.photos.length) {
             await loadTripReceipts();
           }
+          oneDriveSync.lastSyncedReceiptsCount = mergedReceipts.length;
         }
 
-        // 3. Upload ONLY changed files to OneDrive
         if (needPushDb) {
           const dbPayload = {
             activeTripId: store.activeTripId,
@@ -8322,19 +8468,26 @@
           oneDriveSync.cfg.lastReceiptsHash = rHash;
         }
 
+        if ((pulledUpdates > 0 || pulledReceipts > 0) && cloudSync.handle && !cloudSync.needsReconnect && cloudSync.prefs.autoWrite) {
+          writeCloudFile();
+        }
+
         oneDriveSync.cfg.lastSyncedAt = Date.now();
         oneDriveSync.lastPullCheckAt = Date.now();
-        oneDriveSync.pendingPush = false;
+        if (oneDriveSync.localEpoch === runEpoch) {
+          oneDriveSync.pendingPush = false;
+        }
         saveOneDriveConfig();
 
+        const recCountTxt = oneDriveSync.lastSyncedReceiptsCount != null ? (' · ' + oneDriveSync.lastSyncedReceiptsCount + ' receipt(s)') : '';
         if (!silent) {
           if (pulledUpdates > 0 || pulledReceipts > 0) {
-            showToast('OneDrive synced ✓ Pulled ' + pulledUpdates + ' trip(s)' + (pulledReceipts > 0 ? (' & ' + pulledReceipts + ' receipt(s)') : ''), 'green');
+            showToast('OneDrive synced ✓ Merged ' + pulledUpdates + ' trip(s)' + (pulledReceipts > 0 ? (' & ' + pulledReceipts + ' receipt(s)') : '') + recCountTxt, 'green');
           } else {
-            showToast('OneDrive synced ✓ (' + sanitizeOneDriveFolder(oneDriveSync.cfg.folder) + ')', 'green');
+            showToast('OneDrive synced ✓ (' + sanitizeOneDriveFolder(oneDriveSync.cfg.folder) + recCountTxt + ')', 'green');
           }
         } else if (pulledUpdates > 0 || pulledReceipts > 0) {
-          showToast('Auto-synced newer edits from OneDrive ✓', 'green');
+          showToast('Auto-merged updates from OneDrive ✓' + recCountTxt, 'green');
         }
       } catch (err) {
         oneDriveSync.lastError = err.message || 'OneDrive sync error';
@@ -8344,6 +8497,13 @@
         oneDriveSync.busy = false;
         renderCloudStatusUI();
         if (document.documentElement.getAttribute('data-layout') === 'mobile') renderWorkspace();
+        if (oneDriveSync.localEpoch !== runEpoch && !oneDriveSync.lastError && oneDriveSync.cfg.enabled && oneDriveSync.cfg.autoPush !== false) {
+          oneDriveSync.pendingPush = true;
+          clearTimeout(oneDriveSync.pushTimer);
+          oneDriveSync.pushTimer = setTimeout(function () {
+            syncOneDriveTwoWay(true, true);
+          }, 450);
+        }
       }
     }
 
@@ -8414,6 +8574,7 @@
     }
 
     async function syncGistTwoWay(silent, pushPreferred) {
+      if (!CLOUD_APIS_ENABLED) return;
       const token = sanitizeGistCredential(gistSync.cfg.token);
       const gistId = sanitizeGistId(gistSync.cfg.gistId);
       if (!gistSync.cfg.enabled || !token || !gistId) return;
@@ -8431,11 +8592,10 @@
 
       gistSync.busy = true;
       gistSync.lastError = '';
+      const runEpoch = gistSync.localEpoch;
       renderCloudStatusUI();
 
       try {
-        // Note: Do NOT pass cache: 'no-store' to api.github.com — browsers add a Cache-Control header
-        // which GitHub's CORS preflight rejects with TypeError: Failed to fetch. Use ?_cb= instead.
         const res = await gistFetch(GIST_API_BASE + '/' + encodeURIComponent(gistId) + '?_cb=' + Date.now(), {
           method: 'GET',
           mode: 'cors',
@@ -8447,6 +8607,7 @@
 
         let needPushDb = !!pushPreferred;
         let pulledUpdates = 0;
+        const allDayIdRemaps = {};
 
         let remoteDb = null;
         if (files[GIST_DATA_FILE]) {
@@ -8454,7 +8615,6 @@
           if (txt && txt.trim()) remoteDb = JSON.parse(txt);
         }
 
-        const localDeletedBefore = getDeletedReceiptIds();
         const mergedDeleted = mergeDeletedReceiptIds(remoteDb && remoteDb.deletedReceiptIds);
         if (mergedDeleted.length !== (remoteDb && remoteDb.deletedReceiptIds ? remoteDb.deletedReceiptIds.length : 0)) {
           needPushDb = true;
@@ -8471,17 +8631,25 @@
             if (idx < 0) {
               store.trips.unshift(rt);
               pulledUpdates++;
-            } else if ((rt.updatedAt || 0) > (store.trips[idx].updatedAt || 0)) {
-              store.trips[idx] = rt;
-              pulledUpdates++;
-            } else if ((store.trips[idx].updatedAt || 0) > (rt.updatedAt || 0)) {
-              needPushDb = true;
+            } else {
+              const resM = smartMergeTrips(store.trips[idx], rt);
+              store.trips[idx] = resM.trip;
+              if (resM.changedLocal) pulledUpdates++;
+              if (resM.changedRemote) needPushDb = true;
+              if (resM.dayIdRemap && Object.keys(resM.dayIdRemap).length > 0) {
+                allDayIdRemaps[rt.id] = Object.assign(allDayIdRemaps[rt.id] || {}, resM.dayIdRemap);
+              }
             }
           });
 
           store.trips.forEach(function (lt) {
             if (!remoteById[lt.id]) needPushDb = true;
           });
+
+          const remapTripIds = Object.keys(allDayIdRemaps);
+          for (let rti = 0; rti < remapTripIds.length; rti++) {
+            await remapStoredReceiptsDayIds(remapTripIds[rti], allDayIdRemaps[remapTripIds[rti]]);
+          }
 
           if (pulledUpdates > 0) {
             state = getActiveTrip();
@@ -8492,7 +8660,6 @@
           needPushDb = true;
         }
 
-        // Phase 1: Always sync lightweight trips DB first so numbers/claims never get blocked by receipt sizes
         if (needPushDb) {
           const dbPatch = {};
           dbPatch[GIST_DATA_FILE] = {
@@ -8513,8 +8680,10 @@
           if (!dbRes.ok) throw new Error(formatGistHttpError(dbRes, 'Save trips'));
         }
 
-        // Phase 2: Differential sharded receipt photo sync (backwards-compatible with legacy claimflow-receipts.json)
         let pulledReceipts = 0;
+        let uploadedShards = 0;
+        const shardReadErrors = [];
+
         if (gistSync.cfg.syncReceipts !== false) {
           const deletedSet = {};
           mergedDeleted.forEach(function (id) { deletedSet[id] = true; });
@@ -8528,7 +8697,6 @@
           const localMap = {};
           localRecs.forEach(function (r) { localMap[r.id] = r; });
 
-          // Read all remote receipt files (both legacy single file and sharded files)
           const remoteRecMap = {};
           const remoteShardHashes = {};
           const remoteShardNames = [];
@@ -8550,14 +8718,22 @@
                 });
               }
             } catch (readErr) {
-              console.warn('Skipped unreadable receipt file ' + fname + ':', readErr);
+              shardReadErrors.push(fname + ': ' + (readErr.message || 'read failed'));
             }
+          }
+
+          if (shardReadErrors.length > 0) {
+            throw new Error('Could not read ' + shardReadErrors.length + ' remote receipt shard(s) (' + shardReadErrors[0] + ') — remote receipts preserved');
           }
 
           const remoteRecs = Object.keys(remoteRecMap).map(function (k) { return remoteRecMap[k]; });
           const toRestore = [];
           remoteRecs.forEach(function (rr) {
             if (!rr || !rr.id || deletedSet[rr.id]) return;
+            const remapForTrip = allDayIdRemaps[rr.tripId];
+            if (remapForTrip && rr.dayId && remapForTrip[rr.dayId]) {
+              rr = Object.assign({}, rr, { dayId: remapForTrip[rr.dayId] });
+            }
             const lr = localMap[rr.id];
             if (!lr) {
               toRestore.push(rr);
@@ -8580,7 +8756,6 @@
             await loadTripReceipts();
           }
 
-          // Build <= 850 KB shards and upload ONLY changed shards in small safe batches (max ~1.6 MB per PATCH)
           const desiredShards = buildGistReceiptShards(localRecs);
           const desiredNames = Object.keys(desiredShards);
           const changedUploads = [];
@@ -8590,27 +8765,24 @@
             }
           });
 
-          // Remove obsolete shards and migrate away from truncated legacy claimflow-receipts.json
           const removals = [];
           remoteShardNames.forEach(function (fname) {
             if (!desiredShards[fname]) removals.push(fname);
           });
           if (files[GIST_RECEIPTS_FILE]) removals.push(GIST_RECEIPTS_FILE);
 
-          // Push changed shards in batches of <= 2 shards (stays safely below GitHub's request limits)
-          for (let b = 0; b < changedUploads.length; b += 2) {
-            const batchPatch = {};
-            const slice = changedUploads.slice(b, b + 2);
-            slice.forEach(function (item) {
-              batchPatch[item.name] = { content: item.content };
-            });
+          for (let b = 0; b < changedUploads.length; b++) {
+            const item = changedUploads[b];
+            const singlePatch = {};
+            singlePatch[item.name] = { content: item.content };
             const sRes = await gistFetch(GIST_API_BASE + '/' + encodeURIComponent(gistId), {
               method: 'PATCH',
               mode: 'cors',
               headers: gistHeaders(token, true),
-              body: JSON.stringify({ files: batchPatch })
-            }, 'Upload receipt photos');
-            if (!sRes.ok) throw new Error(formatGistHttpError(sRes, 'Upload receipts'));
+              body: JSON.stringify({ files: singlePatch })
+            }, 'Upload receipt shard ' + (b + 1) + '/' + changedUploads.length);
+            if (!sRes.ok) throw new Error(formatGistHttpError(sRes, 'Upload receipt shard ' + (b + 1)));
+            uploadedShards++;
           }
 
           if (removals.length > 0) {
@@ -8626,21 +8798,29 @@
           }
 
           gistSync.cfg.lastReceiptsHash = computeReceiptsHash(localRecs);
+          gistSync.lastSyncedReceiptsCount = localRecs.length;
+        }
+
+        if ((pulledUpdates > 0 || pulledReceipts > 0) && cloudSync.handle && !cloudSync.needsReconnect && cloudSync.prefs.autoWrite) {
+          writeCloudFile();
         }
 
         gistSync.cfg.lastSyncedAt = Date.now();
         gistSync.lastPullCheckAt = Date.now();
-        gistSync.pendingPush = false;
+        if (gistSync.localEpoch === runEpoch) {
+          gistSync.pendingPush = false;
+        }
         saveGistConfig();
 
+        const gistRecCnt = gistSync.lastSyncedReceiptsCount != null ? gistSync.lastSyncedReceiptsCount : receiptVault.photos.length;
         if (!silent) {
           if (pulledUpdates > 0 || pulledReceipts > 0) {
-            showToast('Gist synced ✓ Pulled ' + pulledUpdates + ' trip(s)' + (pulledReceipts > 0 ? (' & ' + pulledReceipts + ' receipt(s)') : ''), 'green');
+            showToast('Gist synced ✓ Merged ' + pulledUpdates + ' trip(s)' + (pulledReceipts > 0 ? (' & ' + pulledReceipts + ' receipt(s)') : '') + ' · ' + gistRecCnt + ' total in Gist', 'green');
           } else {
-            showToast('Private Gist synced ✓', 'green');
+            showToast('Private Gist synced ✓ (' + gistRecCnt + ' receipt' + (gistRecCnt === 1 ? '' : 's') + (uploadedShards > 0 ? (', pushed ' + uploadedShards + ' shard' + (uploadedShards === 1 ? '' : 's')) : '') + ')', 'green');
           }
         } else if (pulledUpdates > 0 || pulledReceipts > 0) {
-          showToast('Auto-synced newer edits from Private Gist ✓', 'green');
+          showToast('Auto-merged updates from Private Gist ✓ (' + gistRecCnt + ' receipts)', 'green');
         }
       } catch (err) {
         gistSync.lastError = err.message || 'Gist sync error';
@@ -8650,6 +8830,13 @@
         gistSync.busy = false;
         renderCloudStatusUI();
         if (document.documentElement.getAttribute('data-layout') === 'mobile') renderWorkspace();
+        if (gistSync.localEpoch !== runEpoch && !gistSync.lastError && gistSync.cfg.enabled && gistSync.cfg.autoPush !== false) {
+          gistSync.pendingPush = true;
+          clearTimeout(gistSync.pushTimer);
+          gistSync.pushTimer = setTimeout(function () {
+            syncGistTwoWay(true, true);
+          }, 450);
+        }
       }
     }
 
@@ -8691,28 +8878,18 @@
           }, 'Create Private Gist');
           const created = await res.json().catch(function () { return {}; });
           if (!res.ok || !created.id) {
-            throw new Error(created.message || formatGistHttpError(res, 'Create private Gist'));
+            throw new Error(created.message || formatGistHttpError(res, 'Create Gist'));
           }
           gistId = created.id;
           gistSync.cfg.enabled = true;
           gistSync.cfg.token = token;
           gistSync.cfg.gistId = gistId;
-          gistSync.cfg.lastSyncedAt = Date.now();
-          gistSync.lastPullCheckAt = Date.now();
           gistSync.cfg.lastReceiptsHash = '';
-          gistSync.pendingPush = false;
           saveGistConfig();
           if (tokInp) tokInp.value = '';
           if (idInp) idInp.value = '';
           gistSync.busy = false;
-          renderCloudStatusUI();
-          if (document.documentElement.getAttribute('data-layout') === 'mobile') renderWorkspace();
-          if (gistSync.cfg.syncReceipts !== false) {
-            showToast('Created private Gist — syncing receipts…', 'green');
-            await syncGistTwoWay(false, true);
-          } else {
-            showToast('Created private Gist & enabled Auto-Sync ✓', 'green');
-          }
+          await syncGistTwoWay(false, true);
           return;
         }
 
@@ -8740,29 +8917,20 @@
         showToast('Connect Private GitHub Gist first.', 'amber');
         return;
       }
-      showToast('Testing GitHub Gist connection…', 'indigo');
+      showToast('Testing GitHub token & Private Gist…', 'indigo');
       try {
-        const uRes = await gistFetch('https://api.github.com/user?_cb=' + Date.now(), {
+        const res = await gistFetch(GIST_API_BASE + '/' + encodeURIComponent(gistId) + '?_cb=' + Date.now(), {
           method: 'GET',
           mode: 'cors',
           headers: gistHeaders(token, false)
-        }, 'Auth check');
-        if (!uRes.ok) throw new Error(formatGistHttpError(uRes, 'Token check'));
-        const scopes = uRes.headers.get('x-oauth-scopes');
-        if (scopes !== null && scopes.split(',').map(function (s) { return s.trim(); }).indexOf('gist') < 0) {
-          throw new Error('Token is missing the "gist" scope (found: ' + (scopes || 'none') + ')');
-        }
-        const gRes = await gistFetch(GIST_API_BASE + '/' + encodeURIComponent(gistId) + '?_cb=' + Date.now(), {
-          method: 'GET',
-          mode: 'cors',
-          headers: gistHeaders(token, false)
-        }, 'Gist read check');
-        if (!gRes.ok) throw new Error(formatGistHttpError(gRes, 'Gist check'));
-        const g = await gRes.json();
-        const fileCount = g && g.files ? Object.keys(g.files).length : 0;
+        }, 'Test Private Gist');
+        if (!res.ok) throw new Error(formatGistHttpError(res, 'Gist test'));
+        const scopes = res.headers && res.headers.get ? (res.headers.get('x-oauth-scopes') || '') : '';
+        const gist = await res.json();
+        const fileCount = Object.keys((gist && gist.files) || {}).length;
         gistSync.lastError = '';
         renderCloudStatusUI();
-        showToast('Connection OK ✓ Gist reachable (' + fileCount + ' file' + (fileCount === 1 ? '' : 's') + ')', 'green');
+        showToast('Connected ✓ Gist reachable (' + fileCount + ' file' + (fileCount === 1 ? '' : 's') + (scopes ? (' · scopes: ' + scopes) : '') + ')', 'green');
       } catch (err) {
         gistSync.lastError = err.message || 'Connection test failed';
         renderCloudStatusUI();
@@ -8801,8 +8969,8 @@
         const obj = JSON.parse(decoded);
         if (!obj || !obj.t || !obj.g) throw new Error('Incomplete pairing code');
         gistSync.cfg.enabled = true;
-        gistSync.cfg.token = String(obj.t).trim();
-        gistSync.cfg.gistId = String(obj.g).trim();
+        gistSync.cfg.token = sanitizeGistCredential(obj.t);
+        gistSync.cfg.gistId = sanitizeGistId(obj.g);
         gistSync.cfg.syncReceipts = obj.r !== false;
         gistSync.cfg.lastReceiptsHash = '';
         saveGistConfig();
@@ -8897,8 +9065,6 @@
 
     async function initCloudSync() {
       loadCloudPrefs();
-      loadOneDriveConfig();
-      loadGistConfig();
       const chkW = document.getElementById('chk-cloud-autowrite');
       const chkP = document.getElementById('chk-cloud-autopull');
       const chkE = document.getElementById('chk-cloud-embed-receipts');
@@ -8906,27 +9072,16 @@
       if (chkP) chkP.checked = !!cloudSync.prefs.autoPull;
       if (chkE) chkE.checked = cloudSync.prefs.embedReceipts !== false;
 
-      const chkOdPush = document.getElementById('chk-od-autopush');
-      const chkOdPull = document.getElementById('chk-od-autopull');
-      const chkOdRec = document.getElementById('chk-od-receipts');
-      if (chkOdPush) chkOdPush.checked = oneDriveSync.cfg.autoPush !== false;
-      if (chkOdPull) chkOdPull.checked = oneDriveSync.cfg.autoPull !== false;
-      if (chkOdRec) chkOdRec.checked = oneDriveSync.cfg.syncReceipts !== false;
-
-      const chkGPush = document.getElementById('chk-gist-autopush');
-      const chkGPull = document.getElementById('chk-gist-autopull');
-      const chkGRec = document.getElementById('chk-gist-receipts');
-      if (chkGPush) chkGPush.checked = gistSync.cfg.autoPush !== false;
-      if (chkGPull) chkGPull.checked = gistSync.cfg.autoPull !== false;
-      if (chkGRec) chkGRec.checked = gistSync.cfg.syncReceipts !== false;
-
-      const handledOdCallback = await handleOneDriveOAuthCallback();
-      if (!handledOdCallback && oneDriveSync.cfg.enabled && oneDriveSync.cfg.clientId && (oneDriveSync.cfg.accessToken || oneDriveSync.cfg.refreshToken) && oneDriveSync.cfg.autoPull !== false) {
-        syncOneDriveTwoWay(true, false);
-      }
-
-      if (gistSync.cfg.enabled && gistSync.cfg.token && gistSync.cfg.gistId && gistSync.cfg.autoPull !== false) {
-        syncGistTwoWay(true, false);
+      if (CLOUD_APIS_ENABLED) {
+        loadOneDriveConfig();
+        loadGistConfig();
+        const handledOdCallback = await handleOneDriveOAuthCallback();
+        if (!handledOdCallback && oneDriveSync.cfg.enabled && oneDriveSync.cfg.clientId && (oneDriveSync.cfg.accessToken || oneDriveSync.cfg.refreshToken) && oneDriveSync.cfg.autoPull !== false) {
+          syncOneDriveTwoWay(true, false);
+        }
+        if (gistSync.cfg.enabled && gistSync.cfg.token && gistSync.cfg.gistId && gistSync.cfg.autoPull !== false) {
+          syncGistTwoWay(true, false);
+        }
       }
 
       if (window.showOpenFilePicker && window.showSaveFilePicker) {
@@ -8963,154 +9118,42 @@
       const modePill = document.getElementById('cloud-mode-pill');
       const statusEl = document.getElementById('cloud-fs-status');
       const actionsEl = document.getElementById('cloud-fs-actions');
+      const mergeBox = document.getElementById('last-merge-status-box');
+      const mergePill = document.getElementById('merge-status-pill');
       const fsSupported = !!(window.showOpenFilePicker && window.showSaveFilePicker);
 
-      // Update Direct OneDrive API Auto-Sync UI
-      const odConnected = !!(oneDriveSync.cfg.enabled && oneDriveSync.cfg.clientId && (oneDriveSync.cfg.accessToken || oneDriveSync.cfg.refreshToken));
-      const odPill = document.getElementById('od-mode-pill');
-      const odBox = document.getElementById('od-status-box');
-      const odActs = document.getElementById('od-connected-actions');
-      const odSetup = document.getElementById('od-setup-panel');
-      const odUriEl = document.getElementById('od-redirect-uri-display');
-      const odWarnEl = document.getElementById('od-https-warning');
-      const odCidInp = document.getElementById('od-client-id-input');
-      const odTenSel = document.getElementById('od-tenant-select');
-      const odFldInp = document.getElementById('od-folder-input');
-
-      if (odUriEl) odUriEl.value = getOneDriveRedirectUri();
-      if (odWarnEl) {
-        const isHttp = window.location.protocol === 'https:' || window.location.protocol === 'http:';
-        odWarnEl.style.display = isHttp ? 'none' : 'block';
-        if (!isHttp) {
-          odWarnEl.innerHTML = '<strong>Note:</strong> This page is currently open from <code>' + esc(window.location.protocol) + '</code>. Microsoft OAuth requires hosting this single HTML file on free HTTPS (e.g. GitHub Pages, Cloudflare Pages, or Netlify Drop) so Microsoft can redirect back on iPhone.';
-        }
-      }
-      if (odCidInp && !odCidInp.value && oneDriveSync.cfg.clientId) odCidInp.value = oneDriveSync.cfg.clientId;
-      if (odTenSel && oneDriveSync.cfg.tenant) odTenSel.value = oneDriveSync.cfg.tenant;
-      if (odFldInp && oneDriveSync.cfg.folder) odFldInp.value = oneDriveSync.cfg.folder;
-
-      if (odPill) {
-        if (oneDriveSync.busy) {
-          odPill.className = 'pill pill-sky';
-          odPill.textContent = 'Syncing…';
-        } else if (odConnected && oneDriveSync.lastError) {
-          odPill.className = 'pill pill-red';
-          odPill.textContent = 'Needs Attention';
-        } else if (odConnected && oneDriveSync.pendingPush) {
-          odPill.className = 'pill pill-amber';
-          odPill.textContent = 'Offline Queued';
-        } else if (odConnected) {
-          odPill.className = 'pill pill-green';
-          odPill.textContent = 'OneDrive Auto-Sync ✓';
+      if (mergeBox) {
+        const lastM = loadLastMergeSummary();
+        if (lastM) {
+          mergeBox.innerHTML = '<div style="font-size:12px;">'
+            + '<strong>Last Merge:</strong> <span style="color:var(--green-text);font-weight:800;">' + esc(lastM.summary) + '</span>'
+            + '<div style="font-size:11px;color:var(--text-subtle);">' + esc(lastM.source || 'claimflow-db.json') + ' · ' + fmtTimeHHMM(lastM.at) + ' · ' + store.trips.length + ' trip(s) · ' + receiptVault.photos.length + ' photo(s) in active trip</div>'
+            + '</div>'
+            + '<span class="pill pill-green">Merged ✓</span>';
+          if (mergePill) {
+            mergePill.className = 'pill pill-green';
+            mergePill.textContent = 'Last Merge · ' + fmtTimeHHMM(lastM.at);
+          }
         } else {
-          odPill.className = 'pill pill-neutral';
-          odPill.textContent = 'Not Connected';
+          mergeBox.innerHTML = '<div style="font-size:12px;color:var(--text-muted);"><strong>' + store.trips.length + ' trip(s)</strong> &amp; <strong>' + receiptVault.photos.length + ' photo(s)</strong> in active trip ready for JSON Backup &amp; Smart-Merge.</div>';
+          if (mergePill) {
+            mergePill.className = 'pill pill-accent';
+            mergePill.textContent = 'Smart-Merge Ready';
+          }
         }
       }
 
-      if (odBox) {
-        if (odConnected) {
-          const acct = oneDriveSync.cfg.accountEmail || oneDriveSync.cfg.accountName || 'Microsoft Account';
-          const folderLbl = sanitizeOneDriveFolder(oneDriveSync.cfg.folder);
-          const lastOdStr = oneDriveSync.cfg.lastSyncedAt ? fmtTimeHHMM(oneDriveSync.cfg.lastSyncedAt) : 'Just connected';
-          odBox.innerHTML = '<div style="font-size:12px;">'
-            + '<strong>' + esc(acct) + '</strong> · <span class="mono" style="font-size:11px;color:var(--sky-text);">OneDrive/' + esc(folderLbl) + '</span>'
-            + '<div style="font-size:11px;color:' + (oneDriveSync.lastError ? 'var(--red-text)' : 'var(--text-subtle)') + ';">'
-            + (oneDriveSync.lastError ? ('Error: ' + esc(oneDriveSync.lastError)) : ('Last synced: ' + lastOdStr + ' · ' + store.trips.length + ' trip(s) · ' + receiptVault.photos.length + ' photo(s)'))
-            + '</div></div>'
-            + '<span class="pill ' + (oneDriveSync.lastError ? 'pill-red' : 'pill-green') + '">' + (oneDriveSync.busy ? '↻ Syncing' : (oneDriveSync.pendingPush ? 'Queued' : 'Auto ✓')) + '</span>';
-        } else {
-          odBox.innerHTML = '<div style="font-size:12px;color:var(--text-muted);">Auto-save trips &amp; receipt photos directly to <code>OneDrive/' + esc(sanitizeOneDriveFolder(oneDriveSync.cfg.folder)) + '/</code> from iPhone Safari and Laptop with <strong>zero file pickers</strong> and silent token refresh.</div>';
-        }
-      }
-
-      if (odActs) {
-        odActs.style.display = odConnected ? 'flex' : 'none';
-        if (odConnected) {
-          odActs.innerHTML =
-            '<button type="button" class="btn btn-sm btn-primary" onclick="syncOneDriveTwoWay(false,false)"' + (oneDriveSync.busy ? ' disabled' : '') + '>↻ Sync OneDrive Now</button>'
-            + '<button type="button" class="btn btn-sm btn-sky-soft" onclick="copyOneDriveSetupCode()">📲 Copy Setup Code</button>'
-            + (oneDriveSync.lastError ? '<button type="button" class="btn btn-sm btn-soft" onclick="startOneDriveLogin()">🔓 Re-Sign In</button>' : '')
-            + '<button type="button" class="btn btn-sm btn-red-soft" onclick="disconnectOneDrive()">Disconnect</button>';
-        }
-      }
-
-      if (odSetup) {
-        odSetup.style.display = odConnected ? 'none' : 'flex';
-      }
-
-      // Update Private GitHub Gist Auto-Sync UI
-      const gistConnected = !!(gistSync.cfg.enabled && gistSync.cfg.token && gistSync.cfg.gistId);
-      const gistPill = document.getElementById('gist-mode-pill');
-      const gistBox = document.getElementById('gist-status-box');
-      const gistActs = document.getElementById('gist-connected-actions');
-      const gistSetup = document.getElementById('gist-setup-panel');
-
-      if (gistPill) {
-        if (gistSync.busy) {
-          gistPill.className = 'pill pill-sky';
-          gistPill.textContent = 'Syncing…';
-        } else if (gistConnected && gistSync.lastError) {
-          gistPill.className = 'pill pill-red';
-          gistPill.textContent = 'Sync Error';
-        } else if (gistConnected && gistSync.pendingPush) {
-          gistPill.className = 'pill pill-amber';
-          gistPill.textContent = 'Offline Queued';
-        } else if (gistConnected) {
-          gistPill.className = 'pill pill-green';
-          gistPill.textContent = 'Auto-Sync Active';
-        } else {
-          gistPill.className = 'pill pill-neutral';
-          gistPill.textContent = 'Not Connected';
-        }
-      }
-
-      if (gistBox) {
-        if (gistConnected) {
-          const shortId = gistSync.cfg.gistId.slice(0, 10) + '…';
-          const lastStr = gistSync.cfg.lastSyncedAt ? fmtTimeHHMM(gistSync.cfg.lastSyncedAt) : 'Just connected';
-          gistBox.innerHTML = '<div style="font-size:12px;">'
-            + '<strong>Private Gist <span class="mono">' + esc(shortId) + '</span></strong>'
-            + '<div style="font-size:11px;color:' + (gistSync.lastError ? 'var(--red-text)' : 'var(--text-subtle)') + ';">'
-            + (gistSync.lastError ? ('Error: ' + esc(gistSync.lastError)) : ('Last synced: ' + lastStr + ' · ' + store.trips.length + ' trip(s) · ' + receiptVault.photos.length + ' photo(s)'))
-            + '</div></div>'
-            + '<span class="pill ' + (gistSync.lastError ? 'pill-red' : 'pill-green') + '">' + (gistSync.busy ? '↻ Syncing' : (gistSync.pendingPush ? 'Queued' : 'Zero-Picker ✓')) + '</span>';
-        } else {
-          gistBox.innerHTML = '<div style="font-size:12px;color:var(--text-muted);">Sync trips &amp; receipts silently between iPhone Safari and Laptop with <strong>zero file pickers</strong> and <strong>zero background battery drain</strong>.</div>';
-        }
-      }
-
-      if (gistActs) {
-        gistActs.style.display = gistConnected ? 'flex' : 'none';
-        if (gistConnected) {
-          gistActs.innerHTML =
-            '<button type="button" class="btn btn-sm btn-primary" onclick="syncGistTwoWay(false)"' + (gistSync.busy ? ' disabled' : '') + '>↻ Sync Now</button>'
-            + '<button type="button" class="btn btn-sm btn-soft" onclick="testGitHubGistConnection()"' + (gistSync.busy ? ' disabled' : '') + '>🩺 Test</button>'
-            + '<button type="button" class="btn btn-sm btn-green-soft" onclick="copyGistPairingCode()">📲 Copy 1-Tap Device Pair Code</button>'
-            + '<button type="button" class="btn btn-sm btn-red-soft" onclick="disconnectGitHubGist()">Disconnect</button>';
-        }
-      }
-
-      if (gistSetup) {
-        gistSetup.style.display = gistConnected ? 'none' : 'flex';
-      }
-
-      // Topbar Cloud Sync Button reflects OneDrive OR Gist OR Desktop Folder Sync
       if (btn) {
-        const isLinked = odConnected || gistConnected || !!(cloudSync.handle && !cloudSync.needsReconnect);
-        const isWarn = (odConnected && !!oneDriveSync.lastError) || (gistConnected && !!gistSync.lastError) || !!(cloudSync.handle && cloudSync.needsReconnect);
-        btn.classList.toggle('linked', isLinked && !isWarn);
+        const isLinked = !!(cloudSync.handle && !cloudSync.needsReconnect);
+        const isWarn = !!(cloudSync.handle && cloudSync.needsReconnect);
+        btn.classList.toggle('linked', isLinked);
         btn.classList.toggle('reconnect', isWarn);
       }
       if (btnTxt) {
-        if (odConnected) {
-          btnTxt.textContent = oneDriveSync.busy ? 'Syncing…' : (oneDriveSync.lastError ? 'Retry OneDrive' : 'OneDrive ✓');
-        } else if (gistConnected) {
-          btnTxt.textContent = gistSync.busy ? 'Syncing…' : (gistSync.lastError ? 'Retry Sync' : 'Auto-Synced');
-        } else if (cloudSync.handle) {
-          btnTxt.textContent = cloudSync.needsReconnect ? 'Reconnect Cloud' : 'Synced';
+        if (cloudSync.handle) {
+          btnTxt.textContent = cloudSync.needsReconnect ? 'Reconnect JSON' : 'Backup / Merge ✓';
         } else {
-          btnTxt.textContent = 'Cloud Sync';
+          btnTxt.textContent = 'Backup / Merge';
         }
       }
 
@@ -9131,13 +9174,13 @@
       }
       if (statusEl) {
         if (!fsSupported) {
-          statusEl.innerHTML = '<div style="font-size:12px;color:var(--text-muted);">Direct folder linking is available on Desktop Chrome/Edge. On iPhone Safari, use <strong>Private GitHub Gist Auto-Sync</strong> above!</div>';
+          statusEl.innerHTML = '<div style="font-size:12px;color:var(--text-muted);">Direct folder linking is available on Desktop Chrome/Edge. On iPhone Safari, use <strong>Save / Share All Trips</strong> &amp; <strong>Open &amp; Smart-Merge File</strong> above.</div>';
         } else if (cloudSync.handle && !cloudSync.needsReconnect) {
           statusEl.innerHTML = '<div style="font-size:12px;"><strong>' + esc(cloudSync.fileName) + '</strong><div style="font-size:11px;color:var(--text-subtle);">Last synced: ' + (cloudSync.lastSyncedAt ? fmtTimeHHMM(cloudSync.lastSyncedAt) : 'Ready') + '</div></div><span class="pill pill-green">Auto-Sync Active</span>';
         } else if (cloudSync.handle) {
           statusEl.innerHTML = '<div style="font-size:12px;"><strong>' + esc(cloudSync.fileName) + '</strong><div style="font-size:11px;color:var(--amber-text);">Click Reconnect to grant write permission for this session.</div></div>';
         } else {
-          statusEl.innerHTML = '<div style="font-size:12px;color:var(--text-muted);">Link a <code>claimflow-db.json</code> inside your OneDrive, iCloud, or Google Drive folder for desktop auto-syncing.</div>';
+          statusEl.innerHTML = '<div style="font-size:12px;color:var(--text-muted);">Link a <code>claimflow-db.json</code> inside your OneDrive, iCloud, or Google Drive folder on Desktop so it auto-updates when you drop your iPhone backup in.</div>';
         }
       }
       if (actionsEl) {
@@ -9145,10 +9188,10 @@
           actionsEl.innerHTML = '';
         } else if (cloudSync.handle) {
           actionsEl.innerHTML = (cloudSync.needsReconnect ? '<button type="button" class="btn btn-sm btn-primary" onclick="reconnectSavedCloudFile()">🔓 Reconnect File</button>' : '')
-            + '<button type="button" class="btn btn-sm btn-soft" onclick="syncCloudNow()">↻ Sync Now</button>'
+            + '<button type="button" class="btn btn-sm btn-soft" onclick="syncCloudNow()">↻ Merge &amp; Sync Now</button>'
             + '<button type="button" class="btn btn-sm btn-red-soft" onclick="unlinkCloudFile()">Unlink</button>';
         } else {
-          actionsEl.innerHTML = '<button type="button" class="btn btn-sm btn-primary" onclick="createCloudFile()">＋ Create New Cloud DB File</button>'
+          actionsEl.innerHTML = '<button type="button" class="btn btn-sm btn-primary" onclick="createCloudFile()">＋ Create Local DB File</button>'
             + '<button type="button" class="btn btn-sm btn-soft" onclick="linkCloudFile()">📂 Link Existing DB File</button>';
         }
       }
@@ -9223,11 +9266,14 @@
     async function writeCloudFile() {
       if (!cloudSync.handle || cloudSync.needsReconnect) return;
       try {
-        const payload = { activeTripId: store.activeTripId, trips: store.trips };
+        const deletedIds = getDeletedReceiptIds();
+        const payload = { activeTripId: store.activeTripId, trips: store.trips, deletedReceiptIds: deletedIds };
         const customPresets = loadCustomRoutePresets();
         if (customPresets.length > 0) payload._customPresets = customPresets;
         if (cloudSync.prefs.embedReceipts !== false) {
-          const allReceipts = await idbGetAllReceipts();
+          const deletedSet = {};
+          deletedIds.forEach(function (id) { deletedSet[id] = true; });
+          const allReceipts = (await idbGetAllReceipts()).filter(function (r) { return r && r.id && !deletedSet[r.id]; });
           if (allReceipts.length > 0) payload._receipts = allReceipts;
         }
         const writable = await cloudSync.handle.createWritable();
@@ -9243,14 +9289,15 @@
     }
 
     function scheduleCloudWrite(immediate) {
-      if (oneDriveSync.cfg.enabled && oneDriveSync.cfg.clientId && (oneDriveSync.cfg.accessToken || oneDriveSync.cfg.refreshToken) && oneDriveSync.cfg.autoPush !== false) {
+      bumpSyncEpochs();
+      if (CLOUD_APIS_ENABLED && oneDriveSync.cfg.enabled && oneDriveSync.cfg.clientId && (oneDriveSync.cfg.accessToken || oneDriveSync.cfg.refreshToken) && oneDriveSync.cfg.autoPush !== false) {
         oneDriveSync.pendingPush = true;
         clearTimeout(oneDriveSync.pushTimer);
         oneDriveSync.pushTimer = setTimeout(function () {
           syncOneDriveTwoWay(true, true);
         }, immediate ? 350 : 2500);
       }
-      if (gistSync.cfg.enabled && gistSync.cfg.token && gistSync.cfg.gistId && gistSync.cfg.autoPush !== false) {
+      if (CLOUD_APIS_ENABLED && gistSync.cfg.enabled && gistSync.cfg.token && gistSync.cfg.gistId && gistSync.cfg.autoPush !== false) {
         gistSync.pendingPush = true;
         clearTimeout(gistSync.pushTimer);
         gistSync.pushTimer = setTimeout(function () {
@@ -9272,17 +9319,17 @@
       }
       await checkCloudFileUpdates(true);
       await writeCloudFile();
-      showToast('Cloud file synced ✓', 'green');
+      showToast('Local JSON DB merged & saved ✓', 'green');
     }
 
     async function checkCloudFileUpdates(force) {
-      if (oneDriveSync.cfg.enabled && oneDriveSync.cfg.clientId && (oneDriveSync.cfg.accessToken || oneDriveSync.cfg.refreshToken) && (force || oneDriveSync.cfg.autoPull !== false)) {
+      if (CLOUD_APIS_ENABLED && oneDriveSync.cfg.enabled && oneDriveSync.cfg.clientId && (oneDriveSync.cfg.accessToken || oneDriveSync.cfg.refreshToken) && (force || oneDriveSync.cfg.autoPull !== false)) {
         const nowOd = Date.now();
         if (force || oneDriveSync.pendingPush || (nowOd - oneDriveSync.lastPullCheckAt > 15000)) {
           syncOneDriveTwoWay(true, !!oneDriveSync.pendingPush);
         }
       }
-      if (gistSync.cfg.enabled && gistSync.cfg.token && gistSync.cfg.gistId && (force || gistSync.cfg.autoPull !== false)) {
+      if (CLOUD_APIS_ENABLED && gistSync.cfg.enabled && gistSync.cfg.token && gistSync.cfg.gistId && (force || gistSync.cfg.autoPull !== false)) {
         const now = Date.now();
         if (force || gistSync.pendingPush || (now - gistSync.lastPullCheckAt > 15000)) {
           syncGistTwoWay(true, !!gistSync.pendingPush);
@@ -9297,7 +9344,7 @@
         if (text && text.trim()) {
           const parsed = JSON.parse(text);
           if (parsed && Array.isArray(parsed.trips)) {
-            await mergeWorkspacePayload(parsed, true);
+            await mergeWorkspacePayload(parsed, true, cloudSync.fileName || 'claimflow-db.json');
           }
         }
         cloudSync.lastModifiedSeen = file.lastModified || Date.now();
@@ -9306,10 +9353,14 @@
       } catch (e) {}
     }
 
-    async function mergeWorkspacePayload(payload, silent) {
+    async function mergeWorkspacePayload(payload, silent, sourceName) {
       if (payload && Array.isArray(payload._customPresets)) {
         mergeCustomRoutePresets(payload._customPresets);
       }
+      const mergedDeleted = mergeDeletedReceiptIds(payload && payload.deletedReceiptIds);
+      const deletedSet = {};
+      mergedDeleted.forEach(function (id) { deletedSet[id] = true; });
+
       const rawTrips = (payload && Array.isArray(payload.trips)) ? payload.trips : [];
       const collectedReceipts = Array.isArray(payload && payload._receipts) ? payload._receipts.slice() : [];
       const incomingTrips = rawTrips.map(function (rawT) {
@@ -9323,39 +9374,111 @@
         return normalizeTrip(clone);
       });
       if (incomingTrips.length === 0 && collectedReceipts.length === 0) return;
-      let added = 0;
-      let updated = 0;
+
+      let addedTrips = 0;
+      let updatedTrips = 0;
+      let totalAddedLines = 0;
+      let totalUpdatedLines = 0;
+      let totalAddedDays = 0;
+      let needsWriteBack = false;
+      const tripIdRemap = {};
+      const allDayIdRemaps = {};
+
       incomingTrips.forEach(function (inc) {
-        const idx = store.trips.findIndex(function (t) { return t.id === inc.id; });
+        const idx = findMatchingLocalTripIndex(inc);
         if (idx < 0) {
           store.trips.unshift(inc);
-          added++;
-        } else if ((inc.updatedAt || 0) > (store.trips[idx].updatedAt || 0)) {
-          store.trips[idx] = inc;
-          updated++;
+          addedTrips++;
+          needsWriteBack = true;
+        } else {
+          const canonicalId = store.trips[idx].id;
+          if (inc.id !== canonicalId) {
+            tripIdRemap[inc.id] = canonicalId;
+          }
+          const resM = smartMergeTrips(store.trips[idx], inc);
+          store.trips[idx] = resM.trip;
+          totalAddedLines += resM.addedLines || 0;
+          totalUpdatedLines += resM.updatedLines || 0;
+          totalAddedDays += resM.addedDays || 0;
+          if (resM.changedLocal) {
+            updatedTrips++;
+            needsWriteBack = true;
+          }
+          if (resM.changedRemote) needsWriteBack = true;
+          if (resM.dayIdRemap && Object.keys(resM.dayIdRemap).length > 0) {
+            allDayIdRemaps[canonicalId] = Object.assign(allDayIdRemaps[canonicalId] || {}, resM.dayIdRemap);
+          }
         }
       });
+
+      // Purge any receipts marked deleted in the merged tombstone list
+      const existingLocalRecs = await idbGetAllReceipts();
+      for (let i = 0; i < existingLocalRecs.length; i++) {
+        if (deletedSet[existingLocalRecs[i].id]) {
+          await idbDeleteReceipt(existingLocalRecs[i].id);
+        }
+      }
+
+      const remapTripIds = Object.keys(allDayIdRemaps);
+      for (let rti = 0; rti < remapTripIds.length; rti++) {
+        await remapStoredReceiptsDayIds(remapTripIds[rti], allDayIdRemaps[remapTripIds[rti]]);
+      }
+
       state = getActiveTrip();
       try { localStorage.setItem(STORE_KEY, JSON.stringify(store)); } catch (e) {}
-      let restoredPhotos = 0;
+
+      let recStats = { added: 0, updated: 0, skipped: 0 };
       if (collectedReceipts.length > 0) {
-        restoredPhotos = await restoreEmbeddedReceipts(collectedReceipts);
+        const filteredRecs = collectedReceipts
+          .filter(function (r) { return r && r.id && !deletedSet[r.id]; })
+          .map(function (r) {
+            const mappedTripId = (r.tripId && tripIdRemap[r.tripId]) ? tripIdRemap[r.tripId] : (r.tripId || state.id);
+            const rm = allDayIdRemaps[mappedTripId];
+            const mappedDayId = (rm && r.dayId && rm[r.dayId]) ? rm[r.dayId] : (r.dayId || '');
+            return Object.assign({}, r, { tripId: mappedTripId, dayId: mappedDayId });
+          });
+        if (filteredRecs.length > 0) {
+          recStats = await restoreEmbeddedReceiptsDetailed(filteredRecs);
+        }
       }
+
+      const summaryTxt = buildMergeSummaryText({
+        addedTrips: addedTrips,
+        updatedTrips: updatedTrips,
+        addedLines: totalAddedLines,
+        updatedLines: totalUpdatedLines,
+        addedDays: totalAddedDays,
+        addedReceipts: recStats.added,
+        updatedReceipts: recStats.updated
+      });
+      if (!silent || addedTrips > 0 || updatedTrips > 0 || recStats.added > 0 || recStats.updated > 0) {
+        recordLastMergeSummary(summaryTxt, sourceName || 'claimflow-db.json');
+      }
+
       renderAll();
-      if (restoredPhotos > 0) await loadTripReceipts();
-      if (!silent || added > 0 || updated > 0 || restoredPhotos > 0) {
-        showToast('Merged ' + added + ' new, ' + updated + ' updated trip(s)' + (restoredPhotos > 0 ? (' + ' + restoredPhotos + ' receipt(s)') : '') + ' ✓', 'green');
+      await loadTripReceipts();
+
+      // Persist merged captures straight back to local folder DB if linked
+      if (needsWriteBack || recStats.added > 0 || recStats.updated > 0) {
+        scheduleCloudWrite(!silent);
+      }
+
+      if (!silent || addedTrips > 0 || updatedTrips > 0 || recStats.added > 0 || recStats.updated > 0) {
+        showToast('Smart-Merge: ' + summaryTxt, 'green');
       }
     }
 
     async function exportFullWorkspaceJSON() {
       flushLocalSave(false, false);
-      const payload = { activeTripId: store.activeTripId, trips: store.trips };
+      const deletedIds = getDeletedReceiptIds();
+      const deletedSet = {};
+      deletedIds.forEach(function (id) { deletedSet[id] = true; });
+      const payload = { activeTripId: store.activeTripId, trips: store.trips, deletedReceiptIds: deletedIds };
       const customPresets = loadCustomRoutePresets();
       if (customPresets.length > 0) payload._customPresets = customPresets;
       let photoCount = 0;
       if (cloudSync.prefs.embedReceipts !== false) {
-        const allReceipts = await idbGetAllReceipts();
+        const allReceipts = (await idbGetAllReceipts()).filter(function (r) { return r && r.id && !deletedSet[r.id]; });
         if (allReceipts.length > 0) {
           payload._receipts = allReceipts;
           photoCount = allReceipts.length;
@@ -9364,20 +9487,23 @@
       const jsonStr = JSON.stringify(payload, null, 2);
       const fileName = 'claimflow-db.json';
       try {
-        const file = new File([jsonStr], fileName, { type: 'application/json' });
-        if (navigator.canShare && navigator.canShare({ files: [file] }) && navigator.share) {
-          await navigator.share({
-            files: [file],
-            title: 'ClaimFlow Backup (' + store.trips.length + ' trips' + (photoCount > 0 ? (', ' + photoCount + ' receipts') : '') + ')'
-          });
-          showToast('Shared claimflow-db.json' + (photoCount > 0 ? (' (' + photoCount + ' receipts embedded)') : '') + ' ✓', 'green');
-          return;
+        if (typeof File === 'function' && navigator.share) {
+          const file = new File([jsonStr], fileName, { type: 'application/json' });
+          if (!navigator.canShare || navigator.canShare({ files: [file] })) {
+            await navigator.share({
+              files: [file],
+              title: 'ClaimFlow Backup (' + store.trips.length + ' trips' + (photoCount > 0 ? (', ' + photoCount + ' receipts') : '') + ')'
+            });
+            showToast('Shared claimflow-db.json' + (photoCount > 0 ? (' (' + photoCount + ' receipts embedded)') : '') + ' ✓', 'green');
+            return;
+          }
         }
       } catch (err) {
         if (err && err.name === 'AbortError') return;
+        // Fall through cleanly to direct file download if iOS Share Sheet rejects .json
       }
       downloadFile(jsonStr, fileName, 'application/json');
-      showToast('Saved claimflow-db.json (' + store.trips.length + ' trips' + (photoCount > 0 ? (', ' + photoCount + ' receipts') : '') + ') ✓', 'green');
+      showToast('Downloaded claimflow-db.json (' + store.trips.length + ' trips' + (photoCount > 0 ? (', ' + photoCount + ' receipts') : '') + ') ✓', 'green');
     }
 
     function handleImportWorkspaceJSON(evt) {
@@ -9389,9 +9515,9 @@
         try {
           const parsed = JSON.parse(String(reader.result || '{}'));
           if (parsed && Array.isArray(parsed.trips)) {
-            await mergeWorkspacePayload(parsed, false);
+            await mergeWorkspacePayload(parsed, false, file.name);
           } else if (parsed && parsed.trip) {
-            await mergeWorkspacePayload({ trips: [parsed] }, false);
+            await mergeWorkspacePayload({ trips: [parsed] }, false, file.name);
           } else {
             throw new Error('Invalid ClaimFlow backup file');
           }
@@ -9452,11 +9578,108 @@
       lightboxPhotoId: null,
       bwMode: (function () {
         try {
-          const saved = localStorage.getItem(BW_MODE_KEY);
-          return saved === null ? true : saved === '1';
-        } catch (e) { return true; }
+          return localStorage.getItem(BW_MODE_KEY) === '1';
+        } catch (e) { return false; }
       })()
     };
+    function receiptFingerprint(r) {
+      if (!r) return '';
+      const b = Number(r.bytes) || estimateDataUrlBytes(r.dataUrl);
+      return [
+        String(r.tripId || ''),
+        String(r.width || 0),
+        String(r.height || 0),
+        String(b),
+        String(r.dataUrl || '').slice(-40)
+      ].join('|');
+    }
+
+    /** Deduplicates receipts cleanly while preserving linked itemId/dayId/scope/note metadata from both sides */
+    async function restoreEmbeddedReceiptsDetailed(list) {
+      if (!Array.isArray(list) || list.length === 0) return { added: 0, updated: 0, skipped: 0 };
+      const existingAll = await idbGetAllReceipts();
+      const byId = {};
+      const byFp = {};
+      existingAll.forEach(function (ex) {
+        if (!ex || !ex.id) return;
+        byId[ex.id] = ex;
+        const fp = receiptFingerprint(ex);
+        if (fp) byFp[fp] = ex;
+      });
+
+      let added = 0;
+      let updated = 0;
+      let skipped = 0;
+
+      for (let i = 0; i < list.length; i++) {
+        const r = list[i];
+        if (!r || !r.id || !r.dataUrl) continue;
+        const cleanRec = {
+          id: String(r.id),
+          tripId: String(r.tripId || state.id),
+          scope: r.scope || 'unmatched',
+          itemId: r.itemId || '',
+          dayId: r.dayId || '',
+          role: r.role === 'bank' ? 'bank' : (r.role === 'policy' ? 'policy' : 'receipt'),
+          orient: (r.orient === 'landscape' || r.orient === 'portrait') ? r.orient : 'auto',
+          name: r.name || 'receipt.jpg',
+          note: r.note || '',
+          dataUrl: r.dataUrl,
+          width: Number(r.width) || 0,
+          height: Number(r.height) || 0,
+          bytes: Number(r.bytes) || estimateDataUrlBytes(r.dataUrl),
+          isBW: !!r.isBW,
+          createdAt: Number(r.createdAt) || Date.now()
+        };
+
+        const fp = receiptFingerprint(cleanRec);
+        const existing = byId[cleanRec.id] || (fp ? byFp[fp] : null);
+        if (existing) {
+          const mergedRec = Object.assign({}, existing);
+          let changed = false;
+          if (!mergedRec.itemId && cleanRec.itemId) { mergedRec.itemId = cleanRec.itemId; changed = true; }
+          if (!mergedRec.dayId && cleanRec.dayId) { mergedRec.dayId = cleanRec.dayId; changed = true; }
+          if ((!mergedRec.scope || mergedRec.scope === 'unmatched') && cleanRec.scope && cleanRec.scope !== 'unmatched') {
+            mergedRec.scope = cleanRec.scope;
+            changed = true;
+          }
+          if (!mergedRec.note && cleanRec.note) { mergedRec.note = cleanRec.note; changed = true; }
+          if (mergedRec.role === 'receipt' && cleanRec.role !== 'receipt') { mergedRec.role = cleanRec.role; changed = true; }
+          if (mergedRec.orient === 'auto' && cleanRec.orient !== 'auto') { mergedRec.orient = cleanRec.orient; changed = true; }
+
+          if (changed) {
+            await idbPutReceipt(mergedRec);
+            byId[mergedRec.id] = mergedRec;
+            if (mergedRec.tripId === state.id) {
+              const vIdx = receiptVault.photos.findIndex(function (p) { return p.id === mergedRec.id; });
+              if (vIdx >= 0) receiptVault.photos[vIdx] = mergedRec;
+              else receiptVault.photos.push(mergedRec);
+            }
+            updated++;
+          } else {
+            skipped++;
+          }
+          continue;
+        }
+
+        await idbPutReceipt(cleanRec);
+        byId[cleanRec.id] = cleanRec;
+        if (fp) byFp[fp] = cleanRec;
+        if (cleanRec.tripId === state.id) {
+          const existIdx = receiptVault.photos.findIndex(function (p) { return p.id === cleanRec.id; });
+          if (existIdx >= 0) receiptVault.photos[existIdx] = cleanRec;
+          else receiptVault.photos.push(cleanRec);
+        }
+        added++;
+      }
+      updateVaultCountBadges();
+      return { added: added, updated: updated, skipped: skipped };
+    }
+
+    async function restoreEmbeddedReceipts(list) {
+      const res = await restoreEmbeddedReceiptsDetailed(list);
+      return res.added + res.updated;
+    }
 
     function openReceiptDB() {
       return new Promise(function (resolve, reject) {
@@ -9491,7 +9714,7 @@
     async function idbDeleteReceipt(id) {
       try {
         const db = await openReceiptDB();
-        await new Promise(function (resolve) {
+        await new Promise(function (resolve, reject) {
           const tx = db.transaction(RECEIPT_STORE_NAME, 'readwrite');
           tx.objectStore(RECEIPT_STORE_NAME).delete(id);
           tx.oncomplete = resolve;
@@ -9526,41 +9749,6 @@
       } catch (e) {
         return receiptVault.photos.filter(function (p) { return p.tripId === tripId; });
       }
-    }
-
-    async function restoreEmbeddedReceipts(list) {
-      if (!Array.isArray(list) || list.length === 0) return 0;
-      let restored = 0;
-      for (let i = 0; i < list.length; i++) {
-        const r = list[i];
-        if (!r || !r.id || !r.dataUrl) continue;
-        const cleanRec = {
-          id: String(r.id),
-          tripId: String(r.tripId || state.id),
-          scope: r.scope || 'unmatched',
-          itemId: r.itemId || '',
-          dayId: r.dayId || '',
-          role: r.role === 'bank' ? 'bank' : (r.role === 'policy' ? 'policy' : 'receipt'),
-          orient: (r.orient === 'landscape' || r.orient === 'portrait') ? r.orient : 'auto',
-          name: r.name || 'receipt.jpg',
-          note: r.note || '',
-          dataUrl: r.dataUrl,
-          width: Number(r.width) || 0,
-          height: Number(r.height) || 0,
-          bytes: Number(r.bytes) || 0,
-          isBW: !!r.isBW,
-          createdAt: Number(r.createdAt) || Date.now()
-        };
-        await idbPutReceipt(cleanRec);
-        if (cleanRec.tripId === state.id) {
-          const existIdx = receiptVault.photos.findIndex(function (p) { return p.id === cleanRec.id; });
-          if (existIdx >= 0) receiptVault.photos[existIdx] = cleanRec;
-          else receiptVault.photos.push(cleanRec);
-        }
-        restored++;
-      }
-      updateVaultCountBadges();
-      return restored;
     }
 
     async function loadTripReceipts() {
@@ -9635,12 +9823,6 @@
       }
     }
 
-    /**
-     * Smart FCY Receipt + Bank SGD Pairing Helpers:
-     * 1. Sorts photos linked to the same line item side-by-side (🧾 Receipt directly before 💳 Bank SGD).
-     * 2. Detects paired items (itemId having both Receipt + Bank SGD) so UI/PDF/Share sheets show 🔗 Pair.
-     * 3. Chunks pages without splitting a Receipt + Bank SGD pair across a page break.
-     */
     function sortPhotosWithPairs(photos, itemIdxMap) {
       return (photos || []).slice().sort(function (a, b) {
         const ia = (itemIdxMap && a.itemId && itemIdxMap[a.itemId] !== undefined) ? itemIdxMap[a.itemId] : (a.itemId ? 5000 : 9999);
@@ -9785,7 +9967,6 @@
 
       const opts = ['<option value="unmatched|unmatched||"' + (curVal === 'unmatched|unmatched||' ? ' selected' : '') + '>Unmatched</option>'];
 
-      // Daily Meals group
       if (state.meals && state.meals.length > 0) {
         opts.push('<optgroup label="Daily Meals">');
         state.meals.forEach(function (d) {
@@ -9802,7 +9983,6 @@
         opts.push('</optgroup>');
       }
 
-      // Expense Categories
       const cats = [
         { scope: 'airFare', title: 'Air Fare' },
         { scope: 'hotel', title: 'Hotel' },
@@ -9825,7 +10005,6 @@
         opts.push('</optgroup>');
       });
 
-      // Overnight Allowance (Policy Document / Boarding Pass)
       opts.push('<optgroup label="Overnight Allowance">');
       const ovVal = 'scope|overnight||';
       opts.push('<option value="' + esc(ovVal) + '"' + (curVal === ovVal ? ' selected' : '') + '>Overnight Allowance (Policy Doc / Boarding Pass)</option>');
@@ -9848,7 +10027,7 @@
       const bwBtn = document.getElementById('vault-bw-toggle-btn');
       if (bwBtn) {
         bwBtn.className = 'btn btn-sm ' + (receiptVault.bwMode ? 'btn-green-soft' : '');
-        bwBtn.textContent = receiptVault.bwMode ? '🖤 B&W (<300 KB): ON' : '🎨 Color (<300 KB)';
+        bwBtn.textContent = receiptVault.bwMode ? '🖤 B&W Scan (<300 KB): ON' : '🎨 Full Color (<300 KB)';
       }
 
       const optBtn = document.getElementById('vault-optimize-btn');
@@ -9938,7 +10117,7 @@
           + '<button type="button" class="btn btn-sm ' + (isLand ? 'btn-soft' : '') + '" style="height:26px;padding:0 6px;font-size:10.5px;" title="Toggle Landscape / Portrait slot for mixed auto-fitting" onclick="toggleReceiptOrient(\'' + esc(p.id) + '\')">' + (isLand ? '▭ Land' : '▯ Port') + '</button>'
           + '<button type="button" class="btn btn-icon-sm" title="Rotate 90°" onclick="rotateReceiptPhoto(\'' + esc(p.id) + '\')">↻</button>'
           + '<button type="button" class="btn btn-icon-sm btn-soft" title="Crop bank screenshot or receipt margins" onclick="openReceiptCropper(\'' + esc(p.id) + '\')">✂️</button>'
-          + (!p.isBW ? ('<button type="button" class="btn btn-icon-sm" title="Convert to Hi-Res B&amp;W" onclick="convertReceiptToBW(\'' + esc(p.id) + '\')">🖤</button>') : '')
+          + (!p.isBW ? ('<button type="button" class="btn btn-icon-sm" title="Convert to crisp B&amp;W" onclick="convertReceiptToBW(\'' + esc(p.id) + '\')">🖤</button>') : '')
           + pairBtnHtml
           + '</div>'
           + '<button type="button" class="btn btn-icon-sm btn-red-soft" title="Delete receipt photo" onclick="deleteReceiptPhoto(\'' + esc(p.id) + '\')">✕</button>'
@@ -9976,6 +10155,16 @@
       triggerReceiptUpload(Object.assign({}, baseTarget, { role: role === 'bank' ? 'bank' : 'receipt' }), !!useCamera);
     }
 
+    function triggerReceiptUpload(target, useCamera) {
+      receiptVault.pendingUploadTarget = Object.assign({ scope: 'unmatched', itemId: '', dayId: '', role: 'receipt', autoCreateLine: false }, target || {});
+      const inp = document.getElementById(useCamera ? 'receipt-camera-input' : 'receipt-upload-input');
+      if (inp) {
+        if (!useCamera) inp.removeAttribute('capture');
+        inp.value = '';
+        inp.click();
+      }
+    }
+
     function triggerSnapMealQuick(dayId) {
       triggerReceiptUpload({
         scope: 'meal',
@@ -9997,17 +10186,6 @@
       }, false);
     }
 
-    function triggerReceiptUpload(target, useCamera) {
-      receiptVault.pendingUploadTarget = Object.assign({ scope: 'unmatched', itemId: '', dayId: '', role: 'receipt', autoCreateLine: false }, target || {});
-      const inp = document.getElementById(useCamera ? 'receipt-camera-input' : 'receipt-upload-input');
-      if (inp) {
-        // Strictly ensure Library / PDF inputs never force the camera
-        if (!useCamera) inp.removeAttribute('capture');
-        inp.value = '';
-        inp.click();
-      }
-    }
-
     function loadImageElement(src) {
       return new Promise(function (resolve, reject) {
         const img = new Image();
@@ -10017,26 +10195,135 @@
       });
     }
 
+    /**
+     * Optional Crisp B&W Document Scanner (Off by default — Full Color is default):
+     * 1. Auto-inverts dark-mode iPhone bank screenshots to white paper.
+     * 2. Estimates local paper illumination using a smoothed 95th-percentile tile grid
+     *    so ink-heavy regions never darken the white reference.
+     * 3. Uses a high 0.965 white cutoff + deeper gamma (2.35) ink curve so faint grey
+     *    thermal receipt text stays dark, sharp, and never washes out.
+     */
     function applyBWFilterToCanvas(ctx, w, h) {
       const imgData = ctx.getImageData(0, 0, w, h);
       const data = imgData.data;
-      let lumSum = 0;
       const pxCount = w * h;
-      for (let i = 0; i < data.length; i += 4) {
-        lumSum += 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
-      }
-      const avgLum = pxCount > 0 ? (lumSum / pxCount) : 180;
-      const invertDarkUi = avgLum < 95; // Auto-invert dark-mode iPhone bank screenshots to white paper
+      if (pxCount <= 0) return;
 
-      for (let i = 0; i < data.length; i += 4) {
-        let l = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
-        if (invertDarkUi) l = 255 - l;
-        // High-contrast crisp document curve with clean white background clipping (cuts JPEG size dramatically)
-        l = (l - 128) * 1.52 + 148;
-        if (l > 218) l = 255;
-        else if (l < 42) l = 0;
-        else l = Math.max(0, Math.min(255, Math.round(l)));
-        data[i] = data[i + 1] = data[i + 2] = l;
+      const lums = new Uint8Array(pxCount);
+      let lumSum = 0;
+      for (let p = 0, i = 0; p < pxCount; p++, i += 4) {
+        const l = Math.round(0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2]);
+        lums[p] = l;
+        lumSum += l;
+      }
+
+      const avgLum = lumSum / pxCount;
+      const invertDarkUi = avgLum < 95; // Auto-invert dark-mode iPhone bank screenshots to white paper
+      if (invertDarkUi) {
+        for (let p = 0; p < pxCount; p++) lums[p] = 255 - lums[p];
+      }
+
+      // Coarse adaptive illumination grid (up to 16x16 tiles) using local 95th-percentile paper white
+      const gridCols = Math.max(4, Math.min(16, Math.round(w / 90)));
+      const gridRows = Math.max(4, Math.min(16, Math.round(h / 90)));
+      const tileWhite = new Float32Array(gridCols * gridRows);
+      const hist = new Uint32Array(256);
+
+      for (let gy = 0; gy < gridRows; gy++) {
+        const y0 = Math.floor((gy * h) / gridRows);
+        const y1 = Math.floor(((gy + 1) * h) / gridRows);
+        const yStep = Math.max(1, Math.floor((y1 - y0) / 24));
+        for (let gx = 0; gx < gridCols; gx++) {
+          const x0 = Math.floor((gx * w) / gridCols);
+          const x1 = Math.floor(((gx + 1) * w) / gridCols);
+          const xStep = Math.max(1, Math.floor((x1 - x0) / 24));
+          hist.fill(0);
+          let samples = 0;
+          for (let y = y0; y < y1; y += yStep) {
+            const rowOff = y * w;
+            for (let x = x0; x < x1; x += xStep) {
+              hist[lums[rowOff + x]]++;
+              samples++;
+            }
+          }
+          const targetRank = Math.max(1, Math.floor(samples * 0.95));
+          let acc = 0;
+          let p95 = 235;
+          for (let v = 0; v < 256; v++) {
+            acc += hist[v];
+            if (acc >= targetRank) {
+              p95 = v;
+              break;
+            }
+          }
+          tileWhite[gy * gridCols + gx] = Math.max(84, p95);
+        }
+      }
+
+      // 3x3 smoothing pass over the illumination grid for seamless lighting normalization
+      const smoothWhite = new Float32Array(gridCols * gridRows);
+      for (let gy = 0; gy < gridRows; gy++) {
+        for (let gx = 0; gx < gridCols; gx++) {
+          let sum = 0;
+          let cnt = 0;
+          for (let dy = -1; dy <= 1; dy++) {
+            const ny = gy + dy;
+            if (ny < 0 || ny >= gridRows) continue;
+            for (let dx = -1; dx <= 1; dx++) {
+              const nx = gx + dx;
+              if (nx < 0 || nx >= gridCols) continue;
+              const wt = (dx === 0 && dy === 0) ? 2 : 1;
+              sum += tileWhite[ny * gridCols + nx] * wt;
+              cnt += wt;
+            }
+          }
+          smoothWhite[gy * gridCols + gx] = sum / cnt;
+        }
+      }
+
+      // Precompute deeper ink-preserving LUT: 0.965 white cutoff + 0.10 black floor + gamma 2.35
+      const gammaLut = new Uint8Array(1025);
+      for (let k = 0; k <= 1024; k++) {
+        const norm = k / 1024;
+        if (norm >= 0.965) {
+          gammaLut[k] = 255;
+        } else if (norm <= 0.10) {
+          gammaLut[k] = 0;
+        } else {
+          const stretched = (norm - 0.10) / (0.965 - 0.10);
+          const curved = Math.pow(stretched, 2.35);
+          gammaLut[k] = Math.max(0, Math.min(255, Math.round(curved * 255)));
+        }
+      }
+
+      // Bilinearly normalize each pixel against local paper brightness & darken ink via LUT
+      const xScale = gridCols / w;
+      const yScale = gridRows / h;
+      for (let y = 0; y < h; y++) {
+        const fy = y * yScale - 0.5;
+        const gy0 = Math.max(0, Math.min(gridRows - 1, Math.floor(fy)));
+        const gy1 = Math.min(gridRows - 1, gy0 + 1);
+        const wy = Math.max(0, Math.min(1, fy - gy0));
+        const r0Off = gy0 * gridCols;
+        const r1Off = gy1 * gridCols;
+        const rowPx = y * w;
+
+        for (let x = 0; x < w; x++) {
+          const fx = x * xScale - 0.5;
+          const gx0 = Math.max(0, Math.min(gridCols - 1, Math.floor(fx)));
+          const gx1 = Math.min(gridCols - 1, gx0 + 1);
+          const wx = Math.max(0, Math.min(1, fx - gx0));
+
+          const topBg = smoothWhite[r0Off + gx0] * (1 - wx) + smoothWhite[r0Off + gx1] * wx;
+          const botBg = smoothWhite[r1Off + gx0] * (1 - wx) + smoothWhite[r1Off + gx1] * wx;
+          const localBg = topBg * (1 - wy) + botBg * wy;
+
+          const p = rowPx + x;
+          const ratioIdx = Math.min(1024, Math.max(0, Math.round((lums[p] / localBg) * 1024)));
+          const out = gammaLut[ratioIdx];
+          const di = p * 4;
+          data[di] = data[di + 1] = data[di + 2] = out;
+        }
       }
       ctx.putImageData(imgData, 0, 0);
     }
@@ -10637,7 +10924,7 @@
       receiptVault.bwMode = !receiptVault.bwMode;
       try { localStorage.setItem(BW_MODE_KEY, receiptVault.bwMode ? '1' : '0'); } catch (e) {}
       renderReceiptModal();
-      showToast(receiptVault.bwMode ? 'B&W Document Scan ON (Auto < 300 KB)' : 'Color Mode ON (Auto < 300 KB)', 'indigo');
+      showToast(receiptVault.bwMode ? 'Optional B&W Scan ON (< 300 KB)' : 'Full Color Default ON (< 300 KB)', 'indigo');
     }
 
     function openReceiptLightbox(photoId) {
@@ -12753,7 +13040,7 @@
       updateMobileNavActive();
       if (currentMobileView === 'daily' && state.ui.collapsed.meals) {
         state.ui.collapsed.meals = false;
-        persistStore(false);
+        persistUiOnly();
       }
       if (currentMobileView !== 'hrms') {
         renderWorkspace();
@@ -12762,20 +13049,7 @@
     }
 
     function jumpToMealsMobile() {
-      setMobileView('entry');
-      if (state.ui.collapsed.meals) {
-        state.ui.collapsed.meals = false;
-        persistStore(false);
-        renderWorkspace();
-      }
-      const btnEntry = document.getElementById('mnav-entry');
-      const btnMeals = document.getElementById('mnav-meals');
-      if (btnEntry) btnEntry.classList.remove('active');
-      if (btnMeals) btnMeals.classList.add('active');
-      setTimeout(function () {
-        const el = document.getElementById('section-meals-card');
-        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }, 60);
+      setMobileView('daily');
     }
 
     function openQuickMenu() {
@@ -12941,6 +13215,7 @@
 
     window.addEventListener('focus', function () { checkCloudFileUpdates(); });
     window.addEventListener('online', function () {
+      if (!CLOUD_APIS_ENABLED) return;
       if (oneDriveSync.cfg.enabled && (oneDriveSync.pendingPush || oneDriveSync.cfg.autoPull !== false)) {
         syncOneDriveTwoWay(true, !!oneDriveSync.pendingPush);
       }
