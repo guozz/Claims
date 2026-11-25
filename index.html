@@ -1018,8 +1018,14 @@
     }
     .day-photo-thumb {
       position: relative; border-radius: 10px; overflow: hidden;
-      border: 1px solid var(--border-strong); background: var(--surface-2); cursor: pointer;
-      display: flex; flex-direction: column; transition: transform 0.12s ease, border-color 0.12s ease;
+      border: 1px solid var(--border-strong); background: var(--surface-2); cursor: grab;
+      display: flex; flex-direction: column; transition: transform 0.12s ease, border-color 0.12s ease, opacity 0.14s ease;
+    }
+    .day-photo-thumb:active { cursor: grabbing; }
+    .day-photo-thumb.is-dragging, .vault-card.is-dragging { opacity: 0.42; transform: scale(0.96); }
+    body.dragging-existing-receipt .receipt-row,
+    body.dragging-existing-receipt .anchor-row {
+      border-style: dashed; border-color: color-mix(in srgb, var(--accent-border) 75%, var(--border));
     }
     .day-photo-thumb:hover { transform: translateY(-1px); border-color: var(--accent); }
     .day-photo-thumb img { width: 100%; height: 84px; object-fit: cover; display: block; background: #0f172a; }
@@ -3690,7 +3696,15 @@
         }
         return normalized;
       });
-      t.console = Object.assign({ formatMode: 'compact', mealOutputMode: 'daily', includeRefPrefix: false, autoCompleteOnCopy: true, filterTab: 'all', completedMap: {}, copiedMap: {}, foldedMap: {}, manualDescriptions: {} }, t.console || {});
+      t.console = Object.assign({
+        formatMode: 'compact', mealOutputMode: 'daily', includeRefPrefix: false, autoCompleteOnCopy: true,
+        filterTab: 'all', completedMap: {}, copiedMap: {}, foldedMap: {}, manualDescriptions: {},
+        statusUpdatedAt: {}, copiedUpdatedAt: {}, descUpdatedAt: {}
+      }, t.console || {});
+      if (!t.console.statusUpdatedAt || typeof t.console.statusUpdatedAt !== 'object') t.console.statusUpdatedAt = {};
+      if (!t.console.copiedUpdatedAt || typeof t.console.copiedUpdatedAt !== 'object') t.console.copiedUpdatedAt = {};
+      if (!t.console.descUpdatedAt || typeof t.console.descUpdatedAt !== 'object') t.console.descUpdatedAt = {};
+      t.tripFieldUpdatedAt = (t.tripFieldUpdatedAt && typeof t.tripFieldUpdatedAt === 'object') ? t.tripFieldUpdatedAt : {};
       t.ui = Object.assign({ collapsed: {} }, t.ui || {});
       if (!t.ui.collapsed || typeof t.ui.collapsed !== 'object') t.ui.collapsed = {};
       if (!t.ui.setupDefaultsApplied) {
@@ -3789,6 +3803,7 @@
     function flushLocalSave(immediateCloud, updateSwitcher) {
       clearTimeout(localSaveTimer);
       localSaveTimer = null;
+      flushPendingReceiptNoteSaves(true);
       if (!hasPendingSave && !immediateCloud) return;
       hasPendingSave = false;
       setSaveBadge('saving');
@@ -3966,6 +3981,7 @@
     function applyRoutePreset(presetId) {
       const preset = findRoutePresetById(presetId);
       if (!preset) return;
+      const now = Date.now();
       state.trip.presetId = preset.id;
       state.trip.route = preset.label.replace('↔', '–');
       state.trip.foreignCurrency = preset.currency;
@@ -3978,15 +3994,20 @@
         ? round2(Number(preset.tzDiffFromSgt))
         : (preset.destCode ? round2(getUtcOffset(preset.destCode, state.trip.startDate) - 8) : 0);
       state.trip.tzDiffFromSgt = tzDiff;
+      state.tripFieldUpdatedAt = Object.assign(state.tripFieldUpdatedAt || {}, {
+        presetId: now, route: now, foreignCurrency: now, dailyMealCap: now, tzDiffFromSgt: now
+      });
 
       if (state.flights && Array.isArray(state.flights.legs)) {
         if (state.flights.legs[0]) {
           state.flights.legs[0].fromCode = 'SG';
           state.flights.legs[0].toCode = destCode;
+          state.flights.legs[0].updatedAt = now;
         }
         if (state.flights.legs[1]) {
           state.flights.legs[1].fromCode = destCode;
           state.flights.legs[1].toCode = 'SG';
+          state.flights.legs[1].updatedAt = now;
         }
       }
       persistStore(true, true);
@@ -3995,13 +4016,15 @@
     }
 
     function selectCustomDestinationMode() {
+      const now = Date.now();
       state.trip.presetId = 'CUSTOM';
       if (!Number.isFinite(parseFloat(state.trip.tzDiffFromSgt))) {
         state.trip.tzDiffFromSgt = getCurrentTripTzDiff();
       }
+      state.tripFieldUpdatedAt = Object.assign(state.tripFieldUpdatedAt || {}, { presetId: now, tzDiffFromSgt: now });
       if (state.flights && Array.isArray(state.flights.legs)) {
-        if (state.flights.legs[0]) state.flights.legs[0].toCode = 'CUSTOM';
-        if (state.flights.legs[1]) state.flights.legs[1].fromCode = 'CUSTOM';
+        if (state.flights.legs[0]) { state.flights.legs[0].toCode = 'CUSTOM'; state.flights.legs[0].updatedAt = now; }
+        if (state.flights.legs[1]) { state.flights.legs[1].fromCode = 'CUSTOM'; state.flights.legs[1].updatedAt = now; }
       }
       persistStore(true, true);
       renderAll();
@@ -4066,6 +4089,8 @@
       } else {
         state.trip[field] = val;
       }
+      if (!state.tripFieldUpdatedAt) state.tripFieldUpdatedAt = {};
+      state.tripFieldUpdatedAt[field] = Date.now();
       const isMeta = (field === 'ref' || field === 'route' || field === 'startDate' || field === 'endDate');
       persistStore(!!needsFullRender, isMeta);
       if (needsFullRender) {
@@ -5115,12 +5140,12 @@
             const roleClass = isPol ? ' policy' : (isBank ? ' bank' : '');
             const roleLbl = isPol ? '📄 Policy' : (isBank ? '💳 Bank' : (scope === 'overnight' ? '✈️ Flight' : '🧾 Rec'));
             const effOrient = getPhotoEffectiveOrient(ph);
-            return '<div class="day-photo-thumb" style="border-top:3px solid ' + info.colors.bg + ';" onclick="openReceiptLightbox(\'' + esc(ph.id) + '\')">'
+            return '<div class="day-photo-thumb" draggable="true" ondragstart="handleExistingReceiptDragStart(event,\'' + esc(ph.id) + '\')" ondragend="handleExistingReceiptDragEnd(event)" style="border-top:3px solid ' + info.colors.bg + ';" onclick="openReceiptLightbox(\'' + esc(ph.id) + '\')" title="Click to preview/edit · Drag onto any line to re-tag without duplicating">'
               + '<span class="day-photo-role' + roleClass + '">' + roleLbl + '</span>'
               + '<span class="day-photo-size">' + esc(sz.sizeStr) + '</span>'
               + (isPaired ? '<span class="day-photo-pair">🔗 Pair</span>' : '')
               + '<span class="day-photo-orient" title="Slot orientation: ' + effOrient + '">' + (effOrient === 'landscape' ? '▭' : '▯') + '</span>'
-              + '<img src="' + ph.dataUrl + '" alt="' + esc(info.tagLeft) + '" loading="lazy" />'
+              + '<img src="' + ph.dataUrl + '" alt="' + esc(info.tagLeft) + '" loading="lazy" draggable="false" />'
               + '<div class="day-photo-cap">' + (info.idx >= 0 ? ('<span class="rc-num-pill" style="background:' + info.colors.bg + ';">' + esc(info.numBadge) + '</span> ') : '') + esc(info.amountStr || info.tagLeft) + '</div>'
               + '</div>';
           }).join('') + '</div>'
@@ -5297,12 +5322,12 @@
               const isPol = ph.role === 'policy';
               const isPaired = !!(ph.itemId && pairedSet[ph.itemId]);
               const effOrient = getPhotoEffectiveOrient(ph);
-              return '<div class="day-photo-thumb" style="border-top:3px solid ' + info.colors.bg + ';" onclick="openReceiptLightbox(\'' + esc(ph.id) + '\')">'
+              return '<div class="day-photo-thumb" draggable="true" ondragstart="handleExistingReceiptDragStart(event,\'' + esc(ph.id) + '\')" ondragend="handleExistingReceiptDragEnd(event)" style="border-top:3px solid ' + info.colors.bg + ';" onclick="openReceiptLightbox(\'' + esc(ph.id) + '\')" title="Click to preview/edit · Drag onto any meal line to re-tag without duplicating">'
                 + '<span class="day-photo-role' + (isPol ? ' policy' : (isBank ? ' bank' : '')) + '">' + (isPol ? '📄 Policy' : (isBank ? '💳 Bank' : '🧾 Rec')) + '</span>'
                 + '<span class="day-photo-size">' + esc(sz.sizeStr) + '</span>'
                 + (isPaired ? '<span class="day-photo-pair">🔗 Pair</span>' : '')
                 + '<span class="day-photo-orient" title="Slot orientation: ' + effOrient + '">' + (effOrient === 'landscape' ? '▭' : '▯') + '</span>'
-                + '<img src="' + ph.dataUrl + '" alt="' + esc(info.tagLeft) + '" loading="lazy" />'
+                + '<img src="' + ph.dataUrl + '" alt="' + esc(info.tagLeft) + '" loading="lazy" draggable="false" />'
                 + '<div class="day-photo-cap">' + (info.idx >= 0 ? ('<span class="rc-num-pill" style="background:' + info.colors.bg + ';">' + esc(info.numBadge) + '</span> ') : '') + esc(info.amountStr || info.tagLeft) + '</div>'
                 + '</div>';
             }).join('') + '</div>'
@@ -5607,12 +5632,12 @@
             const isPol = ph.role === 'policy';
             const isPaired = !!(ph.itemId && pairedSet[ph.itemId]);
             const effOrient = getPhotoEffectiveOrient(ph);
-            return '<div class="day-photo-thumb" style="border-top:3px solid ' + info.colors.bg + ';" onclick="openReceiptLightbox(\'' + esc(ph.id) + '\')">'
+            return '<div class="day-photo-thumb" draggable="true" ondragstart="handleExistingReceiptDragStart(event,\'' + esc(ph.id) + '\')" ondragend="handleExistingReceiptDragEnd(event)" style="border-top:3px solid ' + info.colors.bg + ';" onclick="openReceiptLightbox(\'' + esc(ph.id) + '\')" title="Click to preview/edit · Drag onto any meal line to re-tag without duplicating">'
               + '<span class="day-photo-role' + (isPol ? ' policy' : (isBank ? ' bank' : '')) + '">' + (isPol ? '📄 Policy' : (isBank ? '💳 Bank' : '🧾 Rec')) + '</span>'
               + '<span class="day-photo-size">' + esc(sz.sizeStr) + '</span>'
               + (isPaired ? '<span class="day-photo-pair">🔗 Pair</span>' : '')
               + '<span class="day-photo-orient">' + (effOrient === 'landscape' ? '▭' : '▯') + '</span>'
-              + '<img src="' + ph.dataUrl + '" alt="' + esc(info.tagLeft) + '" loading="lazy" />'
+              + '<img src="' + ph.dataUrl + '" alt="' + esc(info.tagLeft) + '" loading="lazy" draggable="false" />'
               + '<div class="day-photo-cap">' + (info.idx >= 0 ? ('<span class="rc-num-pill" style="background:' + info.colors.bg + ';">' + esc(info.numBadge) + '</span> ') : '') + esc(info.amountStr || info.tagLeft) + '</div>'
               + '</div>';
           }).join('') + '</div>'
@@ -6543,6 +6568,9 @@
         confirmLabel: 'Clear All',
         confirmClass: 'btn-red-soft',
         onConfirm: function () {
+          (state.timeOff.entries || []).forEach(function (en) {
+            if (en && en.id) recordDeletedItemId(en.id);
+          });
           state.timeOff.entries = [];
           persistStore(true);
           renderAll();
@@ -6553,6 +6581,9 @@
 
     function syncToilFromFlights() {
       const countPreWork = !!(state.timeOff && state.timeOff.countPreWork);
+      (state.timeOff.entries || []).forEach(function (e) {
+        if (e && e.source === 'flight' && e.id) recordDeletedItemId(e.id);
+      });
       const manualEntries = (state.timeOff.entries || []).filter(function (e) { return e.source !== 'flight'; });
       const synced = [];
 
@@ -6577,7 +6608,8 @@
           endNextDay: (parseInt(leg.arrDayOffset, 10) || 0) > 0,
           isHoliday: false,
           notes: (leg.label || '').trim(),
-          manualDays: ''
+          manualDays: '',
+          updatedAt: Date.now()
         });
       });
 
@@ -6914,6 +6946,7 @@
       const d = state.meals.find(function (m) { return m.id === dayId; });
       if (!d) return;
       d.date = val;
+      d.updatedAt = Date.now();
       persistStore(true);
       renderAll();
     }
@@ -6944,6 +6977,8 @@
       if (c.amt && c.desc && !state.console.completedMap[id]) {
         state.console.completedMap[id] = true;
         state.console.foldedMap[id] = true;
+        if (!state.console.statusUpdatedAt) state.console.statusUpdatedAt = {};
+        state.console.statusUpdatedAt[id] = Date.now();
         showToast('Both copied — marked Completed ✓', 'green');
       }
     }
@@ -6951,6 +6986,8 @@
     function copyClaimAmt(id, amtStr) {
       copyToClipboard(amtStr);
       state.console.copiedMap[id] = Object.assign({}, state.console.copiedMap[id], { amt: true });
+      if (!state.console.copiedUpdatedAt) state.console.copiedUpdatedAt = {};
+      state.console.copiedUpdatedAt[id] = Date.now();
       checkAutoComplete(id);
       persistStore(false);
       renderConsole();
@@ -6962,6 +6999,8 @@
       const val = ta ? ta.value : '';
       copyToClipboard(val);
       state.console.copiedMap[id] = Object.assign({}, state.console.copiedMap[id], { desc: true });
+      if (!state.console.copiedUpdatedAt) state.console.copiedUpdatedAt = {};
+      state.console.copiedUpdatedAt[id] = Date.now();
       checkAutoComplete(id);
       persistStore(false);
       renderConsole();
@@ -6970,6 +7009,8 @@
 
     function handleManualDesc(id, val) {
       state.console.manualDescriptions[id] = val;
+      if (!state.console.descUpdatedAt) state.console.descUpdatedAt = {};
+      state.console.descUpdatedAt[id] = Date.now();
       const cc = document.getElementById('cc-' + id);
       if (cc) {
         const isLong = val.length > 200;
@@ -6980,7 +7021,9 @@
     }
 
     function resetManualDesc(id) {
-      delete state.console.manualDescriptions[id];
+      state.console.manualDescriptions[id] = null;
+      if (!state.console.descUpdatedAt) state.console.descUpdatedAt = {};
+      state.console.descUpdatedAt[id] = Date.now();
       persistStore(true);
       renderConsole();
       showToast('Restored auto-generated description.', 'indigo');
@@ -6990,6 +7033,8 @@
       const next = !state.console.completedMap[id];
       state.console.completedMap[id] = next;
       state.console.foldedMap[id] = next;
+      if (!state.console.statusUpdatedAt) state.console.statusUpdatedAt = {};
+      state.console.statusUpdatedAt[id] = Date.now();
       persistStore(false);
       renderConsole();
     }
@@ -6997,7 +7042,11 @@
     function toggleFoldHrmsCard(id) {
       const nextFold = !state.console.foldedMap[id];
       state.console.foldedMap[id] = nextFold;
-      if (nextFold) state.console.completedMap[id] = true;
+      if (nextFold) {
+        state.console.completedMap[id] = true;
+        if (!state.console.statusUpdatedAt) state.console.statusUpdatedAt = {};
+        state.console.statusUpdatedAt[id] = Date.now();
+      }
       persistStore(false);
       renderConsole();
     }
@@ -7050,8 +7099,19 @@
         confirmLabel: 'Reset All to Pending',
         confirmClass: 'btn-red-soft',
         onConfirm: function () {
-          state.console.completedMap = {};
-          state.console.copiedMap = {};
+          const now = Date.now();
+          const allKeys = {};
+          Object.keys(state.console.completedMap || {}).forEach(function (k) { allKeys[k] = true; });
+          Object.keys(state.console.copiedMap || {}).forEach(function (k) { allKeys[k] = true; });
+          buildHRMSClaims(computeSummary()).forEach(function (c) { allKeys[c.id] = true; });
+          if (!state.console.statusUpdatedAt) state.console.statusUpdatedAt = {};
+          if (!state.console.copiedUpdatedAt) state.console.copiedUpdatedAt = {};
+          Object.keys(allKeys).forEach(function (k) {
+            state.console.completedMap[k] = false;
+            state.console.statusUpdatedAt[k] = now;
+            state.console.copiedMap[k] = { amt: false, desc: false };
+            state.console.copiedUpdatedAt[k] = now;
+          });
           state.console.foldedMap = {};
           persistStore(true);
           renderConsole();
@@ -7829,7 +7889,8 @@
         autoPull: true,
         syncReceipts: true,
         lastSyncedAt: 0,
-        lastRemoteDbSha: ''
+        lastRemoteDbSha: '',
+        dirty: false
       },
       busy: false,
       pendingPush: false,
@@ -7927,17 +7988,164 @@
           gitSync.cfg = Object.assign({
             enabled: false, token: '', repo: '', branch: 'main',
             powerMode: 'eco', autoPush: true, autoPull: true, syncReceipts: true,
-            lastSyncedAt: 0, lastRemoteDbSha: ''
+            lastSyncedAt: 0, lastRemoteDbSha: '', dirty: false
           }, parsed);
           if (!parsed.powerMode) {
             gitSync.cfg.powerMode = (gitSync.cfg.autoPush || gitSync.cfg.autoPull) ? 'eco' : 'manual';
           }
+          if (gitSync.cfg.dirty) gitSync.pendingPush = true;
         }
       } catch (e) {}
     }
 
     function saveGitConfig() {
       try { localStorage.setItem(GIT_CFG_KEY, JSON.stringify(gitSync.cfg)); } catch (e) {}
+    }
+
+    /** Full-payload FNV-1a fingerprint so every crop, rotate, B&W scan, or optimize change produces a unique hash */
+    function computeDataUrlHash(dataUrl) {
+      const s = String(dataUrl || '');
+      if (!s) return '0';
+      const comma = s.indexOf(',');
+      const start = comma >= 0 ? comma + 1 : 0;
+      let h = 2166136261;
+      for (let i = start; i < s.length; i++) {
+        h ^= s.charCodeAt(i);
+        h = Math.imul(h, 16777619);
+      }
+      return (h >>> 0).toString(36) + '_' + (s.length - start).toString(36);
+    }
+
+    function computeReceiptImageHash(r) {
+      if (!r) return '';
+      const b = Number(r.bytes) || estimateDataUrlBytes(r.dataUrl);
+      return [Number(r.width) || 0, Number(r.height) || 0, b, r.isBW ? 1 : 0, computeDataUrlHash(r.dataUrl)].join(':');
+    }
+
+    function extractReceiptMeta(r) {
+      const created = Number(r.createdAt) || Date.now();
+      const updated = Number(r.updatedAt) || created;
+      const imgUpdated = Number(r.imgUpdatedAt) || updated;
+      return {
+        id: String(r.id),
+        tripId: String(r.tripId || state.id),
+        scope: r.scope || 'unmatched',
+        itemId: r.itemId || '',
+        dayId: r.dayId || '',
+        role: r.role === 'bank' ? 'bank' : (r.role === 'policy' ? 'policy' : 'receipt'),
+        orient: (r.orient === 'landscape' || r.orient === 'portrait') ? r.orient : 'auto',
+        name: r.name || 'receipt.jpg',
+        note: r.note || '',
+        width: Number(r.width) || 0,
+        height: Number(r.height) || 0,
+        bytes: Number(r.bytes) || estimateDataUrlBytes(r.dataUrl),
+        isBW: !!r.isBW,
+        mime: /^data:(image\/[a-z0-9.+-]+);base64,/i.test(r.dataUrl || '') ? r.dataUrl.match(/^data:(image\/[a-z0-9.+-]+);base64,/i)[1] : 'image/jpeg',
+        imgHash: r.imgHash || computeReceiptImageHash(r),
+        rev: Number(r.rev) || 0,
+        createdAt: created,
+        updatedAt: updated,
+        imgUpdatedAt: imgUpdated
+      };
+    }
+
+    function receiptMetaEqual(a, b) {
+      if (!a || !b) return false;
+      return a.tripId === b.tripId && a.scope === b.scope && a.itemId === b.itemId
+        && a.dayId === b.dayId && a.role === b.role && a.orient === b.orient
+        && String(a.note || '') === String(b.note || '')
+        && a.imgHash === b.imgHash
+        && (Number(a.rev) || 0) === (Number(b.rev) || 0)
+        && (Number(a.updatedAt) || 0) === (Number(b.updatedAt) || 0);
+    }
+
+    function isReceiptIncomingNewer(localMeta, remoteMeta) {
+      if (!remoteMeta) return false;
+      if (!localMeta) return true;
+      const lUpd = Number(localMeta.updatedAt) || Number(localMeta.createdAt) || 0;
+      const rUpd = Number(remoteMeta.updatedAt) || Number(remoteMeta.createdAt) || 0;
+      if (rUpd !== lUpd) return rUpd > lUpd;
+      const lRev = Number(localMeta.rev) || 0;
+      const rRev = Number(remoteMeta.rev) || 0;
+      return rRev > lRev;
+    }
+
+    function isReceiptImageIncomingNewer(localMeta, remoteMeta) {
+      if (!remoteMeta) return false;
+      if (!localMeta) return true;
+      const lImg = Number(localMeta.imgUpdatedAt) || Number(localMeta.updatedAt) || Number(localMeta.createdAt) || 0;
+      const rImg = Number(remoteMeta.imgUpdatedAt) || Number(remoteMeta.updatedAt) || Number(remoteMeta.createdAt) || 0;
+      if (rImg !== lImg) return rImg > lImg;
+      const lRev = Number(localMeta.rev) || 0;
+      const rRev = Number(remoteMeta.rev) || 0;
+      return rRev > lRev;
+    }
+
+    /** Collects every itemId referenced by receipts so Smart-Merge NEVER drops a photo-tagged blank line */
+    function collectReferencedItemIds(localRecs, extraMetaOrList) {
+      const refSet = {};
+      (localRecs || []).forEach(function (r) {
+        if (r && r.itemId) refSet[r.itemId] = true;
+      });
+      if (Array.isArray(extraMetaOrList)) {
+        extraMetaOrList.forEach(function (r) {
+          if (r && r.itemId) refSet[r.itemId] = true;
+        });
+      } else if (extraMetaOrList && typeof extraMetaOrList === 'object') {
+        Object.keys(extraMetaOrList).forEach(function (k) {
+          const m = extraMetaOrList[k];
+          if (m && m.itemId) refSet[m.itemId] = true;
+        });
+      }
+      return refSet;
+    }
+
+    /** Ensures any receipt with an itemId points to its exact canonical trip, scope & meal dayId */
+    function canonicalizeReceiptLink(rec) {
+      if (!rec || !rec.itemId) return false;
+      const trip = store.trips.find(function (t) { return t.id === rec.tripId; });
+      if (!trip) return false;
+      const meals = trip.meals || [];
+      for (let i = 0; i < meals.length; i++) {
+        const d = meals[i];
+        if ((d.items || []).some(function (it) { return it && it.id === rec.itemId; })) {
+          let changed = false;
+          if (rec.scope !== 'meal') { rec.scope = 'meal'; changed = true; }
+          if (rec.dayId !== d.id) { rec.dayId = d.id; changed = true; }
+          return changed;
+        }
+      }
+      const cats = ['airFare', 'hotel', 'sgTransport', 'overseasTransport', 'data', 'otherMisc'];
+      for (let c = 0; c < cats.length; c++) {
+        const sc = cats[c];
+        const items = (trip[sc] && trip[sc].items) || [];
+        if (items.some(function (it) { return it && it.id === rec.itemId; })) {
+          let changed = false;
+          if (rec.scope !== sc) { rec.scope = sc; changed = true; }
+          if (rec.dayId) { rec.dayId = ''; changed = true; }
+          return changed;
+        }
+      }
+      if ((trip.fxAnchors || []).some(function (a) { return a && a.id === rec.itemId; })) {
+        let changed = false;
+        if (rec.scope !== 'fxAnchors') { rec.scope = 'fxAnchors'; changed = true; }
+        if (rec.dayId) { rec.dayId = ''; changed = true; }
+        return changed;
+      }
+      return false;
+    }
+
+    async function repairReceiptLinksForAllTrips() {
+      const all = await idbGetAllReceipts();
+      let fixed = 0;
+      for (let i = 0; i < all.length; i++) {
+        const rec = all[i];
+        if (canonicalizeReceiptLink(rec)) {
+          await idbPutReceipt(rec);
+          fixed++;
+        }
+      }
+      return fixed;
     }
 
     function setGitPowerMode(mode) {
@@ -7992,41 +8200,6 @@
       const bytes = new Uint8Array(bin.length);
       for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
       return new TextDecoder().decode(bytes);
-    }
-
-    function computeReceiptImageHash(r) {
-      if (!r) return '';
-      const b = Number(r.bytes) || estimateDataUrlBytes(r.dataUrl);
-      return [Number(r.width) || 0, Number(r.height) || 0, b, r.isBW ? 1 : 0, String(r.dataUrl || '').slice(-28)].join(':');
-    }
-
-    function extractReceiptMeta(r) {
-      return {
-        id: String(r.id),
-        tripId: String(r.tripId || state.id),
-        scope: r.scope || 'unmatched',
-        itemId: r.itemId || '',
-        dayId: r.dayId || '',
-        role: r.role === 'bank' ? 'bank' : (r.role === 'policy' ? 'policy' : 'receipt'),
-        orient: (r.orient === 'landscape' || r.orient === 'portrait') ? r.orient : 'auto',
-        name: r.name || 'receipt.jpg',
-        note: r.note || '',
-        width: Number(r.width) || 0,
-        height: Number(r.height) || 0,
-        bytes: Number(r.bytes) || estimateDataUrlBytes(r.dataUrl),
-        isBW: !!r.isBW,
-        mime: /^data:(image\/[a-z0-9.+-]+);base64,/i.test(r.dataUrl || '') ? r.dataUrl.match(/^data:(image\/[a-z0-9.+-]+);base64,/i)[1] : 'image/jpeg',
-        imgHash: computeReceiptImageHash(r),
-        createdAt: Number(r.createdAt) || Date.now(),
-        updatedAt: Number(r.updatedAt) || Number(r.createdAt) || Date.now()
-      };
-    }
-
-    function receiptMetaEqual(a, b) {
-      if (!a || !b) return false;
-      return a.tripId === b.tripId && a.scope === b.scope && a.itemId === b.itemId
-        && a.dayId === b.dayId && a.role === b.role && a.orient === b.orient
-        && a.note === b.note && a.imgHash === b.imgHash;
     }
 
     function gitHeaders(token, includeContentType) {
@@ -8463,6 +8636,7 @@
       renderCloudStatusUI();
 
       try {
+        flushPendingReceiptNoteSaves(true);
         flushLocalSave(false, false);
 
         // 1. Read remote claimflow-db.json (single lightweight GET)
@@ -8470,10 +8644,10 @@
         let remoteDb = null;
         let remoteDbSha = remoteFile ? remoteFile.sha : '';
 
-        // Battery & Data Fast-Path: If remote DB SHA is unchanged and we have no local edits queued, skip everything!
+        // Battery & Data Fast-Path: Only short-circuit if remote SHA is unchanged AND no local edits are pending/dirty!
         if (
           remoteFile && remoteDbSha && remoteDbSha === gitSync.cfg.lastRemoteDbSha
-          && !pushPreferred && !gitSync.pendingPush && gitSync.localEpoch === runEpoch
+          && !pushPreferred && !gitSync.pendingPush && !gitSync.cfg.dirty && gitSync.localEpoch === runEpoch
         ) {
           gitSync.cfg.lastSyncedAt = Date.now();
           gitSync.lastPullCheckAt = Date.now();
@@ -8489,6 +8663,10 @@
           if (parsedText && parsedText.trim()) remoteDb = JSON.parse(parsedText);
         }
 
+        const remoteMetaMap = (remoteDb && remoteDb.receiptMeta && typeof remoteDb.receiptMeta === 'object') ? remoteDb.receiptMeta : {};
+        const preLocalRecs = await idbGetAllReceipts();
+        const referencedItemIds = collectReferencedItemIds(preLocalRecs, remoteMetaMap);
+
         // 2. Merge deleted trip & receipt tombstones + custom destination presets
         const mergedDeletedTrips = mergeDeletedTripIds(remoteDb && remoteDb.deletedTripIds);
         const deletedTripSet = {};
@@ -8498,7 +8676,7 @@
         const deletedSet = {};
         mergedDeleted.forEach(function (id) { deletedSet[id] = true; });
 
-        let needPushDb = !remoteDb || !!pushPreferred;
+        let needPushDb = !remoteDb || !!pushPreferred || !!gitSync.cfg.dirty;
         if (mergedDeleted.length !== (remoteDb && Array.isArray(remoteDb.deletedReceiptIds) ? remoteDb.deletedReceiptIds.length : 0)) {
           needPushDb = true;
         }
@@ -8559,7 +8737,7 @@
               const canonicalId = store.trips[idx].id;
               matchedLocalIds[canonicalId] = true;
               if (rt.id !== canonicalId) tripIdRemap[rt.id] = canonicalId;
-              const resM = smartMergeTrips(store.trips[idx], rt);
+              const resM = smartMergeTrips(store.trips[idx], rt, referencedItemIds);
               store.trips[idx] = resM.trip;
               totalAddedLines += resM.addedLines || 0;
               totalUpdatedLines += resM.updatedLines || 0;
@@ -8602,7 +8780,6 @@
         let pulledReceipts = 0;
         let pushedReceipts = 0;
         let updatedReceiptMeta = 0;
-        const remoteMetaMap = (remoteDb && remoteDb.receiptMeta && typeof remoteDb.receiptMeta === 'object') ? remoteDb.receiptMeta : {};
         const finalMetaMap = {};
 
         if (gitSync.cfg.syncReceipts !== false) {
@@ -8620,7 +8797,7 @@
 
           const remoteFilesMap = await gitListReceiptFiles(owner, repo, branch, token);
 
-          // 4A. Pull any remote receipts missing locally (or with newer cropped/rotated imgHash)
+          // 4A. Pull any remote receipts missing locally OR with newer cropped/rotated/B&W image or newer remarks/tags
           const remoteIds = Object.keys(remoteFilesMap);
           const toDownload = [];
           for (let i = 0; i < remoteIds.length; i++) {
@@ -8634,24 +8811,25 @@
             if (!localRec) {
               toDownload.push({ id: rid, file: remoteFilesMap[rid], meta: rMeta });
             } else if (rMeta) {
-              const localHash = computeReceiptImageHash(localRec);
-              const lUpd = Number(localRec.updatedAt) || Number(localRec.createdAt) || 0;
-              const rUpd = Number(rMeta.updatedAt) || Number(rMeta.createdAt) || 0;
-              if (rMeta.imgHash && rMeta.imgHash !== localHash && rUpd > lUpd) {
+              const lMeta = extractReceiptMeta(localRec);
+              const imgDiffers = !!(rMeta.imgHash && rMeta.imgHash !== lMeta.imgHash);
+              if (imgDiffers && isReceiptImageIncomingNewer(lMeta, rMeta)) {
                 toDownload.push({ id: rid, file: remoteFilesMap[rid], meta: rMeta });
-              } else if (rUpd > lUpd && !receiptMetaEqual(extractReceiptMeta(localRec), rMeta)) {
-                // Metadata-only update (reassigned line/note/role/orient) — zero image download needed!
+              } else if (!receiptMetaEqual(lMeta, rMeta) && isReceiptIncomingNewer(lMeta, rMeta)) {
+                // Metadata-only update (line tag, remark/comment, role, orientation) — zero image download needed!
                 const mappedTrip = (rMeta.tripId && tripIdRemap[rMeta.tripId]) ? tripIdRemap[rMeta.tripId] : (rMeta.tripId || localRec.tripId);
                 const dRemap = allDayIdRemaps[mappedTrip];
                 const mappedDay = (dRemap && rMeta.dayId && dRemap[rMeta.dayId]) ? dRemap[rMeta.dayId] : (rMeta.dayId || '');
                 localRec.tripId = mappedTrip;
                 localRec.scope = rMeta.scope || localRec.scope;
-                localRec.itemId = rMeta.itemId || '';
+                localRec.itemId = rMeta.itemId != null ? rMeta.itemId : localRec.itemId;
                 localRec.dayId = mappedDay;
                 localRec.role = rMeta.role || localRec.role;
                 localRec.orient = rMeta.orient || localRec.orient;
                 localRec.note = rMeta.note != null ? rMeta.note : localRec.note;
-                localRec.updatedAt = rUpd;
+                localRec.rev = Math.max(Number(localRec.rev) || 0, Number(rMeta.rev) || 0);
+                localRec.updatedAt = Math.max(Number(localRec.updatedAt) || 0, Number(rMeta.updatedAt) || 0);
+                canonicalizeReceiptLink(localRec);
                 await idbPutReceipt(localRec);
                 updatedReceiptMeta++;
               }
@@ -8670,31 +8848,45 @@
             const mappedTrip = (meta.tripId && tripIdRemap[meta.tripId]) ? tripIdRemap[meta.tripId] : (meta.tripId || state.id);
             const dRemap = allDayIdRemaps[mappedTrip];
             const mappedDay = (dRemap && meta.dayId && dRemap[meta.dayId]) ? dRemap[meta.dayId] : (meta.dayId || '');
+            const existingL = localMap[job.id];
+            const keepLocalMeta = existingL && !isReceiptIncomingNewer(extractReceiptMeta(existingL), meta);
             const rec = {
               id: job.id,
-              tripId: mappedTrip,
-              scope: meta.scope || 'unmatched',
-              itemId: meta.itemId || '',
-              dayId: mappedDay,
-              role: meta.role === 'bank' ? 'bank' : (meta.role === 'policy' ? 'policy' : 'receipt'),
-              orient: (meta.orient === 'landscape' || meta.orient === 'portrait') ? meta.orient : 'auto',
+              tripId: keepLocalMeta ? existingL.tripId : mappedTrip,
+              scope: keepLocalMeta ? existingL.scope : (meta.scope || 'unmatched'),
+              itemId: keepLocalMeta ? (existingL.itemId || '') : (meta.itemId || ''),
+              dayId: keepLocalMeta ? (existingL.dayId || '') : mappedDay,
+              role: keepLocalMeta ? existingL.role : (meta.role === 'bank' ? 'bank' : (meta.role === 'policy' ? 'policy' : 'receipt')),
+              orient: keepLocalMeta ? existingL.orient : ((meta.orient === 'landscape' || meta.orient === 'portrait') ? meta.orient : 'auto'),
               name: meta.name || job.file.name || (job.id + '.jpg'),
-              note: meta.note || '',
+              note: keepLocalMeta ? (existingL.note || '') : (meta.note || ''),
               dataUrl: dataUrl,
               width: Number(meta.width) || 0,
               height: Number(meta.height) || 0,
               bytes: Number(meta.bytes) || estimateDataUrlBytes(dataUrl),
               isBW: !!meta.isBW,
+              imgHash: meta.imgHash || '',
+              rev: Math.max(Number(existingL && existingL.rev) || 0, Number(meta.rev) || 0),
               createdAt: Number(meta.createdAt) || Date.now(),
-              updatedAt: Number(meta.updatedAt) || Number(meta.createdAt) || Date.now()
+              updatedAt: Math.max(Number(existingL && existingL.updatedAt) || 0, Number(meta.updatedAt) || Number(meta.createdAt) || Date.now()),
+              imgUpdatedAt: Number(meta.imgUpdatedAt) || Number(meta.updatedAt) || Number(meta.createdAt) || Date.now()
             };
+            if (!rec.imgHash) rec.imgHash = computeReceiptImageHash(rec);
+            canonicalizeReceiptLink(rec);
             await idbPutReceipt(rec);
             localMap[rec.id] = rec;
             pulledReceipts++;
           }
 
-          // 4B. Upload ONLY local receipts missing remotely or modified (cropped/rotated)
+          // Canonicalize all local receipt links before building finalMetaMap so no line tag drifts
           const allLocalList = Object.keys(localMap).map(function (k) { return localMap[k]; });
+          for (let li = 0; li < allLocalList.length; li++) {
+            if (canonicalizeReceiptLink(allLocalList[li])) {
+              await idbPutReceipt(allLocalList[li]);
+            }
+          }
+
+          // 4B. Upload ONLY local receipts missing remotely OR locally modified (cropped/rotated/B&W/optimized)
           const toUpload = [];
           allLocalList.forEach(function (lr) {
             const meta = extractReceiptMeta(lr);
@@ -8703,7 +8895,7 @@
             const remMeta = remoteMetaMap[lr.id];
             if (!remFile) {
               toUpload.push({ rec: lr, existingSha: '' });
-            } else if (!remMeta || (remMeta.imgHash && remMeta.imgHash !== meta.imgHash && meta.updatedAt >= (Number(remMeta.updatedAt) || 0))) {
+            } else if (!remMeta || (remMeta.imgHash !== meta.imgHash && !isReceiptImageIncomingNewer(meta, remMeta))) {
               toUpload.push({ rec: lr, existingSha: remFile.sha });
             }
             if (!remMeta || !receiptMetaEqual(meta, remMeta)) {
@@ -8781,6 +8973,7 @@
         gitSync.lastPullCheckAt = Date.now();
         if (gitSync.localEpoch === runEpoch) {
           gitSync.pendingPush = false;
+          gitSync.cfg.dirty = false;
         }
         saveGitConfig();
 
@@ -8929,8 +9122,7 @@
         && !String(it.amountExpr || '').trim()
         && !String(it.deductionExpr || '').trim();
     }
-
-    function mergeItemArraysById(localArr, remoteArr, deletedSet, localNewer, kind) {
+    function mergeItemArraysById(localArr, remoteArr, deletedSet, localNewer, kind, referencedItemIds) {
       const lList = Array.isArray(localArr) ? localArr : [];
       const rList = Array.isArray(remoteArr) ? remoteArr : [];
       const lMap = {};
@@ -8938,6 +9130,7 @@
       const order = [];
       let addedCount = 0;
       let updatedCount = 0;
+      const refIds = referencedItemIds || {};
 
       lList.forEach(function (it) {
         if (!it || !it.id || deletedSet[it.id]) return;
@@ -8984,97 +9177,69 @@
         }
       });
 
-      // Drop untouched blank placeholder rows if real captured rows are present
+      // Drop untouched blank placeholder rows ONLY if they have NO receipt photo tagged to them!
       if (kind === 'receipt' && merged.length > 1) {
-        const nonBlank = merged.filter(function (it) { return !isBlankReceiptRow(it); });
-        if (nonBlank.length > 0) {
-          nonBlank._mergeMeta = { added: addedCount, updated: updatedCount };
-          return nonBlank;
+        const kept = merged.filter(function (it) { return !isBlankReceiptRow(it) || !!refIds[it.id]; });
+        if (kept.length > 0) {
+          kept._mergeMeta = { added: addedCount, updated: updatedCount };
+          return kept;
         }
       }
       merged._mergeMeta = { added: addedCount, updated: updatedCount };
       return merged;
     }
+    function mergeKeyedMapLWW(localMap, localTimes, remoteMap, remoteTimes, localFallbackTs, remoteFallbackTs) {
+      const lMap = (localMap && typeof localMap === 'object') ? localMap : {};
+      const rMap = (remoteMap && typeof remoteMap === 'object') ? remoteMap : {};
+      const lTs = (localTimes && typeof localTimes === 'object') ? localTimes : {};
+      const rTs = (remoteTimes && typeof remoteTimes === 'object') ? remoteTimes : {};
+      const keys = {};
+      Object.keys(lMap).forEach(function (k) { keys[k] = true; });
+      Object.keys(rMap).forEach(function (k) { keys[k] = true; });
+      Object.keys(lTs).forEach(function (k) { keys[k] = true; });
+      Object.keys(rTs).forEach(function (k) { keys[k] = true; });
 
-    function normalizeMatchToken(str) {
-      return String(str || '').trim().toUpperCase().replace(/[\s–—↔-]+/g, '-');
+      const outMap = {};
+      const outTimes = {};
+      Object.keys(keys).forEach(function (k) {
+        const hasL = Object.prototype.hasOwnProperty.call(lMap, k);
+        const hasR = Object.prototype.hasOwnProperty.call(rMap, k);
+        const lt = Number(lTs[k]) || (hasL ? localFallbackTs : 0);
+        const rt = Number(rTs[k]) || (hasR ? remoteFallbackTs : 0);
+        if (hasL && !hasR) {
+          if (rt > lt && Object.prototype.hasOwnProperty.call(rTs, k)) {
+            outTimes[k] = rt;
+          } else {
+            outMap[k] = lMap[k];
+            if (lt) outTimes[k] = lt;
+          }
+        } else if (!hasL && hasR) {
+          if (lt > rt && Object.prototype.hasOwnProperty.call(lTs, k)) {
+            outTimes[k] = lt;
+          } else {
+            outMap[k] = rMap[k];
+            if (rt) outTimes[k] = rt;
+          }
+        } else if (hasL && hasR) {
+          if (rt > lt) {
+            outMap[k] = rMap[k];
+            if (rt) outTimes[k] = rt;
+          } else {
+            outMap[k] = lMap[k];
+            if (lt) outTimes[k] = lt;
+          }
+        }
+      });
+      return { map: outMap, times: outTimes };
     }
 
-    /**
-     * Smart Trip Matcher:
-     * 1. Exact Trip ID match
-     * 2. Fallback: Matching Ref # + Route
-     * 3. Fallback: Matching Route + Start/End Dates
-     * Ensures phone captures unify cleanly into the matching Desktop trip instead of creating duplicates.
-     */
-    function findMatchingLocalTripIndex(inc) {
-      if (!inc) return -1;
-      const byId = store.trips.findIndex(function (t) { return t.id === inc.id; });
-      if (byId >= 0) return byId;
-
-      const incRef = normalizeMatchToken(inc.trip && inc.trip.ref);
-      const incRoute = normalizeMatchToken(inc.trip && inc.trip.route);
-      const incStart = String((inc.trip && inc.trip.startDate) || '').trim();
-      const incEnd = String((inc.trip && inc.trip.endDate) || '').trim();
-
-      if (incRef && incRoute) {
-        const byRefRoute = store.trips.findIndex(function (t) {
-          return normalizeMatchToken(t.trip && t.trip.ref) === incRef
-            && normalizeMatchToken(t.trip && t.trip.route) === incRoute;
-        });
-        if (byRefRoute >= 0) return byRefRoute;
-      }
-
-      if (incRoute && incStart && incEnd) {
-        const byRouteDates = store.trips.findIndex(function (t) {
-          return normalizeMatchToken(t.trip && t.trip.route) === incRoute
-            && String((t.trip && t.trip.startDate) || '').trim() === incStart
-            && String((t.trip && t.trip.endDate) || '').trim() === incEnd;
-        });
-        if (byRouteDates >= 0) return byRouteDates;
-      }
-      return -1;
-    }
-
-    function buildMergeSummaryText(stats) {
-      const s = stats || {};
-      const parts = [];
-      if (s.addedTrips > 0) parts.push('+' + s.addedTrips + ' trip' + (s.addedTrips === 1 ? '' : 's'));
-      if (s.addedDays > 0) parts.push('+' + s.addedDays + ' day' + (s.addedDays === 1 ? '' : 's'));
-      if (s.addedLines > 0) parts.push('+' + s.addedLines + ' line' + (s.addedLines === 1 ? '' : 's'));
-      if (s.updatedLines > 0) parts.push(s.updatedLines + ' updated');
-      const recChg = (s.addedReceipts || 0) + (s.updatedReceipts || 0);
-      if (recChg > 0) parts.push('+' + recChg + ' receipt' + (recChg === 1 ? '' : 's'));
-      if (parts.length === 0) {
-        if (s.updatedTrips > 0) return 'Synced trip metadata ✓';
-        return 'Already up to date ✓';
-      }
-      return parts.join(', ') + ' ✓';
-    }
-
-    function loadLastMergeSummary() {
-      try {
-        const raw = localStorage.getItem(LAST_MERGE_KEY);
-        return raw ? JSON.parse(raw) : null;
-      } catch (e) { return null; }
-    }
-
-    function recordLastMergeSummary(summaryText, sourceName) {
-      try {
-        localStorage.setItem(LAST_MERGE_KEY, JSON.stringify({
-          summary: summaryText || 'Merged ✓',
-          source: sourceName || 'claimflow-db.json',
-          at: Date.now()
-        }));
-      } catch (e) {}
-    }
-
-    function smartMergeTrips(localRaw, remoteRaw) {
+    function smartMergeTrips(localRaw, remoteRaw, referencedItemIds) {
       const local = normalizeTrip(JSON.parse(JSON.stringify(localRaw)));
       const remote = normalizeTrip(JSON.parse(JSON.stringify(remoteRaw)));
       const localTs = Number(local.updatedAt) || 0;
       const remoteTs = Number(remote.updatedAt) || 0;
       const localNewer = localTs >= remoteTs;
+      const refIds = referencedItemIds || {};
 
       // Union explicit deletions so deleted items never resurrect on merge
       const deletedIds = [];
@@ -9087,16 +9252,31 @@
       });
       if (deletedIds.length > 400) deletedIds.splice(0, deletedIds.length - 400);
 
-      // Keep canonical local ID and UI collapse state; start from newer trip's content metadata while preserving non-empty fields
+      // Keep canonical local ID and UI collapse state; merge top-level trip fields with per-field LWW
       const base = localNewer ? JSON.parse(JSON.stringify(local)) : JSON.parse(JSON.stringify(remote));
       base.id = local.id;
       base.ui = local.ui;
-      const other = localNewer ? remote : local;
-      ['ref', 'route', 'startDate', 'endDate', 'foreignCurrency'].forEach(function (f) {
-        if (!String(base.trip[f] || '').trim() && String(other.trip[f] || '').trim()) {
-          base.trip[f] = other.trip[f];
+      const mergedFieldTimes = {};
+      const tripFields = ['presetId', 'ref', 'route', 'startDate', 'endDate', 'foreignCurrency', 'dailyMealCap', 'tzDiffFromSgt'];
+      tripFields.forEach(function (f) {
+        const lt = Number(local.tripFieldUpdatedAt && local.tripFieldUpdatedAt[f]) || 0;
+        const rt = Number(remote.tripFieldUpdatedAt && remote.tripFieldUpdatedAt[f]) || 0;
+        if (lt > 0 || rt > 0) {
+          if (rt > lt) {
+            base.trip[f] = remote.trip[f];
+            mergedFieldTimes[f] = rt;
+          } else {
+            base.trip[f] = local.trip[f];
+            mergedFieldTimes[f] = lt;
+          }
+        } else {
+          const other = localNewer ? remote : local;
+          if (!String(base.trip[f] || '').trim() && String(other.trip[f] || '').trim()) {
+            base.trip[f] = other.trip[f];
+          }
         }
       });
+      base.tripFieldUpdatedAt = mergedFieldTimes;
 
       let addedLines = 0;
       let updatedLines = 0;
@@ -9110,17 +9290,17 @@
         return arr;
       };
 
-      // Union-merge all item categories & anchors
-      base.fxAnchors = tally(mergeItemArraysById(local.fxAnchors, remote.fxAnchors, deletedSet, localNewer, 'fx'));
+      // Union-merge all item categories & anchors (preserving any line referenced by an attached photo!)
+      base.fxAnchors = tally(mergeItemArraysById(local.fxAnchors, remote.fxAnchors, deletedSet, localNewer, 'fx', refIds));
       if (base.fxAnchors.length === 0) base.fxAnchors = local.fxAnchors.length ? local.fxAnchors : remote.fxAnchors;
-      base.airFare.items = tally(mergeItemArraysById(local.airFare && local.airFare.items, remote.airFare && remote.airFare.items, deletedSet, localNewer, 'receipt'));
-      base.hotel.items = tally(mergeItemArraysById(local.hotel && local.hotel.items, remote.hotel && remote.hotel.items, deletedSet, localNewer, 'receipt'));
-      base.sgTransport.items = tally(mergeItemArraysById(local.sgTransport && local.sgTransport.items, remote.sgTransport && remote.sgTransport.items, deletedSet, localNewer, 'receipt'));
-      base.overseasTransport.items = tally(mergeItemArraysById(local.overseasTransport && local.overseasTransport.items, remote.overseasTransport && remote.overseasTransport.items, deletedSet, localNewer, 'receipt'));
-      base.data.items = tally(mergeItemArraysById(local.data && local.data.items, remote.data && remote.data.items, deletedSet, localNewer, 'receipt'));
-      base.otherMisc.items = tally(mergeItemArraysById(local.otherMisc && local.otherMisc.items, remote.otherMisc && remote.otherMisc.items, deletedSet, localNewer, 'receipt'));
-      base.flights.legs = tally(mergeItemArraysById(local.flights && local.flights.legs, remote.flights && remote.flights.legs, deletedSet, localNewer, 'flight'));
-      base.timeOff.entries = tally(mergeItemArraysById(local.timeOff && local.timeOff.entries, remote.timeOff && remote.timeOff.entries, deletedSet, localNewer, 'toil'));
+      base.airFare.items = tally(mergeItemArraysById(local.airFare && local.airFare.items, remote.airFare && remote.airFare.items, deletedSet, localNewer, 'receipt', refIds));
+      base.hotel.items = tally(mergeItemArraysById(local.hotel && local.hotel.items, remote.hotel && remote.hotel.items, deletedSet, localNewer, 'receipt', refIds));
+      base.sgTransport.items = tally(mergeItemArraysById(local.sgTransport && local.sgTransport.items, remote.sgTransport && remote.sgTransport.items, deletedSet, localNewer, 'receipt', refIds));
+      base.overseasTransport.items = tally(mergeItemArraysById(local.overseasTransport && local.overseasTransport.items, remote.overseasTransport && remote.overseasTransport.items, deletedSet, localNewer, 'receipt', refIds));
+      base.data.items = tally(mergeItemArraysById(local.data && local.data.items, remote.data && remote.data.items, deletedSet, localNewer, 'receipt', refIds));
+      base.otherMisc.items = tally(mergeItemArraysById(local.otherMisc && local.otherMisc.items, remote.otherMisc && remote.otherMisc.items, deletedSet, localNewer, 'receipt', refIds));
+      base.flights.legs = tally(mergeItemArraysById(local.flights && local.flights.legs, remote.flights && remote.flights.legs, deletedSet, localNewer, 'flight', refIds));
+      base.timeOff.entries = tally(mergeItemArraysById(local.timeOff && local.timeOff.entries, remote.timeOff && remote.timeOff.entries, deletedSet, localNewer, 'toil', refIds));
 
       // Union-merge Daily Meals: unify by ID OR calendar date, remapping retired dayIds for receipts
       const dayIdRemap = {};
@@ -9137,6 +9317,7 @@
           const cloned = {
             id: d.id,
             date: dateKey,
+            updatedAt: Number(d.updatedAt) || 0,
             items: cleanItems
           };
           mergedDays.push(cloned);
@@ -9153,7 +9334,7 @@
           }
           const lItems = isFromLocal ? d.items : target.items;
           const rItems = isFromLocal ? target.items : d.items;
-          target.items = tally(mergeItemArraysById(lItems, rItems, deletedSet, localNewer, 'receipt'));
+          target.items = tally(mergeItemArraysById(lItems, rItems, deletedSet, localNewer, 'receipt', refIds));
         }
       };
 
@@ -9162,10 +9343,30 @@
       mergedDays.sort(function (a, b) { return String(a.date || '').localeCompare(String(b.date || '')); });
       base.meals = mergedDays;
 
-      // Preserve completed/copied HRMS checkmarks from both sides
-      base.console.completedMap = Object.assign({}, other.console && other.console.completedMap, base.console && base.console.completedMap);
-      base.console.copiedMap = Object.assign({}, other.console && other.console.copiedMap, base.console && base.console.copiedMap);
-      base.console.manualDescriptions = Object.assign({}, other.console && other.console.manualDescriptions, base.console && base.console.manualDescriptions);
+      // Per-key Last-Write-Wins merge for HRMS Status (Done/Pending/Reset), Copied state & Custom Descriptions/Remarks
+      const statusM = mergeKeyedMapLWW(
+        local.console && local.console.completedMap, local.console && local.console.statusUpdatedAt,
+        remote.console && remote.console.completedMap, remote.console && remote.console.statusUpdatedAt,
+        localTs, remoteTs
+      );
+      base.console.completedMap = statusM.map;
+      base.console.statusUpdatedAt = statusM.times;
+
+      const copiedM = mergeKeyedMapLWW(
+        local.console && local.console.copiedMap, local.console && local.console.copiedUpdatedAt,
+        remote.console && remote.console.copiedMap, remote.console && remote.console.copiedUpdatedAt,
+        localTs, remoteTs
+      );
+      base.console.copiedMap = copiedM.map;
+      base.console.copiedUpdatedAt = copiedM.times;
+
+      const descM = mergeKeyedMapLWW(
+        local.console && local.console.manualDescriptions, local.console && local.console.descUpdatedAt,
+        remote.console && remote.console.manualDescriptions, remote.console && remote.console.descUpdatedAt,
+        localTs, remoteTs
+      );
+      base.console.manualDescriptions = descM.map;
+      base.console.descUpdatedAt = descM.times;
       base.deletedItemIds = deletedIds;
 
       const sigOf = function (t) {
@@ -10877,6 +11078,10 @@
       bumpSyncEpochs();
       if (isGitSyncConfigured()) {
         gitSync.pendingPush = true;
+        if (!gitSync.cfg.dirty) {
+          gitSync.cfg.dirty = true;
+          saveGitConfig();
+        }
         renderCloudStatusUI();
         if (gitSync.cfg.autoPush === true) {
           clearTimeout(gitSync.pushTimer);
@@ -11005,6 +11210,9 @@
       }).filter(function (inc) { return !deletedTripSet[inc.id]; });
       if (incomingTrips.length === 0 && collectedReceipts.length === 0 && localTripsToRemove.length === 0) return;
 
+      const existingLocalRecsPre = await idbGetAllReceipts();
+      const referencedItemIds = collectReferencedItemIds(existingLocalRecsPre, collectedReceipts);
+
       let addedTrips = 0;
       let updatedTrips = 0;
       let totalAddedLines = 0;
@@ -11023,7 +11231,7 @@
         } else {
           const canonicalId = store.trips[idx].id;
           if (inc.id !== canonicalId) tripIdRemap[inc.id] = canonicalId;
-          const resM = smartMergeTrips(store.trips[idx], inc);
+          const resM = smartMergeTrips(store.trips[idx], inc, referencedItemIds);
           store.trips[idx] = resM.trip;
           totalAddedLines += resM.addedLines || 0;
           totalUpdatedLines += resM.updatedLines || 0;
@@ -11068,6 +11276,7 @@
         recStats = await restoreEmbeddedReceiptsDetailed(filteredRecs);
         if (recStats.added > 0 || recStats.updated > 0) needsWriteBack = true;
       }
+      await repairReceiptLinksForAllTrips();
 
       const summaryTxt = buildMergeSummaryText({
         addedTrips: addedTrips,
@@ -11235,15 +11444,81 @@
         for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
         const json = new TextDecoder().decode(bytes);
         const parsed = JSON.parse(json);
-        mergeWorkspacePayload(parsed, false);
+        mergeWorkspacePayload(parsed, false, 'Sync Code');
         if (inp) inp.value = '';
       } catch (err) {
         showToast('Invalid sync code: ' + err.message, 'red');
       }
     }
 
+    function loadLastMergeSummary() {
+      try {
+        const raw = localStorage.getItem(LAST_MERGE_KEY);
+        return raw ? JSON.parse(raw) : null;
+      } catch (e) { return null; }
+    }
+
+    function recordLastMergeSummary(summaryText, sourceName) {
+      try {
+        localStorage.setItem(LAST_MERGE_KEY, JSON.stringify({
+          summary: String(summaryText || 'Up to date ✓'),
+          source: String(sourceName || 'claimflow-db.json'),
+          at: Date.now()
+        }));
+      } catch (e) {}
+    }
+
+    function buildMergeSummaryText(stats) {
+      const s = stats || {};
+      const parts = [];
+      if (s.addedTrips) parts.push('+' + s.addedTrips + ' trip' + (s.addedTrips === 1 ? '' : 's'));
+      if (s.addedDays) parts.push('+' + s.addedDays + ' day' + (s.addedDays === 1 ? '' : 's'));
+      if (s.addedLines) parts.push('+' + s.addedLines + ' line' + (s.addedLines === 1 ? '' : 's'));
+      if (s.updatedLines) parts.push(s.updatedLines + ' updated');
+      if (s.addedReceipts) parts.push('+' + s.addedReceipts + ' receipt' + (s.addedReceipts === 1 ? '' : 's'));
+      if (s.updatedReceipts) parts.push(s.updatedReceipts + ' photo edit' + (s.updatedReceipts === 1 ? '' : 's'));
+      if (parts.length === 0 && s.updatedTrips) parts.push(s.updatedTrips + ' trip updated');
+      return parts.length > 0 ? (parts.join(', ') + ' ✓') : 'Already up to date ✓';
+    }
+
+    function findMatchingLocalTripIndex(inc) {
+      if (!inc) return -1;
+      const byId = store.trips.findIndex(function (t) { return t.id === inc.id; });
+      if (byId >= 0) return byId;
+      const incRef = String((inc.trip && inc.trip.ref) || '').trim().toLowerCase();
+      const incRoute = String((inc.trip && inc.trip.route) || '').trim().toLowerCase();
+      const incStart = String((inc.trip && inc.trip.startDate) || '').trim();
+      const incEnd = String((inc.trip && inc.trip.endDate) || '').trim();
+      if (incRef && incRoute) {
+        const byRef = store.trips.findIndex(function (t) {
+          return String((t.trip && t.trip.ref) || '').trim().toLowerCase() === incRef
+            && String((t.trip && t.trip.route) || '').trim().toLowerCase() === incRoute;
+        });
+        if (byRef >= 0) return byRef;
+      }
+      if (incRoute && incStart && incEnd) {
+        const byDates = store.trips.findIndex(function (t) {
+          return String((t.trip && t.trip.route) || '').trim().toLowerCase() === incRoute
+            && String((t.trip && t.trip.startDate) || '').trim() === incStart
+            && String((t.trip && t.trip.endDate) || '').trim() === incEnd;
+        });
+        if (byDates >= 0) return byDates;
+      }
+      return -1;
+    }
+
+    function receiptFingerprint(r) {
+      if (!r || !r.dataUrl) return '';
+      return [
+        String(r.tripId || ''),
+        String(r.bytes || estimateDataUrlBytes(r.dataUrl)),
+        String(r.width || 0) + 'x' + String(r.height || 0),
+        computeDataUrlHash(r.dataUrl)
+      ].join('|');
+    }
+
     /* ==========================================================================
-       10C. RECEIPT PHOTO VAULT (INDEXEDDB, HI-RES B&W SCAN, PAIRING & LIGHTBOX)
+       10C. RECEIPT PHOTO VAULT (INDEXEDDB, FULL COLOR DEFAULT, PAIRING & LIGHTBOX)
        ========================================================================== */
     const RECEIPT_DB_NAME = 'ClaimFlowReceiptsDB';
     const RECEIPT_STORE_NAME = 'photos';
@@ -11259,19 +11534,8 @@
         } catch (e) { return false; }
       })()
     };
-    function receiptFingerprint(r) {
-      if (!r) return '';
-      const b = Number(r.bytes) || estimateDataUrlBytes(r.dataUrl);
-      return [
-        String(r.tripId || ''),
-        String(r.width || 0),
-        String(r.height || 0),
-        String(b),
-        String(r.dataUrl || '').slice(-40)
-      ].join('|');
-    }
 
-    /** Deduplicates receipts cleanly while preserving linked itemId/dayId/scope/note metadata from both sides */
+    /** Deduplicates receipts cleanly while applying Last-Write-Wins updates for cropped/rotated images & remarks/tags */
     async function restoreEmbeddedReceiptsDetailed(list) {
       if (!Array.isArray(list) || list.length === 0) return { added: 0, updated: 0, skipped: 0 };
       const existingAll = await idbGetAllReceipts();
@@ -11291,6 +11555,8 @@
       for (let i = 0; i < list.length; i++) {
         const r = list[i];
         if (!r || !r.id || !r.dataUrl) continue;
+        const created = Number(r.createdAt) || Date.now();
+        const updatedTs = Number(r.updatedAt) || created;
         const cleanRec = {
           id: String(r.id),
           tripId: String(r.tripId || state.id),
@@ -11306,23 +11572,59 @@
           height: Number(r.height) || 0,
           bytes: Number(r.bytes) || estimateDataUrlBytes(r.dataUrl),
           isBW: !!r.isBW,
-          createdAt: Number(r.createdAt) || Date.now()
+          rev: Number(r.rev) || 0,
+          createdAt: created,
+          updatedAt: updatedTs,
+          imgUpdatedAt: Number(r.imgUpdatedAt) || updatedTs
         };
+        cleanRec.imgHash = r.imgHash || computeReceiptImageHash(cleanRec);
+        canonicalizeReceiptLink(cleanRec);
 
         const fp = receiptFingerprint(cleanRec);
         const existing = byId[cleanRec.id] || (fp ? byFp[fp] : null);
         if (existing) {
           const mergedRec = Object.assign({}, existing);
+          const lMeta = extractReceiptMeta(mergedRec);
+          const rMeta = extractReceiptMeta(cleanRec);
           let changed = false;
-          if (!mergedRec.itemId && cleanRec.itemId) { mergedRec.itemId = cleanRec.itemId; changed = true; }
-          if (!mergedRec.dayId && cleanRec.dayId) { mergedRec.dayId = cleanRec.dayId; changed = true; }
-          if ((!mergedRec.scope || mergedRec.scope === 'unmatched') && cleanRec.scope && cleanRec.scope !== 'unmatched') {
-            mergedRec.scope = cleanRec.scope;
+
+          // 1. Apply newer image file edits (crop, rotate, B&W, optimize) via LWW
+          if (rMeta.imgHash && rMeta.imgHash !== lMeta.imgHash && isReceiptImageIncomingNewer(lMeta, rMeta)) {
+            mergedRec.dataUrl = cleanRec.dataUrl;
+            mergedRec.width = cleanRec.width;
+            mergedRec.height = cleanRec.height;
+            mergedRec.bytes = cleanRec.bytes;
+            mergedRec.isBW = cleanRec.isBW;
+            mergedRec.imgHash = rMeta.imgHash;
+            mergedRec.imgUpdatedAt = rMeta.imgUpdatedAt;
             changed = true;
           }
-          if (!mergedRec.note && cleanRec.note) { mergedRec.note = cleanRec.note; changed = true; }
-          if (mergedRec.role === 'receipt' && cleanRec.role !== 'receipt') { mergedRec.role = cleanRec.role; changed = true; }
-          if (mergedRec.orient === 'auto' && cleanRec.orient !== 'auto') { mergedRec.orient = cleanRec.orient; changed = true; }
+
+          // 2. Apply newer metadata edits (remarks/notes, line tags, role, orientation) via LWW
+          if (isReceiptIncomingNewer(lMeta, rMeta)) {
+            if (mergedRec.tripId !== cleanRec.tripId) { mergedRec.tripId = cleanRec.tripId; changed = true; }
+            if (mergedRec.scope !== cleanRec.scope) { mergedRec.scope = cleanRec.scope; changed = true; }
+            if (mergedRec.itemId !== cleanRec.itemId) { mergedRec.itemId = cleanRec.itemId; changed = true; }
+            if (mergedRec.dayId !== cleanRec.dayId) { mergedRec.dayId = cleanRec.dayId; changed = true; }
+            if (mergedRec.note !== cleanRec.note) { mergedRec.note = cleanRec.note; changed = true; }
+            if (mergedRec.role !== cleanRec.role) { mergedRec.role = cleanRec.role; changed = true; }
+            if (mergedRec.orient !== cleanRec.orient) { mergedRec.orient = cleanRec.orient; changed = true; }
+            mergedRec.updatedAt = Math.max(lMeta.updatedAt, rMeta.updatedAt);
+            mergedRec.rev = Math.max(lMeta.rev, rMeta.rev);
+          } else {
+            // Fallback fill-in-blanks for legacy backups that had no updatedAt timestamp
+            if (!mergedRec.itemId && cleanRec.itemId) { mergedRec.itemId = cleanRec.itemId; changed = true; }
+            if (!mergedRec.dayId && cleanRec.dayId) { mergedRec.dayId = cleanRec.dayId; changed = true; }
+            if ((!mergedRec.scope || mergedRec.scope === 'unmatched') && cleanRec.scope && cleanRec.scope !== 'unmatched') {
+              mergedRec.scope = cleanRec.scope;
+              changed = true;
+            }
+            if (!mergedRec.note && cleanRec.note) { mergedRec.note = cleanRec.note; changed = true; }
+            if (mergedRec.role === 'receipt' && cleanRec.role !== 'receipt') { mergedRec.role = cleanRec.role; changed = true; }
+            if (mergedRec.orient === 'auto' && cleanRec.orient !== 'auto') { mergedRec.orient = cleanRec.orient; changed = true; }
+          }
+
+          if (canonicalizeReceiptLink(mergedRec)) changed = true;
 
           if (changed) {
             await idbPutReceipt(mergedRec);
@@ -11439,8 +11741,8 @@
       }
       updateVaultCountBadges();
       renderWorkspace();
-      const vaultBackdrop = document.getElementById('receipt-modal-backdrop');
-      if (vaultBackdrop && vaultBackdrop.classList.contains('open')) {
+      const rmBd = document.getElementById('receipt-modal-backdrop');
+      if (rmBd && rmBd.classList.contains('open')) {
         renderReceiptModal();
       }
     }
@@ -11463,9 +11765,7 @@
     function getReceiptSizeMeta(ph) {
       let bytes = ph && ph.bytes ? ph.bytes : 0;
       if (!bytes && ph && ph.dataUrl) {
-        const comma = ph.dataUrl.indexOf(',');
-        const b64Len = comma >= 0 ? (ph.dataUrl.length - comma - 1) : ph.dataUrl.length;
-        bytes = Math.round((b64Len * 3) / 4);
+        bytes = estimateDataUrlBytes(ph.dataUrl);
       }
       const dims = (ph && ph.width && ph.height) ? (ph.width + '×' + ph.height + 'px') : '';
       const modeTag = ph && ph.isBW ? 'B&W' : 'Color';
@@ -11504,12 +11804,80 @@
       }
     }
 
-    /* --- Desktop Drag & Drop Handlers (Attach Docks, Rows, FX Anchors & Receipt Vault) --- */
+    /* --- Desktop Drag & Drop Handlers (Attach Docks, Rows, FX Anchors & Fail-Safe Existing-Photo Re-Tagging) --- */
+    let draggingReceiptPhotoId = null;
+
+    function handleExistingReceiptDragStart(evt, photoId) {
+      draggingReceiptPhotoId = photoId || null;
+      if (evt && evt.dataTransfer && photoId) {
+        evt.dataTransfer.effectAllowed = 'move';
+        try {
+          evt.dataTransfer.setData('application/x-claimflow-receipt-id', photoId);
+          evt.dataTransfer.setData('text/plain', 'claimflow-receipt:' + photoId);
+        } catch (e) {}
+      }
+      if (evt && evt.currentTarget) evt.currentTarget.classList.add('is-dragging');
+      document.body.classList.add('dragging-existing-receipt');
+    }
+
+    function handleExistingReceiptDragEnd(evt) {
+      draggingReceiptPhotoId = null;
+      if (evt && evt.currentTarget) evt.currentTarget.classList.remove('is-dragging');
+      document.body.classList.remove('dragging-existing-receipt');
+      document.querySelectorAll('.drop-active').forEach(function (el) { el.classList.remove('drop-active'); });
+    }
+
+    function getDraggedExistingReceiptId(evt) {
+      if (draggingReceiptPhotoId) return draggingReceiptPhotoId;
+      try {
+        if (evt && evt.dataTransfer) {
+          const custom = evt.dataTransfer.getData('application/x-claimflow-receipt-id');
+          if (custom) return custom;
+          const plain = evt.dataTransfer.getData('text/plain') || '';
+          if (plain.indexOf('claimflow-receipt:') === 0) return plain.slice('claimflow-receipt:'.length);
+        }
+      } catch (e) {}
+      return null;
+    }
+
+    async function moveExistingReceiptToTarget(photoId, scope, dayId, itemId) {
+      const ph = receiptVault.photos.find(function (p) { return p.id === photoId; });
+      if (!ph) return false;
+      const nextScope = scope || 'unmatched';
+      const nextDayId = dayId || '';
+      const nextItemId = itemId || '';
+      if (ph.scope === nextScope && (ph.dayId || '') === nextDayId && (ph.itemId || '') === nextItemId) {
+        showToast('Receipt is already tagged to this line ✓', 'indigo');
+        return true;
+      }
+      ph.scope = nextScope;
+      ph.dayId = nextDayId;
+      ph.itemId = nextItemId;
+      if (nextScope === 'fxAnchors' && ph.role === 'receipt') {
+        ph.role = 'bank';
+      }
+      canonicalizeReceiptLink(ph);
+      if (ph.itemId) delete mobileUnlockedLines[ph.itemId];
+      await stampReceiptChange(ph, { imageChanged: false });
+      renderWorkspace();
+      if (document.getElementById('receipt-modal-backdrop').classList.contains('open')) renderReceiptModal();
+      if (document.getElementById('slide-preview-backdrop').classList.contains('open')) renderSlidePreviewModal();
+      if (receiptVault.lightboxPhotoId === ph.id) openReceiptLightbox(ph.id);
+
+      const mealDayObj = ph.dayId ? (state.meals || []).find(function (m) { return m.id === ph.dayId; }) : null;
+      const info = getReceiptDisplayInfo(ph, mealDayObj);
+      const destLbl = (info.numBadge ? (info.numBadge + ' ') : '') + (info.tagLeft || nextScope);
+      showToast('Tagged onto ' + destLbl + ' (no duplicate) ✓', 'green');
+      return true;
+    }
+
     function handleDropZoneDragOver(evt, el) {
       if (!evt) return;
       evt.preventDefault();
       evt.stopPropagation();
-      if (evt.dataTransfer) evt.dataTransfer.dropEffect = 'copy';
+      if (evt.dataTransfer) {
+        evt.dataTransfer.dropEffect = draggingReceiptPhotoId ? 'move' : 'copy';
+      }
       if (el) el.classList.add('drop-active');
     }
 
@@ -11525,6 +11893,16 @@
         evt.stopPropagation();
       }
       if (el) el.classList.remove('drop-active');
+
+      // Fail-safe: Dragging an existing receipt thumbnail onto a line or dock re-tags it in-place (zero duplication!)
+      const existingId = getDraggedExistingReceiptId(evt);
+      if (existingId) {
+        draggingReceiptPhotoId = null;
+        document.body.classList.remove('dragging-existing-receipt');
+        await moveExistingReceiptToTarget(existingId, scope, dayId, itemId);
+        return;
+      }
+
       const rawFiles = Array.from((evt && evt.dataTransfer && evt.dataTransfer.files) || []);
       const validFiles = rawFiles.filter(function (f) {
         return f && (/^image\//i.test(f.type || '') || f.type === 'application/pdf' || /\.(png|jpe?g|webp|heic|heif|gif|bmp|pdf)$/i.test(f.name || ''));
@@ -11853,13 +12231,13 @@
         const pairBtnHtml = (p.itemId && !isPaired)
           ? ('<button type="button" class="btn btn-sm btn-sky-soft" style="height:26px;padding:0 7px;font-size:10.5px;" title="Upload matching ' + (isBank ? 'FCY Receipt' : 'Bank SGD screenshot') + ' to auto-pair" onclick="triggerReceiptUpload({ scope: \'' + esc(p.scope || 'meal') + '\', itemId: \'' + esc(p.itemId) + '\', dayId: \'' + esc(p.dayId || '') + '\', role: \'' + (isBank ? 'receipt' : 'bank') + '\' }, false)">🔗 ' + (isBank ? '+Rec' : '+Bank') + '</button>')
           : '';
-        return '<div class="vault-card" style="border-top:3px solid ' + info.colors.bg + ';">'
+        return '<div class="vault-card" draggable="true" ondragstart="handleExistingReceiptDragStart(event,\'' + esc(p.id) + '\')" ondragend="handleExistingReceiptDragEnd(event)" style="border-top:3px solid ' + info.colors.bg + ';">'
           + '<div class="vault-img-wrap" onclick="openReceiptLightbox(\'' + esc(p.id) + '\')">'
           + '<span class="day-photo-role' + (isPol ? ' policy' : (isBank ? ' bank' : '')) + '">' + (isPol ? '📄 Policy Doc' : (isBank ? '💳 Bank SGD' : '🧾 Receipt')) + '</span>'
           + '<span class="day-photo-size">' + esc(sz.sizeStr) + '</span>'
           + (isPaired ? '<span class="day-photo-pair">🔗 FCY+Bank Pair</span>' : '')
           + '<span class="day-photo-orient">' + (isLand ? '▭ Land' : '▯ Port') + '</span>'
-          + '<img src="' + p.dataUrl + '" alt="' + esc(p.name || 'Receipt') + '" loading="lazy" />'
+          + '<img src="' + p.dataUrl + '" alt="' + esc(p.name || 'Receipt') + '" loading="lazy" draggable="false" />'
           + '</div>'
           + '<div class="vault-card-body">'
           + '<div class="vault-meta-row">'
@@ -11867,7 +12245,7 @@
           + '<span>' + esc(sz.dims || sz.sizeStr) + '</span>'
           + '</div>'
           + '<select class="select" style="font-size:11.5px;padding:5px 7px;" onchange="reassignReceipt(\'' + esc(p.id) + '\',this.value)">' + buildReceiptMatchOptions(p) + '</select>'
-          + '<input class="input" style="font-size:11.5px;padding:5px 7px;" type="text" placeholder="Optional caption / note" value="' + esc(p.note || '') + '" onchange="updateReceiptNote(\'' + esc(p.id) + '\',this.value)" />'
+          + '<input class="input" style="font-size:11.5px;padding:5px 7px;" type="text" placeholder="Optional caption / note" value="' + esc(p.note || '') + '" oninput="handleReceiptNoteInput(\'' + esc(p.id) + '\',this.value)" onchange="updateReceiptNote(\'' + esc(p.id) + '\',this.value)" />'
           + '<div class="vault-card-actions">'
           + '<div style="display:flex;gap:4px;align-items:center;flex-wrap:wrap;">'
           + '<button type="button" class="btn btn-icon-sm" title="Cycle Receipt / Bank SGD / Policy role" onclick="toggleReceiptRole(\'' + esc(p.id) + '\')">' + (isPol ? '📄' : (isBank ? '💳' : '🧾')) + '</button>'
@@ -12427,9 +12805,15 @@
 
       for (let rIdx = 0; rIdx < stagedRecs.length; rIdx++) {
         const rec = stagedRecs[rIdx];
+        const stampTs = Date.now() + rIdx;
         rec.scope = target.scope || rec.scope;
         rec.dayId = target.dayId || '';
         rec.itemId = target.itemId || '';
+        rec.rev = 1;
+        rec.updatedAt = stampTs;
+        rec.imgUpdatedAt = stampTs;
+        rec.imgHash = computeReceiptImageHash(rec);
+        canonicalizeReceiptLink(rec);
         receiptVault.photos.push(rec);
         await idbPutReceipt(rec);
       }
@@ -12659,7 +13043,7 @@
             ph.width = encoded.width;
             ph.height = encoded.height;
             ph.bytes = encoded.bytes;
-            await idbPutReceipt(ph);
+            await stampReceiptChange(ph, { imageChanged: true, skipSync: true });
             beforeTotal += prevBytes;
             afterTotal += encoded.bytes;
             count++;
@@ -12713,13 +13097,14 @@
       if (ctrlEl) {
         ctrlEl.innerHTML =
           '<select class="select" style="flex:1 1 200px;font-size:12px;" onchange="reassignReceipt(\'' + esc(ph.id) + '\',this.value); openReceiptLightbox(\'' + esc(ph.id) + '\');">' + buildReceiptMatchOptions(ph) + '</select>'
-          + '<input class="input" style="flex:1 1 180px;font-size:12px;" type="text" placeholder="Add caption / note" value="' + esc(ph.note || '') + '" onchange="updateReceiptNote(\'' + esc(ph.id) + '\',this.value); openReceiptLightbox(\'' + esc(ph.id) + '\');" />';
+          + '<input class="input" style="flex:1 1 180px;font-size:12px;" type="text" placeholder="Add caption / note" value="' + esc(ph.note || '') + '" oninput="handleReceiptNoteInput(\'' + esc(ph.id) + '\',this.value)" onchange="updateReceiptNote(\'' + esc(ph.id) + '\',this.value); openReceiptLightbox(\'' + esc(ph.id) + '\');" />';
       }
       const bd = document.getElementById('receipt-lightbox-backdrop');
       if (bd) bd.classList.add('open');
     }
 
     function closeReceiptLightbox() {
+      flushPendingReceiptNoteSaves(false);
       receiptVault.lightboxPhotoId = null;
       const bd = document.getElementById('receipt-lightbox-backdrop');
       if (bd) bd.classList.remove('open');
@@ -13209,13 +13594,12 @@
         canvas.width = 0;
         canvas.height = 0;
 
-        await idbPutReceipt(ph);
+        await stampReceiptChange(ph, { imageChanged: true });
         closeReceiptCropper();
         renderWorkspace();
         if (document.getElementById('receipt-modal-backdrop').classList.contains('open')) renderReceiptModal();
         if (document.getElementById('slide-preview-backdrop').classList.contains('open')) renderSlidePreviewModal();
         if (receiptVault.lightboxPhotoId === ph.id) openReceiptLightbox(ph.id);
-        scheduleCloudWrite(false);
         showToast('Cropped receipt to ' + encoded.width + '×' + encoded.height + 'px (' + formatBytes(encoded.bytes) + ') ✓', 'green');
       } catch (e) {
         showToast('Crop failed: ' + e.message, 'red');
@@ -13227,6 +13611,197 @@
       if (!id) return;
       closeReceiptLightbox();
       deleteReceiptPhoto(id);
+    }
+
+    /** Centralized revision stamper for ALL receipt file & metadata edits so Git & JSON Smart-Merge never miss an update */
+    const pendingNoteTimers = {};
+    const pendingNoteIds = {};
+
+    async function stampReceiptChange(ph, opts) {
+      if (!ph) return;
+      const cfg = opts || {};
+      const now = Date.now();
+      ph.rev = (Number(ph.rev) || 0) + 1;
+      ph.updatedAt = Math.max(now, (Number(ph.updatedAt) || 0) + 1);
+      if (cfg.imageChanged) {
+        ph.imgHash = computeReceiptImageHash(ph);
+        ph.imgUpdatedAt = ph.updatedAt;
+      } else if (!ph.imgHash && ph.dataUrl) {
+        ph.imgHash = computeReceiptImageHash(ph);
+      }
+      await idbPutReceipt(ph);
+      if (!cfg.skipSync) {
+        scheduleCloudWrite(false);
+      }
+    }
+
+    function handleReceiptNoteInput(photoId, val) {
+      const ph = receiptVault.photos.find(function (p) { return p.id === photoId; });
+      if (!ph) return;
+      ph.note = String(val || '').trim();
+      pendingNoteIds[photoId] = true;
+      clearTimeout(pendingNoteTimers[photoId]);
+      pendingNoteTimers[photoId] = setTimeout(function () {
+        delete pendingNoteTimers[photoId];
+        delete pendingNoteIds[photoId];
+        stampReceiptChange(ph, { imageChanged: false });
+      }, 500);
+    }
+
+    function flushPendingReceiptNoteSaves(skipSync) {
+      const ids = Object.keys(pendingNoteIds);
+      if (ids.length === 0) return;
+      ids.forEach(function (id) {
+        clearTimeout(pendingNoteTimers[id]);
+        delete pendingNoteTimers[id];
+        delete pendingNoteIds[id];
+        const ph = receiptVault.photos.find(function (p) { return p.id === id; });
+        if (ph) stampReceiptChange(ph, { imageChanged: false, skipSync: !!skipSync });
+      });
+    }
+
+    async function rotateReceiptPhoto(photoId) {
+      const ph = receiptVault.photos.find(function (p) { return p.id === photoId; });
+      if (!ph) return;
+      try {
+        const img = await loadImageElement(ph.dataUrl);
+        const w = img.naturalWidth || img.width;
+        const h = img.naturalHeight || img.height;
+        const canvas = document.createElement('canvas');
+        canvas.width = h;
+        canvas.height = w;
+        const ctx = canvas.getContext('2d');
+        ctx.translate(h / 2, w / 2);
+        ctx.rotate(Math.PI / 2);
+        ctx.drawImage(img, -w / 2, -h / 2);
+        const encoded = encodeCanvasToTargetBytes(canvas, !!ph.isBW);
+        ph.dataUrl = encoded.dataUrl;
+        ph.width = encoded.width;
+        ph.height = encoded.height;
+        ph.bytes = encoded.bytes;
+        canvas.width = 0;
+        canvas.height = 0;
+        await stampReceiptChange(ph, { imageChanged: true });
+        renderWorkspace();
+        if (document.getElementById('receipt-modal-backdrop').classList.contains('open')) renderReceiptModal();
+        if (document.getElementById('slide-preview-backdrop').classList.contains('open')) renderSlidePreviewModal();
+        if (receiptVault.lightboxPhotoId === photoId) openReceiptLightbox(photoId);
+      } catch (e) {
+        showToast('Could not rotate photo.', 'red');
+      }
+    }
+
+    async function convertReceiptToBW(photoId) {
+      const ph = receiptVault.photos.find(function (p) { return p.id === photoId; });
+      if (!ph) return;
+      try {
+        const img = await loadImageElement(ph.dataUrl);
+        const w = img.naturalWidth || img.width;
+        const h = img.naturalHeight || img.height;
+        const canvas = document.createElement('canvas');
+        canvas.width = w;
+        canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, w, h);
+        ctx.drawImage(img, 0, 0, w, h);
+        applyBWFilterToCanvas(ctx, w, h);
+        const encoded = encodeCanvasToTargetBytes(canvas, true);
+        ph.dataUrl = encoded.dataUrl;
+        ph.width = encoded.width;
+        ph.height = encoded.height;
+        ph.isBW = true;
+        ph.bytes = encoded.bytes;
+        canvas.width = 0;
+        canvas.height = 0;
+        await stampReceiptChange(ph, { imageChanged: true });
+        renderWorkspace();
+        if (document.getElementById('receipt-modal-backdrop').classList.contains('open')) renderReceiptModal();
+        if (document.getElementById('slide-preview-backdrop').classList.contains('open')) renderSlidePreviewModal();
+        if (receiptVault.lightboxPhotoId === photoId) openReceiptLightbox(photoId);
+        showToast('Converted to crisp B&W (' + formatBytes(encoded.bytes) + ') ✓', 'green');
+      } catch (e) {
+        showToast('B&W conversion failed.', 'red');
+      }
+    }
+
+    async function toggleReceiptRole(photoId) {
+      const ph = receiptVault.photos.find(function (p) { return p.id === photoId; });
+      if (!ph) return;
+      if (ph.scope === 'overnight') {
+        ph.role = ph.role === 'policy' ? 'receipt' : 'policy';
+      } else {
+        const order = ['receipt', 'bank', 'policy'];
+        const cur = order.indexOf(ph.role);
+        ph.role = order[(cur + 1) % order.length];
+      }
+      await stampReceiptChange(ph, { imageChanged: false });
+      renderWorkspace();
+      if (document.getElementById('receipt-modal-backdrop').classList.contains('open')) renderReceiptModal();
+      if (document.getElementById('slide-preview-backdrop').classList.contains('open')) renderSlidePreviewModal();
+    }
+
+    async function toggleReceiptOrient(photoId) {
+      const ph = receiptVault.photos.find(function (p) { return p.id === photoId; });
+      if (!ph) return;
+      const cur = getPhotoEffectiveOrient(ph);
+      ph.orient = cur === 'landscape' ? 'portrait' : 'landscape';
+      await stampReceiptChange(ph, { imageChanged: false });
+      renderWorkspace();
+      if (document.getElementById('receipt-modal-backdrop').classList.contains('open')) renderReceiptModal();
+      if (document.getElementById('slide-preview-backdrop').classList.contains('open')) renderSlidePreviewModal();
+      showToast('Receipt slot set to ' + (ph.orient === 'landscape' ? '▭ Landscape' : '▯ Portrait'), 'indigo');
+    }
+
+    async function reassignReceipt(photoId, encodedVal) {
+      const ph = receiptVault.photos.find(function (p) { return p.id === photoId; });
+      if (!ph) return;
+      const parts = String(encodedVal || 'unmatched|unmatched||').split('|');
+      const kind = parts[0];
+      if (kind === 'item') {
+        ph.scope = parts[1] || 'meal';
+        ph.dayId = parts[2] || '';
+        ph.itemId = parts[3] || '';
+      } else if (kind === 'day') {
+        ph.scope = 'mealDay';
+        ph.dayId = parts[2] || '';
+        ph.itemId = '';
+      } else if (kind === 'scope') {
+        ph.scope = parts[1] || 'unmatched';
+        ph.dayId = '';
+        ph.itemId = '';
+      } else {
+        ph.scope = 'unmatched';
+        ph.dayId = '';
+        ph.itemId = '';
+      }
+      canonicalizeReceiptLink(ph);
+      await stampReceiptChange(ph, { imageChanged: false });
+      renderWorkspace();
+      if (document.getElementById('receipt-modal-backdrop').classList.contains('open')) renderReceiptModal();
+      if (document.getElementById('slide-preview-backdrop').classList.contains('open')) renderSlidePreviewModal();
+    }
+
+    async function updateReceiptNote(photoId, val) {
+      const ph = receiptVault.photos.find(function (p) { return p.id === photoId; });
+      if (!ph) return;
+      clearTimeout(pendingNoteTimers[photoId]);
+      delete pendingNoteTimers[photoId];
+      delete pendingNoteIds[photoId];
+      ph.note = String(val || '').trim();
+      await stampReceiptChange(ph, { imageChanged: false });
+      renderWorkspace();
+      if (document.getElementById('slide-preview-backdrop').classList.contains('open')) renderSlidePreviewModal();
+    }
+    function closeReceiptModal() {
+      flushPendingReceiptNoteSaves(false);
+      const bd = document.getElementById('receipt-modal-backdrop');
+      if (bd) bd.classList.remove('open');
+    }
+
+    function setVaultFilter(f) {
+      receiptVault.filter = f || 'all';
+      renderReceiptModal();
     }
 
     async function rotateReceiptPhoto(photoId) {
@@ -13352,10 +13927,13 @@
     async function updateReceiptNote(photoId, val) {
       const ph = receiptVault.photos.find(function (p) { return p.id === photoId; });
       if (!ph) return;
+      clearTimeout(pendingNoteTimers[photoId]);
+      delete pendingNoteTimers[photoId];
+      delete pendingNoteIds[photoId];
       ph.note = String(val || '').trim();
-      await idbPutReceipt(ph);
+      await stampReceiptChange(ph, { imageChanged: false });
       renderWorkspace();
-      scheduleCloudWrite(false);
+      if (document.getElementById('slide-preview-backdrop').classList.contains('open')) renderSlidePreviewModal();
     }
 
     async function deleteReceiptPhoto(photoId) {
